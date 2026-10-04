@@ -94,6 +94,45 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- DataGrid Styles -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="RowHeight" Value="34"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="20">
@@ -242,7 +281,7 @@
                                 <TextBlock Text="Матриця ієрархічного синтезу (P = L · w)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,4"/>
                                 <TextBlock Text="Для кожної альтернативи наведено локальні пріоритети за критеріями (Lij) та їхній зважений внесок у підсумковий бал (Lij · wj)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,12"/>
 
-                                <DataGrid x:Name="GridSynthesis" MaxHeight="260"/>
+                                <DataGrid x:Name="GridSynthesis" AutoGenerateColumns="True" MaxHeight="280" HeadersVisibility="Column" SelectionMode="Single"/>
                             </StackPanel>
                         </Border>
 
@@ -252,7 +291,20 @@
                                 <TextBlock Text="Показники узгодженості суджень (λmax, CI, RI, CR)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,4"/>
                                 <TextBlock Text="Оцінка логічної несуперечливості експертних оцінок. Згідно із методикою Сааті, прийнятною вважається умова CR ≤ 0.10 (10%)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,12"/>
 
-                                <DataGrid x:Name="GridConsistency" MaxHeight="260"/>
+                                <DataGrid x:Name="GridConsistency" AutoGenerateColumns="False" MaxHeight="280" HeadersVisibility="Column" SelectionMode="Single">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Матриця порівнянь" Binding="{Binding MatrixName}" Width="2*"/>
+                                        <DataGridTextColumn Header="Розмір (n)" Binding="{Binding Dimension}" Width="75"/>
+                                        <DataGridTextColumn Header="λmax" Binding="{Binding LambdaMax}" Width="75"/>
+                                        <DataGridTextColumn Header="CI" Binding="{Binding CI}" Width="75"/>
+                                        <DataGridTextColumn Header="RI (табл)" Binding="{Binding RITable}" Width="75"/>
+                                        <DataGridTextColumn Header="RI (емп)" Binding="{Binding RIEmpirical}" Width="75"/>
+                                        <DataGridTextColumn Header="CR (табл)" Binding="{Binding CRTable}" Width="105"/>
+                                        <DataGridTextColumn Header="CR (емп)" Binding="{Binding CREmpirical}" Width="105"/>
+                                        <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="110"/>
+                                        <DataGridTextColumn Header="Вердикт" Binding="{Binding Verdict}" Width="90"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
                             </StackPanel>
                         </Border>
 
@@ -274,7 +326,7 @@
                                 </Grid>
 
                                 <TextBlock x:Name="TxtSelectedMatrixInfo" Text="Інформація про обрану матрицю..." FontSize="13" FontWeight="SemiBold" Foreground="#1E40AF" Margin="0,0,0,8"/>
-                                <DataGrid x:Name="GridSelectedMatrix" MaxHeight="240"/>
+                                <DataGrid x:Name="GridSelectedMatrix" AutoGenerateColumns="True" MaxHeight="260" HeadersVisibility="Column" SelectionMode="Single"/>
                             </StackPanel>
                         </Border>
 
