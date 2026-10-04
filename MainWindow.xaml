@@ -1,0 +1,384 @@
+<Window x:Class="MAI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MAI"
+        mc:Ignorable="d"
+        Title="Метод аналізу ієрархій Томаса Сааті (МАІ / AHP)" 
+        Height="780" Width="1050"
+        MinHeight="650" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="#F8FAFC">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBlue" Color="#2563EB"/>
+        <SolidColorBrush x:Key="PrimaryBlueHover" Color="#1D4ED8"/>
+        <SolidColorBrush x:Key="PrimaryBluePressed" Color="#1E40AF"/>
+        <SolidColorBrush x:Key="TextDark" Color="#0F172A"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="DangerRed" Color="#DC2626"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.05"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBlue}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="18,6"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBlueHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBluePressed}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MatrixInputStyle" TargetType="TextBox">
+            <Setter Property="Width" Value="72"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="Padding" Value="2"/>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                    <Setter Property="BorderThickness" Value="1.5"/>
+                    <Setter Property="Background" Value="#EFF6FF"/>
+                </Trigger>
+                <Trigger Property="IsReadOnly" Value="True">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="Foreground" Value="#64748B"/>
+                    <Setter Property="FontWeight" Value="Medium"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header & Presets -->
+            <RowDefinition Height="*"/>    <!-- Main Navigation Tabs -->
+            <RowDefinition Height="Auto"/> <!-- Bottom Action Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Top Header & Presets Bar -->
+        <Border Grid.Row="0" CornerRadius="12" Padding="20,16" Margin="0,0,0,16" BorderThickness="1" Background="#FFFFFF" BorderBrush="#E2E8F0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.04"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#DBEAFE" CornerRadius="6" Padding="6,2" Margin="0,0,8,0">
+                            <TextBlock Text="AHP • МАІ" FontSize="11" FontWeight="Bold" Foreground="#1E40AF"/>
+                        </Border>
+                        <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="#0F172A"/>
+                    </StackPanel>
+                    <TextBlock Text="Системний аналіз та теорія прийняття рішень • .NET 10 WPF Application" FontSize="12" Foreground="#64748B" Margin="0,3,0,0"/>
+                </StackPanel>
+
+                <!-- Preset Toolbar -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnPresetLab34" Content="📁 Тестовий набір (Лаб 3–4)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetLab34_Click"/>
+                    <Button x:Name="BtnPresetCoursework" Content="📘 Тестовий набір (Курсова)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetCoursework_Click"/>
+                    <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Navigation Tabs -->
+        <TabControl Grid.Row="1" x:Name="MainTabControl" Background="Transparent" BorderThickness="0" Margin="0,0,0,14" SelectionChanged="MainTabControl_SelectionChanged">
+            <!-- TAB 1: Критерії та Альтернативи -->
+            <TabItem Header="1. Критерії та Альтернативи">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Criteria Management Card -->
+                            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                        <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="#2563EB" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
+
+                                    <DataGrid x:Name="GridCriteria" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
+                                            <DataGridTextColumn Header="Назва критерію" Binding="{Binding Name}" Width="150"/>
+                                            <DataGridTextColumn Header="Опис / Зміст" Binding="{Binding Description}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                        <Button Content="➕ Додати критерій" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddCriterion_Click"/>
+                                        <Button Content="❌ Видалити" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveCriterion_Click"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Alternatives Management Card -->
+                            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                        <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="#2563EB" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
+
+                                    <DataGrid x:Name="GridAlternatives" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
+                                            <DataGridTextColumn Header="Назва альтернативи" Binding="{Binding Name}" Width="180"/>
+                                            <DataGridTextColumn Header="Опис / Специфікація" Binding="{Binding Description}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                        <Button Content="➕ Додати альтернативу" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddAlternative_Click"/>
+                                        <Button Content="❌ Видалити" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveAlternative_Click"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Saaty Scale Reference Card -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Довідка: Фундаментальна 9-бальна шкала важливості Сааті" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                        <TextBlock Text="• 1 — Однакова важливість (рівні умови)" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="• 3 — Помірна перевага одного над іншим" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="• 5 — Суттєва (сильна) перевага" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="• 7 — Значна (очевидна) перевага" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="• 9 — Абсолютна (найвища можлива) перевага" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="• 2, 4, 6, 8 — Проміжні компромісні градації" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="• 1/2, 1/3, ..., 1/9 — Обернені оцінки (перевага стовпця над рядком)" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="💡 Порада: вводьте числа або дроби (наприклад 3 або 1/3). Симетричні клітинки заповнюються автоматично." FontSize="11" FontWeight="SemiBold" Foreground="#2563EB" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 2: Порівняння критеріїв -->
+            <TabItem Header="2. Порівняння критеріїв">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                    <StackPanel>
+                        <!-- Criteria Matrix Card -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Матриця попарних порівнянь критеріїв" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                        <TextBlock Text="Вкажіть перевагу критерію в лівому рядку над критерієм у верхньому стовпці." FontSize="12" Foreground="{StaticResource TextMuted}"/>
+                                    </StackPanel>
+
+                                    <!-- Quick Status Pill -->
+                                    <Border Grid.Column="1" x:Name="PillCritStatus" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="#15803D"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Dynamic Matrix Container -->
+                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                        <Grid x:Name="GridCritMatrixContainer"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <!-- Live Weights & Diagnostics -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Розраховані ваги критеріїв (Вектор w):" FontSize="13" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
+                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="#2563EB" FontWeight="SemiBold"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
+                                            <TextBlock x:Name="TxtCritLambdaCI" Text="λmax = 4.0458 | CI = 0.0153" FontSize="12" Foreground="#64748B"/>
+                                            <TextBlock x:Name="TxtCritRIRatio" Text="RI(табл) = 0.90 | CR = 0.0170 (1.7%)" FontSize="12" FontWeight="SemiBold" Foreground="#059669"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 3: Оцінка альтернатив -->
+            <TabItem Header="3. Оцінка альтернатив">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                    <StackPanel>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Матриці попарних порівнянь альтернатив" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                        <TextBlock Text="Оберіть критерій та заповніть попарні оцінки альтернатив за ним." FontSize="12" Foreground="{StaticResource TextMuted}"/>
+                                    </StackPanel>
+
+                                    <!-- Quick Status Pill for Alternative Matrix -->
+                                    <Border Grid.Column="1" x:Name="PillAltStatus" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="#15803D"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Criteria Tab Strip for Alternatives -->
+                                <WrapPanel x:Name="PanelCritSelectors" Margin="0,0,0,12"/>
+
+                                <!-- Dynamic Matrix Container for Alternatives -->
+                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                        <Grid x:Name="GridAltMatrixContainer"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <!-- Live Local Priorities for selected criterion -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock x:Name="TxtAltLocalPriTitle" Text="Локальні пріоритети альтернатив за обраним критерієм:" FontSize="13" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
+                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="#2563EB" FontWeight="SemiBold"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
+                                            <TextBlock x:Name="TxtAltLambdaCI" Text="λmax = 5.1248 | CI = 0.0312" FontSize="12" Foreground="#64748B"/>
+                                            <TextBlock x:Name="TxtAltRIRatio" Text="RI = 1.12 | CR = 0.0278 (2.8%)" FontSize="12" FontWeight="SemiBold" Foreground="#059669"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Bottom Action Bar -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="16,12">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.04"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
+                    <TextBlock Text="Натисніть кнопку праворуч для відкриття компактних та детальних результатів ієрархічного вибору." FontSize="11" Foreground="#64748B"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="🚀 Розрахувати та показати результати" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
