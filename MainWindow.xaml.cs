@@ -261,7 +261,7 @@ public partial class MainWindow : Window
             $"{c.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})")) + "]";
 
         TxtCritLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        TxtCritRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F4})";
+        TxtCritRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F3})";
 
         if (result.IsConsistent)
         {
@@ -524,7 +524,7 @@ public partial class MainWindow : Window
             $"{a.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})"));
 
         TxtAltLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        TxtAltRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F4})";
+        TxtAltRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F3})";
 
         if (result.IsConsistent)
         {

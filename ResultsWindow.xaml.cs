@@ -82,7 +82,7 @@ public partial class ResultsWindow : Window
             TxtWinnerName.Text = "Не визначено";
         }
 
-        TxtHierarchicalCR.Text = $"CRh = {_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F4})";
+        TxtHierarchicalCR.Text = $"CRh = {_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})";
 
         if (_result.IsHierarchyConsistent)
         {
@@ -111,7 +111,7 @@ public partial class ResultsWindow : Window
                 Description = a.Description,
                 GlobalPriority = a.GlobalPriority,
                 PriorityPercent = pct,
-                PriorityPercentText = $"{pct:F2}% ({a.GlobalPriority:F4})",
+                PriorityPercentText = $"{pct:F1}% ({a.GlobalPriority:F3})",
                 RankBackground = a.Rank switch
                 {
                     1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669")),
@@ -158,7 +158,7 @@ public partial class ResultsWindow : Window
             Name = c.Name,
             Description = c.Description,
             Weight = c.Weight,
-            WeightPercentText = $"{c.Weight:P1} ({c.Weight:F4})"
+            WeightPercentText = $"{c.Weight:P1} ({c.Weight:F3})"
         }).ToList();
 
         ListCriteriaCards.ItemsSource = cards;
@@ -224,12 +224,12 @@ public partial class ResultsWindow : Window
             {
                 double locPri = alt.LocalPriorities.TryGetValue(c.Id, out var lp) ? lp : 0.0;
                 double wScore = alt.WeightedScores.TryGetValue(c.Id, out var ws) ? ws : 0.0;
-                row[$"{c.Name} (Lij)"] = locPri.ToString("F4");
-                row[$"{c.Name} (Внесок)"] = wScore.ToString("F4");
+                row[$"{c.Name} (Lij)"] = locPri.ToString("F3");
+                row[$"{c.Name} (Внесок)"] = wScore.ToString("F3");
             }
 
-            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F4");
-            row["Частка (%)"] = $"{alt.GlobalPriority * 100:F2}%";
+            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F3");
+            row["Частка (%)"] = $"{alt.GlobalPriority * 100:F1}%";
             dt.Rows.Add(row);
         }
 
@@ -250,8 +250,8 @@ public partial class ResultsWindow : Window
             CI = crCrit.CI.ToString("F4"),
             RITable = crCrit.RITable.ToString("F2"),
             RIEmpirical = crCrit.RIEmpirical.ToString("F2"),
-            CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F4})",
-            CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F4})",
+            CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})",
+            CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})",
             Status = crCrit.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
             Verdict = crCrit.IsConsistent ? "CR <= 0.10" : "CR > 0.10"
         });
@@ -271,8 +271,8 @@ public partial class ResultsWindow : Window
                 CI = res.CI.ToString("F4"),
                 RITable = res.RITable.ToString("F2"),
                 RIEmpirical = res.RIEmpirical.ToString("F2"),
-                CRTable = $"{res.CRTable:P1} ({res.CRTable:F4})",
-                CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F4})",
+                CRTable = $"{res.CRTable:P1} ({res.CRTable:F3})",
+                CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F3})",
                 Status = res.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
                 Verdict = res.IsConsistent ? "CR <= 0.10" : "CR > 0.10"
             });
@@ -287,8 +287,8 @@ public partial class ResultsWindow : Window
             CI = _result.HierarchicalCI.ToString("F4"),
             RITable = _result.HierarchicalRITable.ToString("F3"),
             RIEmpirical = _result.HierarchicalRIEmpirical.ToString("F3"),
-            CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F4})",
-            CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F4})",
+            CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})",
+            CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})",
             Status = _result.IsHierarchyConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
             Verdict = _result.IsHierarchyConsistent ? "CRh <= 0.10" : "CRh > 0.10"
         });

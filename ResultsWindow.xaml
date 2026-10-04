@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:MAI"
         mc:Ignorable="d"
         Title="Результати багатокритеріального аналізу МАІ (Сааті)" 
-        Height="740" Width="1000"
-        MinHeight="600" MinWidth="850"
+        Height="750" Width="1100"
+        MinHeight="620" MinWidth="960"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC">
     <Window.Resources>
@@ -180,7 +180,7 @@
         <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,0,0,12">
             <!-- TAB 1: Компактні результати -->
             <TabItem Header="📊 Компактний підсумок (Рейтинг)">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,12,0,0">
                     <StackPanel>
                         <!-- Card 1: Leaderboard Table -->
                         <Border Style="{StaticResource CardStyle}">
@@ -196,7 +196,7 @@
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="48"/>  <!-- Rank Badge -->
                                                         <ColumnDefinition Width="2*"/>  <!-- Name & Description -->
-                                                        <ColumnDefinition Width="90"/>  <!-- Percent -->
+                                                        <ColumnDefinition Width="Auto" MinWidth="130"/>  <!-- Percent (No truncation) -->
                                                         <ColumnDefinition Width="3*"/>  <!-- Progress Bar -->
                                                         <ColumnDefinition Width="110"/> <!-- Status Pill -->
                                                     </Grid.ColumnDefinitions>
@@ -213,7 +213,7 @@
                                                     </StackPanel>
 
                                                     <!-- Percent -->
-                                                    <TextBlock Grid.Column="2" Text="{Binding PriorityPercentText}" FontWeight="Bold" FontSize="15" Foreground="#1E40AF" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding PriorityPercentText}" FontWeight="Bold" FontSize="14" Foreground="#1E40AF" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,14,0"/>
 
                                                     <!-- Visual Bar -->
                                                     <Grid Grid.Column="3" VerticalAlignment="Center" Margin="0,0,12,0">
@@ -273,7 +273,7 @@
 
             <!-- TAB 2: Детальний аналіз та матриці -->
             <TabItem Header="🔬 Детальний аналіз та матриці">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,12,0,0">
                     <StackPanel>
                         <!-- Synthesis Matrix Card -->
                         <Border Style="{StaticResource CardStyle}">
@@ -281,7 +281,8 @@
                                 <TextBlock Text="Матриця ієрархічного синтезу (P = L · w)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,4"/>
                                 <TextBlock Text="Для кожної альтернативи наведено локальні пріоритети за критеріями (Lij) та їхній зважений внесок у підсумковий бал (Lij · wj)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,12"/>
 
-                                <DataGrid x:Name="GridSynthesis" AutoGenerateColumns="True" MaxHeight="280" HeadersVisibility="Column" SelectionMode="Single"/>
+                                <DataGrid x:Name="GridSynthesis" AutoGenerateColumns="True" MaxHeight="300" HeadersVisibility="Column" SelectionMode="Single"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                             </StackPanel>
                         </Border>
 
@@ -291,9 +292,10 @@
                                 <TextBlock Text="Показники узгодженості суджень (λmax, CI, RI, CR)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,4"/>
                                 <TextBlock Text="Оцінка логічної несуперечливості експертних оцінок. Згідно із методикою Сааті, прийнятною вважається умова CR ≤ 0.10 (10%)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,12"/>
 
-                                <DataGrid x:Name="GridConsistency" AutoGenerateColumns="False" MaxHeight="280" HeadersVisibility="Column" SelectionMode="Single">
+                                <DataGrid x:Name="GridConsistency" AutoGenerateColumns="False" MaxHeight="300" HeadersVisibility="Column" SelectionMode="Single"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Матриця порівнянь" Binding="{Binding MatrixName}" Width="2*"/>
+                                        <DataGridTextColumn Header="Матриця порівнянь" Binding="{Binding MatrixName}" Width="190"/>
                                         <DataGridTextColumn Header="Розмір (n)" Binding="{Binding Dimension}" Width="75"/>
                                         <DataGridTextColumn Header="λmax" Binding="{Binding LambdaMax}" Width="75"/>
                                         <DataGridTextColumn Header="CI" Binding="{Binding CI}" Width="75"/>
@@ -326,7 +328,8 @@
                                 </Grid>
 
                                 <TextBlock x:Name="TxtSelectedMatrixInfo" Text="Інформація про обрану матрицю..." FontSize="13" FontWeight="SemiBold" Foreground="#1E40AF" Margin="0,0,0,8"/>
-                                <DataGrid x:Name="GridSelectedMatrix" AutoGenerateColumns="True" MaxHeight="260" HeadersVisibility="Column" SelectionMode="Single"/>
+                                <DataGrid x:Name="GridSelectedMatrix" AutoGenerateColumns="True" MaxHeight="280" HeadersVisibility="Column" SelectionMode="Single"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                             </StackPanel>
                         </Border>
 
