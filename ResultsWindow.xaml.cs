@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
 using MAI.Models;
+using MAI.Services;
 
 namespace MAI;
 
@@ -379,64 +380,7 @@ public partial class ResultsWindow : Window
 
     private string GenerateFullReportText()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("================================================================================");
-        sb.AppendLine("        ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ (.NET 10)");
-        sb.AppendLine("================================================================================");
-        sb.AppendLine($"Дата та час розрахунку: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
-        sb.AppendLine();
-
-        sb.AppendLine("--- 1. ПІДСУМКОВИЙ РЕЙТИНГ АЛЬТЕРНАТИВ ---");
-        foreach (var alt in _result.RankedAlternatives)
-        {
-            sb.AppendLine($"#{alt.Rank,-2} {alt.Name,-35} | Глобальний пріоритет: {alt.GlobalPriority:F4} ({alt.GlobalPriority * 100,6:F2}%)");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("--- 2. ВАГОВІ КОЕФІЦІЄНТИ КРИТЕРІЇВ ---");
-        foreach (var c in _result.Criteria)
-        {
-            sb.AppendLine($"{c.Name,-35} | Вага: {c.Weight:F4} ({c.Weight * 100,5:F2}%)");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("--- 3. ПЕРЕВІРКА УЗГОДЖЕНОСТІ СУДЖЕНЬ (CI, RI, CR) ---");
-        sb.AppendLine($"Матриця критеріїв:           λmax={_result.CriteriaMatrixResult.LambdaMax:F4}, CI={_result.CriteriaMatrixResult.CI:F4}, CR(табл)={_result.CriteriaMatrixResult.CRTable:P2}, CR(емп)={_result.CriteriaMatrixResult.CREmpirical:P2} [{_result.CriteriaMatrixResult.ConsistencyMessage}]");
-
-        foreach (var kvp in _result.AlternativeMatrixResults)
-        {
-            var res = kvp.Value;
-            sb.AppendLine($"{res.Name,-28}: λmax={res.LambdaMax:F4}, CI={res.CI:F4}, CR(табл)={res.CRTable:P2}, CR(емп)={res.CREmpirical:P2} [{res.ConsistencyMessage}]");
-        }
-
-        sb.AppendLine($"Композиція всієї ієрархії:   CIh={_result.HierarchicalCI:F4}, CRh(табл)={_result.HierarchicalCRTable:P2}, CRh(емп)={_result.HierarchicalCREmpirical:P2} [{_result.HierarchyConsistencyMessage}]");
-        sb.AppendLine();
-
-        sb.AppendLine("--- 4. МАТРИЦЯ СИНТЕЗУ (Lij · wj) ---");
-        sb.Append($"{"Альтернатива",-30} | ");
-        foreach (var c in _result.Criteria)
-        {
-            sb.Append($"{c.Name,-16} | ");
-        }
-        sb.AppendLine("Підсумок (Pi)");
-
-        foreach (var alt in _result.RankedAlternatives)
-        {
-            sb.Append($"{alt.Name,-30} | ");
-            foreach (var c in _result.Criteria)
-            {
-                double score = alt.WeightedScores.TryGetValue(c.Id, out var ws) ? ws : 0.0;
-                sb.Append($"{score,16:F4} | ");
-            }
-            sb.AppendLine($"{alt.GlobalPriority:F4}");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine("--- 5. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---");
-        sb.AppendLine(TxtRecommendation.Text);
-        sb.AppendLine("================================================================================");
-
-        return sb.ToString();
+        return ProjectStorageService.GenerateFullReportText(_result, TxtRecommendation.Text);
     }
 
     private void BtnCopyReport_Click(object sender, RoutedEventArgs e)

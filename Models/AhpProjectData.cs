@@ -1,0 +1,29 @@
+using System;
+using System.Collections.Generic;
+
+namespace MAI.Models;
+
+/// <summary>
+/// Повна структура задачі МАІ для збереження та завантаження у форматі JSON.
+/// </summary>
+public class AhpProjectData
+{
+    public string Title { get; set; } = "Задача багатокритеріального аналізу";
+    public string Description { get; set; } = string.Empty;
+    public string Version { get; set; } = "1.1";
+    public DateTime SavedAt { get; set; } = DateTime.Now;
+    public RiCalculationMode RiMode { get; set; } = RiCalculationMode.SaatyTable;
+
+    public List<Criterion> Criteria { get; set; } = new();
+    public List<Alternative> Alternatives { get; set; } = new();
+
+    /// <summary>
+    /// Матриця попарних порівнянь критеріїв (NxN зубчастий масив).
+    /// </summary>
+    public double[][] CriteriaMatrix { get; set; } = Array.Empty<double[]>();
+
+    /// <summary>
+    /// Матриці попарних порівнянь альтернатив за кожним критерієм (ID критерію -> MxM зубчастий масив).
+    /// </summary>
+    public Dictionary<string, double[][]> AlternativeMatrices { get; set; } = new();
+}

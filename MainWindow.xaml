@@ -120,12 +120,43 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Header & Presets -->
-            <RowDefinition Height="*"/>    <!-- Main Navigation Tabs -->
-            <RowDefinition Height="Auto"/> <!-- Bottom Action Bar -->
-        </Grid.RowDefinitions>
+    <DockPanel>
+        <!-- Top Menu Bar -->
+        <Menu DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,4" FontSize="13">
+            <!-- Menu "Файл" -->
+            <MenuItem Header="_Файл">
+                <MenuItem Header="💾 _Зберегти задачу як..." InputGestureText="Ctrl+S" Click="MenuFileSaveAs_Click"/>
+                <MenuItem Header="📂 За_вантажити задачу..." InputGestureText="Ctrl+O" Click="MenuFileOpen_Click"/>
+                <Separator/>
+                <MenuItem Header="📋 _Експорт звіту в TXT..." InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click"/>
+                <Separator/>
+                <MenuItem Header="❌ Ви_хід" InputGestureText="Alt+F4" Click="MenuFileExit_Click"/>
+            </MenuItem>
+
+            <!-- Menu "Налаштування" -->
+            <MenuItem Header="_Налаштування">
+                <MenuItem Header="⚙️ Розрахунок RI">
+                    <MenuItem x:Name="MenuSettingsRiTable" Header="Табличне значення Сааті" IsCheckable="True" IsChecked="True" Click="MenuSettingsRiTable_Click"/>
+                    <MenuItem x:Name="MenuSettingsRiEmpirical" Header="Емпірична формула (1.98 · (n-2) / n)" IsCheckable="True" IsChecked="False" Click="MenuSettingsRiEmpirical_Click"/>
+                </MenuItem>
+                <MenuItem Header="🎨 Тема оформлення">
+                    <MenuItem x:Name="MenuThemeLight" Header="☀️ Світла" IsCheckable="True" IsChecked="True" Click="MenuThemeLight_Click"/>
+                    <MenuItem x:Name="MenuThemeDark" Header="🌙 Темна" IsCheckable="True" IsChecked="False" Click="MenuThemeDark_Click"/>
+                </MenuItem>
+            </MenuItem>
+
+            <!-- Menu "Довідка" -->
+            <MenuItem Header="_Довідка">
+                <MenuItem Header="ℹ️ Про програму" InputGestureText="F1" Click="MenuHelpAbout_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <Grid Margin="20,12,20,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header & Presets -->
+                <RowDefinition Height="*"/>    <!-- Main Navigation Tabs -->
+                <RowDefinition Height="Auto"/> <!-- Bottom Action Bar -->
+            </Grid.RowDefinitions>
 
         <!-- Top Header & Presets Bar -->
         <Border Grid.Row="0" CornerRadius="12" Padding="20,16" Margin="0,0,0,16" BorderThickness="1" Background="#FFFFFF" BorderBrush="#E2E8F0">
@@ -415,4 +446,5 @@
             </Grid>
         </Border>
     </Grid>
+    </DockPanel>
 </Window>

@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
 using MAI.Models;
 using MAI.Services;
 
@@ -711,4 +715,235 @@ public partial class MainWindow : Window
             MessageBox.Show($"Помилка під час ієрархічного синтезу:\n{ex.Message}", "Помилка обчислень", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+
+        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
+        {
+            SaveProjectToFile();
+            e.Handled = true;
+        }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.O)
+        {
+            OpenProjectFromFile();
+            e.Handled = true;
+        }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.E)
+        {
+            ExportReportToFile();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.F1)
+        {
+            MenuHelpAbout_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
+    }
+
+    #region Menu Event Handlers & Project Storage
+
+    private void MenuFileSaveAs_Click(object sender, RoutedEventArgs e)
+    {
+        SaveProjectToFile();
+    }
+
+    private void MenuFileOpen_Click(object sender, RoutedEventArgs e)
+    {
+        OpenProjectFromFile();
+    }
+
+    private void MenuFileExportReport_Click(object sender, RoutedEventArgs e)
+    {
+        ExportReportToFile();
+    }
+
+    private void MenuFileExit_Click(object sender, RoutedEventArgs e)
+    {
+        Application.Current.Shutdown();
+    }
+
+    private void MenuSettingsRiTable_Click(object sender, RoutedEventArgs e)
+    {
+        MenuSettingsRiTable.IsChecked = true;
+        MenuSettingsRiEmpirical.IsChecked = false;
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuSettingsRiEmpirical_Click(object sender, RoutedEventArgs e)
+    {
+        MenuSettingsRiEmpirical.IsChecked = true;
+        MenuSettingsRiTable.IsChecked = false;
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuThemeLight_Click(object sender, RoutedEventArgs e)
+    {
+        MenuThemeLight.IsChecked = true;
+        MenuThemeDark.IsChecked = false;
+    }
+
+    private void MenuThemeDark_Click(object sender, RoutedEventArgs e)
+    {
+        MenuThemeDark.IsChecked = true;
+        MenuThemeLight.IsChecked = false;
+    }
+
+    private void MenuHelpAbout_Click(object sender, RoutedEventArgs e)
+    {
+        MessageBox.Show(
+            "Метод аналізу ієрархій Томаса Сааті (AHP / МАІ)\n" +
+            "Версія: 1.1 (.NET 10 WPF)\n\n" +
+            "Системний аналіз та теорія прийняття рішень.\n" +
+            "Підтримує попарні порівняння, перевірку узгодженості (CI, RI, CR), " +
+            "ієрархічний синтез, збереження задач у JSON та експорт звітів.",
+            "Про програму",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    private void SaveProjectToFile()
+    {
+        try
+        {
+            var sfd = new SaveFileDialog
+            {
+                Title = "Зберегти задачу МАІ як...",
+                Filter = "Файли задач AHP (*.ahp.json;*.json)|*.ahp.json;*.json|Усі файли (*.*)|*.*",
+                DefaultExt = ".ahp.json",
+                FileName = $"AHP_Task_{DateTime.Now:yyyyMMdd_HHmm}.ahp.json"
+            };
+
+            if (sfd.ShowDialog(this) == true)
+            {
+                var data = new AhpProjectData
+                {
+                    Title = "Задача багатокритеріального вибору",
+                    Description = $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
+                    RiMode = MenuSettingsRiEmpirical.IsChecked ? RiCalculationMode.Empirical : RiCalculationMode.SaatyTable,
+                    Criteria = _criteria.ToList(),
+                    Alternatives = _alternatives.ToList(),
+                    CriteriaMatrix = _criteriaMatrix.ToJaggedArray(),
+                    AlternativeMatrices = _alternativeMatrices.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.ToJaggedArray())
+                };
+
+                ProjectStorageService.SaveProject(sfd.FileName, data);
+                TxtBottomStatus.Text = $"Задачу успішно збережено у файл: {Path.GetFileName(sfd.FileName)}";
+                MessageBox.Show($"Задачу успішно збережено у файл:\n{sfd.FileName}", "Збереження виконано", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка збереження задачі:\n{ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void OpenProjectFromFile()
+    {
+        try
+        {
+            var ofd = new OpenFileDialog
+            {
+                Title = "Завантажити задачу МАІ...",
+                Filter = "Файли задач AHP (*.ahp.json;*.json)|*.ahp.json;*.json|Усі файли (*.*)|*.*"
+            };
+
+            if (ofd.ShowDialog(this) == true)
+            {
+                var data = ProjectStorageService.LoadProject(ofd.FileName);
+
+                _criteria.Clear();
+                foreach (var c in data.Criteria)
+                {
+                    _criteria.Add(c);
+                }
+
+                _alternatives.Clear();
+                foreach (var a in data.Alternatives)
+                {
+                    _alternatives.Add(a);
+                }
+
+                _criteriaMatrix = new ComparisonMatrix(_criteria.Count, _criteria.Select(c => c.Name).ToList());
+                if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
+                {
+                    _criteriaMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
+                }
+
+                _alternativeMatrices.Clear();
+                foreach (var c in _criteria)
+                {
+                    var altMat = new ComparisonMatrix(_alternatives.Count, _alternatives.Select(a => a.Name).ToList());
+                    if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
+                    {
+                        altMat.LoadFromJaggedArray(jaggedMat);
+                    }
+                    _alternativeMatrices[c.Id] = altMat;
+                }
+
+                _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
+
+                if (data.RiMode == RiCalculationMode.Empirical)
+                {
+                    MenuSettingsRiEmpirical.IsChecked = true;
+                    MenuSettingsRiTable.IsChecked = false;
+                }
+                else
+                {
+                    MenuSettingsRiTable.IsChecked = true;
+                    MenuSettingsRiEmpirical.IsChecked = false;
+                }
+
+                UpdateCountsUI();
+                BuildCriteriaMatrixGrid();
+                BuildAlternativesCriteriaSelector();
+                BuildAlternativeMatrixGrid();
+                UpdateAllDiagnostics();
+
+                TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                MessageBox.Show($"Задачу успішно завантажено з файлу:\n{ofd.FileName}\n\n• Критеріїв: {_criteria.Count}\n• Альтернатив: {_alternatives.Count}", "Завантаження успішне", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка завантаження задачі:\n{ex.Message}", "Помилка завантаження", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ExportReportToFile()
+    {
+        try
+        {
+            var result = AhpCalculator.SolveHierarchy(
+                _criteria.ToList(),
+                _alternatives.ToList(),
+                _criteriaMatrix,
+                _alternativeMatrices);
+
+            var sfd = new SaveFileDialog
+            {
+                Title = "Експорт повного звіту результатів МАІ",
+                Filter = "Текстовий файл (*.txt)|*.txt|Усі файли (*.*)|*.*",
+                DefaultExt = ".txt",
+                FileName = $"AHP_Report_{DateTime.Now:yyyyMMdd_HHmm}.txt"
+            };
+
+            if (sfd.ShowDialog(this) == true)
+            {
+                string report = ProjectStorageService.GenerateFullReportText(result);
+                File.WriteAllText(sfd.FileName, report, Encoding.UTF8);
+                TxtBottomStatus.Text = $"Звіт успішно експортовано у файл: {Path.GetFileName(sfd.FileName)}";
+                MessageBox.Show($"Звіт успішно сформовано та експортовано:\n{sfd.FileName}", "Експорт звіту", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Не вдалося сформувати звіт:\n{ex.Message}", "Помилка експорту", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    #endregion
 }
