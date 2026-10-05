@@ -24,6 +24,7 @@ public partial class MainWindow : Window
 
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
+    private RiCalculationMode _currentRiMode = RiCalculationMode.SaatyTable;
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
@@ -259,26 +260,27 @@ public partial class MainWindow : Window
 
     private void UpdateCriteriaDiagnostics()
     {
-        var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, "Матриця критеріїв");
+        var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, "Матриця критеріїв", _currentRiMode);
 
         TxtCritWeightsPreview.Text = "w = [" + string.Join(", ", _criteria.Select((c, idx) =>
             $"{c.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})")) + "]";
 
         TxtCritLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        TxtCritRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F3})";
+        string riLabel = _currentRiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
+        TxtCritRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
 
         if (result.IsConsistent)
         {
             PillCritStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
             PillCritStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
-            TxtCritStatus.Text = $"Узгоджено (CR = {result.CRTable:P1} <= 10%)";
+            TxtCritStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= 10%)";
             TxtCritStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
         }
         else
         {
             PillCritStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
             PillCritStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
-            TxtCritStatus.Text = $"Неузгоджено (CR = {result.CRTable:P1} > 10%)";
+            TxtCritStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > 10%)";
             TxtCritStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
         }
     }
@@ -522,26 +524,27 @@ public partial class MainWindow : Window
 
         TxtAltLocalPriTitle.Text = $"Локальні пріоритети за критерієм: «{critTitle}»";
 
-        var result = AhpCalculator.CalculateMatrix(altMatrix, $"Альтернативи за {_selectedCriterionId}");
+        var result = AhpCalculator.CalculateMatrix(altMatrix, $"Альтернативи за {_selectedCriterionId}", _currentRiMode);
 
         TxtAltLocalPriPreview.Text = string.Join(", ", _alternatives.Select((a, idx) =>
             $"{a.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})"));
 
         TxtAltLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        TxtAltRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F3})";
+        string riLabel = _currentRiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
+        TxtAltRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
 
         if (result.IsConsistent)
         {
             PillAltStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
             PillAltStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
-            TxtAltStatus.Text = $"Узгоджено (CR = {result.CRTable:P1} <= 10%)";
+            TxtAltStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= 10%)";
             TxtAltStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
         }
         else
         {
             PillAltStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
             PillAltStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
-            TxtAltStatus.Text = $"Неузгоджено (CR = {result.CRTable:P1} > 10%)";
+            TxtAltStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > 10%)";
             TxtAltStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
         }
     }
@@ -701,7 +704,8 @@ public partial class MainWindow : Window
                 _criteria.ToList(),
                 _alternatives.ToList(),
                 _criteriaMatrix,
-                _alternativeMatrices);
+                _alternativeMatrices,
+                _currentRiMode);
 
             var resultsWin = new ResultsWindow(result)
             {
@@ -766,6 +770,7 @@ public partial class MainWindow : Window
 
     private void MenuSettingsRiTable_Click(object sender, RoutedEventArgs e)
     {
+        _currentRiMode = RiCalculationMode.SaatyTable;
         MenuSettingsRiTable.IsChecked = true;
         MenuSettingsRiEmpirical.IsChecked = false;
         UpdateAllDiagnostics();
@@ -773,6 +778,7 @@ public partial class MainWindow : Window
 
     private void MenuSettingsRiEmpirical_Click(object sender, RoutedEventArgs e)
     {
+        _currentRiMode = RiCalculationMode.Empirical;
         MenuSettingsRiEmpirical.IsChecked = true;
         MenuSettingsRiTable.IsChecked = false;
         UpdateAllDiagnostics();
@@ -821,7 +827,7 @@ public partial class MainWindow : Window
                 {
                     Title = "Задача багатокритеріального вибору",
                     Description = $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
-                    RiMode = MenuSettingsRiEmpirical.IsChecked ? RiCalculationMode.Empirical : RiCalculationMode.SaatyTable,
+                    RiMode = _currentRiMode,
                     Criteria = _criteria.ToList(),
                     Alternatives = _alternatives.ToList(),
                     CriteriaMatrix = _criteriaMatrix.ToJaggedArray(),
@@ -886,7 +892,8 @@ public partial class MainWindow : Window
 
                 _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
 
-                if (data.RiMode == RiCalculationMode.Empirical)
+                _currentRiMode = data.RiMode;
+                if (_currentRiMode == RiCalculationMode.Empirical)
                 {
                     MenuSettingsRiEmpirical.IsChecked = true;
                     MenuSettingsRiTable.IsChecked = false;
@@ -921,7 +928,8 @@ public partial class MainWindow : Window
                 _criteria.ToList(),
                 _alternatives.ToList(),
                 _criteriaMatrix,
-                _alternativeMatrices);
+                _alternativeMatrices,
+                _currentRiMode);
 
             var sfd = new SaveFileDialog
             {

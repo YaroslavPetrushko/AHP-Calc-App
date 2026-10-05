@@ -63,6 +63,7 @@ public static class ProjectStorageService
         sb.AppendLine("        ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ (.NET 10)");
         sb.AppendLine("================================================================================");
         sb.AppendLine($"Дата та час розрахунку: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
+        sb.AppendLine($"Режим розрахунку RI: {(result.ActiveRiMode == RiCalculationMode.Empirical ? "Емпірична формула (1.98 · (n-2) / n)" : "Табличні значення Сааті")}");
         sb.AppendLine();
 
         sb.AppendLine("--- 1. ПІДСУМКОВИЙ РЕЙТИНГ АЛЬТЕРНАТИВ ---");

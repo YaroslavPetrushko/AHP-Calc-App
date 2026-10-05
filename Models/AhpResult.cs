@@ -21,12 +21,17 @@ public class MatrixResult
     public double CRTable { get; set; }
     public double CREmpirical { get; set; }
 
-    public bool IsConsistent => CRTable <= 0.1001;
+    public RiCalculationMode ActiveRiMode { get; set; } = RiCalculationMode.SaatyTable;
+
+    public double ActiveRI => ActiveRiMode == RiCalculationMode.Empirical ? RIEmpirical : RITable;
+    public double ActiveCR => ActiveRiMode == RiCalculationMode.Empirical ? CREmpirical : CRTable;
+
+    public bool IsConsistent => ActiveCR <= 0.1001;
 
     public string ConsistencyMessage =>
         IsConsistent
-            ? $"Узгоджено (CR = {CRTable:P1} <= 10%)"
-            : $"Порушено узгодженість (CR = {CRTable:P1} > 10%)";
+            ? $"Узгоджено (CR = {ActiveCR:P1} <= 10%)"
+            : $"Порушено узгодженість (CR = {ActiveCR:P1} > 10%)";
 }
 
 /// <summary>
@@ -48,12 +53,17 @@ public class AhpResult
     public double HierarchicalCRTable { get; set; }
     public double HierarchicalCREmpirical { get; set; }
 
-    public bool IsHierarchyConsistent => HierarchicalCRTable <= 0.1001;
+    public RiCalculationMode ActiveRiMode { get; set; } = RiCalculationMode.SaatyTable;
+
+    public double ActiveHierarchicalRI => ActiveRiMode == RiCalculationMode.Empirical ? HierarchicalRIEmpirical : HierarchicalRITable;
+    public double ActiveHierarchicalCR => ActiveRiMode == RiCalculationMode.Empirical ? HierarchicalCREmpirical : HierarchicalCRTable;
+
+    public bool IsHierarchyConsistent => ActiveHierarchicalCR <= 0.1001;
 
     public Alternative? BestAlternative => RankedAlternatives.FirstOrDefault();
 
     public string HierarchyConsistencyMessage =>
         IsHierarchyConsistent
-            ? $"Ієрархічна узгодженість прийнятна (CRh = {HierarchicalCRTable:P1} <= 10%)"
-            : $"Увага: Ієрархічна неузгодженість перевищує норму (CRh = {HierarchicalCRTable:P1} > 10%)";
+            ? $"Ієрархічна узгодженість прийнятна (CRh = {ActiveHierarchicalCR:P1} <= 10%)"
+            : $"Увага: Ієрархічна неузгодженість перевищує норму (CRh = {ActiveHierarchicalCR:P1} > 10%)";
 }

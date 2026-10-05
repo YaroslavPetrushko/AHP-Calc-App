@@ -83,7 +83,8 @@ public partial class ResultsWindow : Window
             TxtWinnerName.Text = "Не визначено";
         }
 
-        TxtHierarchicalCR.Text = $"CRh = {_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})";
+        TxtHierarchicalCR.Text = $"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})";
+        TxtHierarchicalCR.ToolTip = $"Розрахунок за: {(_result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою (1.98·(n-2)/n)" : "таблицею Сааті")}\nCRh = {_result.ActiveHierarchicalCR:P2}";
 
         if (_result.IsHierarchyConsistent)
         {
@@ -195,7 +196,12 @@ public partial class ResultsWindow : Window
             sb.AppendLine($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}.");
         }
 
-        sb.AppendLine($"4. Ієрархічна узгодженість системи: коефіцієнт CRh = {_result.HierarchicalCRTable:P2} (за емпіричним RI: {_result.HierarchicalCREmpirical:P2}), що є меншим за допустимий поріг 10% (CR ≤ 0.10). Це математично підтверджує внутрішню логічну несуперечливість експертних суджень.");
+        string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою Сааті" : "табличними значеннями Сааті";
+        string passFailStr = _result.IsHierarchyConsistent
+            ? "що задовольняє умову узгодженості (CRh ≤ 0.10). Судження експерта є несуперечливими."
+            : "що перевищує допустимий поріг 10% (CRh > 0.10). Рекомендується переглянути попарні порівняння.";
+
+        sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
 
         TxtRecommendation.Text = sb.ToString();
     }
@@ -240,6 +246,7 @@ public partial class ResultsWindow : Window
     private void InitConsistencyDataGrid()
     {
         var list = new List<ConsistencyRowItem>();
+        string modeLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емп." : "табл.";
 
         // Матриця критеріїв
         var crCrit = _result.CriteriaMatrixResult;
@@ -254,7 +261,7 @@ public partial class ResultsWindow : Window
             CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})",
             CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})",
             Status = crCrit.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = crCrit.IsConsistent ? "CR <= 0.10" : "CR > 0.10"
+            Verdict = crCrit.IsConsistent ? $"CR <= 0.10 ({modeLabel})" : $"CR > 0.10 ({modeLabel})"
         });
 
         // Матриці альтернатив
@@ -275,7 +282,7 @@ public partial class ResultsWindow : Window
                 CRTable = $"{res.CRTable:P1} ({res.CRTable:F3})",
                 CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F3})",
                 Status = res.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-                Verdict = res.IsConsistent ? "CR <= 0.10" : "CR > 0.10"
+                Verdict = res.IsConsistent ? $"CR <= 0.10 ({modeLabel})" : $"CR > 0.10 ({modeLabel})"
             });
         }
 
@@ -291,7 +298,7 @@ public partial class ResultsWindow : Window
             CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})",
             CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})",
             Status = _result.IsHierarchyConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = _result.IsHierarchyConsistent ? "CRh <= 0.10" : "CRh > 0.10"
+            Verdict = _result.IsHierarchyConsistent ? $"CRh <= 0.10 ({modeLabel})" : $"CRh > 0.10 ({modeLabel})"
         });
 
         GridConsistency.ItemsSource = list;
@@ -326,7 +333,7 @@ public partial class ResultsWindow : Window
         if (idx < 0 || idx >= _allMatrixResults.Count) return;
 
         var mRes = _allMatrixResults[idx];
-        TxtSelectedMatrixInfo.Text = $"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.CRTable:P2} ({mRes.ConsistencyMessage})";
+        TxtSelectedMatrixInfo.Text = $"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.ActiveCR:P2} ({mRes.ConsistencyMessage})";
 
         // Показ нормалізованої матриці та ваг
         var dt = new DataTable();
