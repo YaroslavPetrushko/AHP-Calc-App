@@ -28,13 +28,13 @@ public static class AhpCalculator
     };
 
     /// <summary>
-    /// Отримання табличного значення випадкового індексу RI.
+    /// Отримання табличного значення випадкового індексу RI (визначено для n = 1..10).
     /// </summary>
     public static double GetRITable(int n)
     {
         if (SaatyRITable.TryGetValue(n, out double ri))
             return ri;
-        return n > 10 ? 1.49 + 0.03 * (n - 10) : 0.0;
+        return 0.0;
     }
 
     /// <summary>
@@ -183,23 +183,22 @@ public static class AhpCalculator
         for (int j = 0; j < critCount; j++)
         {
             var crit = criteria[j];
-            if (alternativeMatrices.TryGetValue(crit.Id, out var altMatrix))
+            if (!alternativeMatrices.TryGetValue(crit.Id, out var altMatrix) || altMatrix == null)
             {
-                var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}", riMode);
-                ahpResult.AlternativeMatrixResults[crit.Id] = altResult;
-
-                for (int i = 0; i < altCount; i++)
-                {
-                    localPriorities[i, j] = altResult.Weights[i];
-                }
+                throw new InvalidOperationException($"Матриця попарних порівнянь альтернатив для критерію «{crit.Name}» ({crit.Id}) відсутня.");
             }
-            else
+
+            if (altMatrix.Size != altCount)
             {
-                // Якщо матриця для цього критерію відсутня, беремо рівні пріоритети 1/altCount
-                for (int i = 0; i < altCount; i++)
-                {
-                    localPriorities[i, j] = 1.0 / altCount;
-                }
+                throw new InvalidOperationException($"Розмірність матриці альтернатив для критерію «{crit.Name}» ({altMatrix.Size}) не відповідає кількості альтернатив ({altCount}).");
+            }
+
+            var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}", riMode);
+            ahpResult.AlternativeMatrixResults[crit.Id] = altResult;
+
+            for (int i = 0; i < altCount; i++)
+            {
+                localPriorities[i, j] = altResult.Weights[i];
             }
         }
 

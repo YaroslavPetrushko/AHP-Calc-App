@@ -214,8 +214,8 @@ public partial class ResultsWindow : Window
 
         string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою Сааті" : "табличними значеннями Сааті";
         string passFailStr = _result.IsHierarchyConsistent
-            ? "що задовольняє умову узгодженості (CRh ≤ 0.10). Судження експерта є несуперечливими."
-            : "що перевищує допустимий поріг 10% (CRh > 0.10). Рекомендується переглянути попарні порівняння.";
+            ? "що задовольняє умову узгодженості (CRh ≤ 0.10). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень)."
+            : "що перевищує допустимий поріг 10% (CRh > 0.10). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.";
 
         sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
 
@@ -228,10 +228,29 @@ public partial class ResultsWindow : Window
         dt.Columns.Add("Ранг", typeof(string));
         dt.Columns.Add("Альтернатива", typeof(string));
 
+        var critColMap = new List<(string LijCol, string ScoreCol, Criterion Crit)>();
+
         foreach (var c in _result.Criteria)
         {
-            dt.Columns.Add($"{c.Name} (Lij)", typeof(string));
-            dt.Columns.Add($"{c.Name} (Внесок)", typeof(string));
+            string baseLij = $"{c.Name} (Lij)";
+            string lijCol = baseLij;
+            int counter = 2;
+            while (dt.Columns.Contains(lijCol))
+            {
+                lijCol = $"{c.Name} ({counter++}) (Lij)";
+            }
+            dt.Columns.Add(lijCol, typeof(string));
+
+            string baseScore = $"{c.Name} (Внесок)";
+            string scoreCol = baseScore;
+            counter = 2;
+            while (dt.Columns.Contains(scoreCol))
+            {
+                scoreCol = $"{c.Name} ({counter++}) (Внесок)";
+            }
+            dt.Columns.Add(scoreCol, typeof(string));
+
+            critColMap.Add((lijCol, scoreCol, c));
         }
 
         dt.Columns.Add("Глобальний бал (Pi)", typeof(string));
@@ -243,12 +262,12 @@ public partial class ResultsWindow : Window
             row["Ранг"] = $"#{alt.Rank}";
             row["Альтернатива"] = alt.Name;
 
-            foreach (var c in _result.Criteria)
+            foreach (var item in critColMap)
             {
-                double locPri = alt.LocalPriorities.TryGetValue(c.Id, out var lp) ? lp : 0.0;
-                double wScore = alt.WeightedScores.TryGetValue(c.Id, out var ws) ? ws : 0.0;
-                row[$"{c.Name} (Lij)"] = locPri.ToString("F3");
-                row[$"{c.Name} (Внесок)"] = wScore.ToString("F3");
+                double locPri = alt.LocalPriorities.TryGetValue(item.Crit.Id, out var lp) ? lp : 0.0;
+                double wScore = alt.WeightedScores.TryGetValue(item.Crit.Id, out var ws) ? ws : 0.0;
+                row[item.LijCol] = locPri.ToString("F3");
+                row[item.ScoreCol] = wScore.ToString("F3");
             }
 
             row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F3");

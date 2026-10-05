@@ -232,6 +232,8 @@ public partial class MainWindow : Window
         if (_isUpdatingMatrixCell) return;
 
         string text = tb.Text.Trim();
+        double currentVal = _criteriaMatrix.Values[row, col];
+
         if (ComparisonMatrix.TryParseSaatyValue(text, out double val))
         {
             _isUpdatingMatrixCell = true;
@@ -261,7 +263,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            tb.SetResourceReference(TextBox.BorderBrushProperty, "DangerRed");
+            // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
+            tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
+            tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
+            TxtBottomStatus.Text = $"Некоректне значення «{text}». Значення за шкалою Сааті має бути числом або дробом у діапазоні [1/9; 9].";
         }
     }
 
@@ -495,6 +500,8 @@ public partial class MainWindow : Window
         if (_isUpdatingMatrixCell) return;
 
         string text = tb.Text.Trim();
+        double currentVal = altMatrix.Values[row, col];
+
         if (ComparisonMatrix.TryParseSaatyValue(text, out double val))
         {
             _isUpdatingMatrixCell = true;
@@ -524,7 +531,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            tb.SetResourceReference(TextBox.BorderBrushProperty, "DangerRed");
+            // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
+            tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
+            tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
+            TxtBottomStatus.Text = $"Некоректне значення «{text}». Значення за шкалою Сааті має бути числом або дробом у діапазоні [1/9; 9].";
         }
     }
 
@@ -573,6 +583,26 @@ public partial class MainWindow : Window
 
     #region Criteria & Alternatives Management
 
+    private string GenerateNextCriterionId()
+    {
+        int num = 1;
+        while (_criteria.Any(c => c.Id == $"C{num}") || _alternativeMatrices.ContainsKey($"C{num}"))
+        {
+            num++;
+        }
+        return $"C{num}";
+    }
+
+    private string GenerateNextAlternativeId()
+    {
+        int num = 1;
+        while (_alternatives.Any(a => a.Id == $"A{num}"))
+        {
+            num++;
+        }
+        return $"A{num}";
+    }
+
     private void BtnAddCriterion_Click(object sender, RoutedEventArgs e)
     {
         if (_criteria.Count >= 8)
@@ -581,8 +611,16 @@ public partial class MainWindow : Window
             return;
         }
 
-        int nextNum = _criteria.Count + 1;
-        var newCrit = new Criterion($"C{nextNum}", $"Критерій {nextNum}", "Новий критерій");
+        string nextId = GenerateNextCriterionId();
+        int displayNum = _criteria.Count + 1;
+        string defaultName = $"Критерій {displayNum}";
+        int nameCounter = 2;
+        while (_criteria.Any(c => c.Name.Equals(defaultName, StringComparison.OrdinalIgnoreCase)))
+        {
+            defaultName = $"Критерій {displayNum}_{nameCounter++}";
+        }
+
+        var newCrit = new Criterion(nextId, defaultName, "Новий критерій оцінювання");
         _criteria.Add(newCrit);
 
         _criteriaMatrix.Resize(_criteria.Count, _criteria.Select(c => c.Name).ToList());
@@ -592,6 +630,7 @@ public partial class MainWindow : Window
         BuildCriteriaMatrixGrid();
         BuildAlternativesCriteriaSelector();
         UpdateAllDiagnostics();
+        TxtBottomStatus.Text = $"Додано новий критерій «{newCrit.Name}» ({newCrit.Id}).";
     }
 
     private void BtnRemoveCriterion_Click(object sender, RoutedEventArgs e)
@@ -602,13 +641,23 @@ public partial class MainWindow : Window
             return;
         }
 
-        var selected = GridCriteria.SelectedItem as Criterion ?? _criteria.LastOrDefault();
-        if (selected != null)
+        var selected = GridCriteria.SelectedItem as Criterion;
+        if (selected == null)
         {
-            _criteria.Remove(selected);
-            _alternativeMatrices.Remove(selected.Id);
+            MessageBox.Show("Будь ласка, оберіть критерій для видалення зі списку в таблиці.", "Вибір елемента", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
 
-            _criteriaMatrix.Resize(_criteria.Count, _criteria.Select(c => c.Name).ToList());
+        var confirm = MessageBox.Show($"Ви дійсно бажаєте видалити критерій «{selected.Name}» ({selected.Id})?\nУсі його попарні порівняння та матрицю альтернатив буде видалено.",
+            "Підтвердження видалення", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        int idx = _criteria.IndexOf(selected);
+        if (idx >= 0)
+        {
+            _criteria.RemoveAt(idx);
+            _alternativeMatrices.Remove(selected.Id);
+            _criteriaMatrix.RemoveAt(idx);
 
             if (_selectedCriterionId == selected.Id)
             {
@@ -620,6 +669,7 @@ public partial class MainWindow : Window
             BuildAlternativesCriteriaSelector();
             BuildAlternativeMatrixGrid();
             UpdateAllDiagnostics();
+            TxtBottomStatus.Text = $"Критерій «{selected.Name}» успішно видалено.";
         }
     }
 
@@ -631,8 +681,16 @@ public partial class MainWindow : Window
             return;
         }
 
-        int nextNum = _alternatives.Count + 1;
-        var newAlt = new Alternative($"A{nextNum}", $"Альтернатива {nextNum}", "Новий варіант");
+        string nextId = GenerateNextAlternativeId();
+        int displayNum = _alternatives.Count + 1;
+        string defaultName = $"Альтернатива {displayNum}";
+        int nameCounter = 2;
+        while (_alternatives.Any(a => a.Name.Equals(defaultName, StringComparison.OrdinalIgnoreCase)))
+        {
+            defaultName = $"Альтернатива {displayNum}_{nameCounter++}";
+        }
+
+        var newAlt = new Alternative(nextId, defaultName, "Новий варіант вибору");
         _alternatives.Add(newAlt);
 
         foreach (var c in _criteria)
@@ -646,6 +704,7 @@ public partial class MainWindow : Window
         UpdateCountsUI();
         BuildAlternativeMatrixGrid();
         UpdateAllDiagnostics();
+        TxtBottomStatus.Text = $"Додано нову альтернативу «{newAlt.Name}» ({newAlt.Id}).";
     }
 
     private void BtnRemoveAlternative_Click(object sender, RoutedEventArgs e)
@@ -656,22 +715,34 @@ public partial class MainWindow : Window
             return;
         }
 
-        var selected = GridAlternatives.SelectedItem as Alternative ?? _alternatives.LastOrDefault();
-        if (selected != null)
+        var selected = GridAlternatives.SelectedItem as Alternative;
+        if (selected == null)
         {
-            _alternatives.Remove(selected);
+            MessageBox.Show("Будь ласка, оберіть альтернативу для видалення зі списку в таблиці.", "Вибір елемента", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var confirm = MessageBox.Show($"Ви дійсно бажаєте видалити альтернативу «{selected.Name}» ({selected.Id})?\nЇї оцінки за всіма критеріями буде видалено.",
+            "Підтвердження видалення", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        int idx = _alternatives.IndexOf(selected);
+        if (idx >= 0)
+        {
+            _alternatives.RemoveAt(idx);
 
             foreach (var c in _criteria)
             {
                 if (_alternativeMatrices.TryGetValue(c.Id, out var mat))
                 {
-                    mat.Resize(_alternatives.Count, _alternatives.Select(a => a.Name).ToList());
+                    mat.RemoveAt(idx);
                 }
             }
 
             UpdateCountsUI();
             BuildAlternativeMatrixGrid();
             UpdateAllDiagnostics();
+            TxtBottomStatus.Text = $"Альтернативу «{selected.Name}» успішно видалено.";
         }
     }
 
@@ -706,14 +777,68 @@ public partial class MainWindow : Window
     {
         if (e.Source is TabControl)
         {
+            // Оновлюємо актуальні мітки для матриць динамічно
+            _criteriaMatrix.Labels = _criteria.Select(c => c.Name).ToList();
+            foreach (var c in _criteria)
+            {
+                if (_alternativeMatrices.TryGetValue(c.Id, out var mat))
+                {
+                    mat.Labels = _alternatives.Select(a => a.Name).ToList();
+                }
+            }
+
+            BuildCriteriaMatrixGrid();
+            BuildAlternativesCriteriaSelector();
+            BuildAlternativeMatrixGrid();
             UpdateAllDiagnostics();
         }
     }
 
     private void BtnCalculate_Click(object sender, RoutedEventArgs e)
     {
+        // 1. Валідація наявності назв
+        if (_criteria.Any(c => string.IsNullOrWhiteSpace(c.Name)) || _alternatives.Any(a => string.IsNullOrWhiteSpace(a.Name)))
+        {
+            MessageBox.Show("Назви критеріїв та альтернатив не можуть бути порожніми.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        // 2. Валідація унікальності назв критеріїв
+        var critDuplicate = _criteria
+            .GroupBy(c => c.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(g => g.Count() > 1);
+
+        if (critDuplicate != null)
+        {
+            MessageBox.Show($"Виявлено дублювання назви критерію: «{critDuplicate.Key}».\nУсі критерії повинні мати унікальні назви для коректного формування матриці синтезу.",
+                "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        // 3. Валідація унікальності назв альтернатив
+        var altDuplicate = _alternatives
+            .GroupBy(a => a.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(g => g.Count() > 1);
+
+        if (altDuplicate != null)
+        {
+            MessageBox.Show($"Виявлено дублювання назви альтернативи: «{altDuplicate.Key}».\nУсі альтернативи повинні мати унікальні назви для однозначного ранжування.",
+                "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         try
         {
+            // Оновлюємо актуальні мітки перед ієрархічним синтезом
+            _criteriaMatrix.Labels = _criteria.Select(c => c.Name).ToList();
+            foreach (var c in _criteria)
+            {
+                if (_alternativeMatrices.TryGetValue(c.Id, out var mat))
+                {
+                    mat.Labels = _alternatives.Select(a => a.Name).ToList();
+                }
+            }
+
             var result = AhpCalculator.SolveHierarchy(
                 _criteria.ToList(),
                 _alternatives.ToList(),
@@ -854,7 +979,6 @@ public partial class MainWindow : Window
 
                 ProjectStorageService.SaveProject(sfd.FileName, data);
                 TxtBottomStatus.Text = $"Задачу успішно збережено у файл: {Path.GetFileName(sfd.FileName)}";
-                MessageBox.Show($"Задачу успішно збережено у файл:\n{sfd.FileName}", "Збереження виконано", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         catch (Exception ex)
@@ -927,7 +1051,6 @@ public partial class MainWindow : Window
                 UpdateAllDiagnostics();
 
                 TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
-                MessageBox.Show($"Задачу успішно завантажено з файлу:\n{ofd.FileName}\n\n• Критеріїв: {_criteria.Count}\n• Альтернатив: {_alternatives.Count}", "Завантаження успішне", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         catch (Exception ex)
@@ -960,7 +1083,6 @@ public partial class MainWindow : Window
                 string report = ProjectStorageService.GenerateFullReportText(result);
                 File.WriteAllText(sfd.FileName, report, Encoding.UTF8);
                 TxtBottomStatus.Text = $"Звіт успішно експортовано у файл: {Path.GetFileName(sfd.FileName)}";
-                MessageBox.Show($"Звіт успішно сформовано та експортовано:\n{sfd.FileName}", "Експорт звіту", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         catch (Exception ex)

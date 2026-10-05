@@ -66,6 +66,38 @@ public class ComparisonMatrix
     }
 
     /// <summary>
+    /// Видалення елемента з матриці за вказаним індексом.
+    /// Видаляє відповідний рядок і стовпець, зберігаючи всі інші попарні судження.
+    /// </summary>
+    public void RemoveAt(int index)
+    {
+        if (index < 0 || index >= Size || Size <= 1)
+            return;
+
+        int newSize = Size - 1;
+        var newValues = new double[newSize, newSize];
+
+        for (int i = 0, ni = 0; i < Size; i++)
+        {
+            if (i == index) continue;
+            for (int j = 0, nj = 0; j < Size; j++)
+            {
+                if (j == index) continue;
+                newValues[ni, nj++] = Values[i, j];
+            }
+            ni++;
+        }
+
+        Values = newValues;
+        Size = newSize;
+
+        if (index < Labels.Count)
+        {
+            Labels.RemoveAt(index);
+        }
+    }
+
+    /// <summary>
     /// Зміна розміру матриці зі збереженням наявних значень.
     /// </summary>
     public void Resize(int newSize, List<string>? newLabels = null)
@@ -103,7 +135,8 @@ public class ComparisonMatrix
     }
 
     /// <summary>
-    /// Парсинг значення зі строки (підтримує "3", "1/3", "0.333", "0,5").
+    /// Парсинг значення зі строки (підтримує "3", "1/3", "0.333", "0.5").
+    /// Перевіряє діапазон шкали Сааті [1/9; 9].
     /// </summary>
     public static bool TryParseSaatyValue(string input, out double result)
     {
@@ -113,27 +146,50 @@ public class ComparisonMatrix
 
         input = input.Trim().Replace(',', '.');
 
+        double parsedVal = 0.0;
+        bool success = false;
+
         if (input.Contains('/'))
         {
             var parts = input.Split('/');
             if (parts.Length == 2 &&
-                double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double num) &&
-                double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double den) &&
-                den != 0)
+                double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double num) &&
+                double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double den) &&
+                den > 0 && num > 0)
             {
-                result = num / den;
-                return result > 0;
+                parsedVal = num / den;
+                success = true;
             }
-            return false;
         }
-
-        if (double.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out double val) && val > 0)
+        else if (double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out double val) && val > 0)
         {
-            result = val;
-            return true;
+            parsedVal = val;
+            success = true;
         }
 
-        return false;
+        if (!success)
+            return false;
+
+        // Перевірка допустимого діапазону шкали Сааті [1/9; 9]
+        if (parsedVal < (1.0 / 9.0) - 1e-3 || parsedVal > 9.0 + 1e-3)
+            return false;
+
+        // Прив'язка близьких десяткових значень (наприклад, 0.333 -> 1/3, 0.143 -> 1/7, 0.111 -> 1/9)
+        // Тільки якщо вхідний рядок не містив явного дробу зі слешем
+        if (!input.Contains('/'))
+        {
+            for (int k = 2; k <= 9; k++)
+            {
+                if (Math.Abs(parsedVal - (1.0 / k)) < 0.005)
+                {
+                    parsedVal = 1.0 / k;
+                    break;
+                }
+            }
+        }
+
+        result = parsedVal;
+        return true;
     }
 
     /// <summary>
@@ -178,19 +234,33 @@ public class ComparisonMatrix
     }
 
     /// <summary>
-    /// Завантаження значень із зубчастого масиву double[][].
+    /// Завантаження значень із зубчастого масиву double[][] з гарантією одиничної діагоналі та зворотної симетрії.
     /// </summary>
     public void LoadFromJaggedArray(double[][] array)
     {
         if (array == null) return;
         int n = Math.Min(Size, array.Length);
+
+        // Гарантуємо одиничну діагональ
+        for (int i = 0; i < Size; i++)
+        {
+            Values[i, i] = 1.0;
+        }
+
+        // Завантажуємо значення та примусово відновлюємо зворотну симетрію: a[j, i] = 1.0 / a[i, j]
         for (int i = 0; i < n; i++)
         {
             if (array[i] == null) continue;
             int m = Math.Min(Size, array[i].Length);
-            for (int j = 0; j < m; j++)
+            for (int j = i + 1; j < m; j++)
             {
-                Values[i, j] = array[i][j];
+                double val = array[i][j];
+                if (val <= 0 || double.IsNaN(val) || double.IsInfinity(val))
+                {
+                    val = 1.0;
+                }
+                Values[i, j] = val;
+                Values[j, i] = 1.0 / val;
             }
         }
     }
