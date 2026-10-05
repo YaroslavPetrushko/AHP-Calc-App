@@ -1,0 +1,72 @@
+<Window x:Class="MAI.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Про програму — Метод аналізу ієрархій"
+        Width="550"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource AppBackground}">
+    <Border Padding="20">
+        <StackPanel>
+            <!-- Header Card / Banner -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12" Padding="18,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon / Badge -->
+                    <Border Grid.Column="0" Width="46" Height="46" CornerRadius="10" Background="{DynamicResource BadgeBg}" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <TextBlock Text="📊" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Title & Discipline -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Засіб для вирішення багатокритеріальних задач вибору за методом аналізу ієрархій Томаса Сааті (AHP / MAI)" 
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextDark}" TextWrapping="Wrap" LineHeight="20"/>
+                        <TextBlock Text="Системний аналіз та теорія прийняття рішень" 
+                                   FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Middle Card: Description & Key Features -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12" Padding="18,14">
+                <StackPanel>
+                    <TextBlock Text="Ключові можливості програмного комплексу:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,8"/>
+                    
+                    <StackPanel Margin="4,0,0,0">
+                        <TextBlock Text="• Попарні порівняння критеріїв та альтернатив за 9-бальною шкалою Сааті" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Розрахунок власних векторів пріоритетів та нормалізованих вагових коефіцієнтів" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Оцінка логічної несуперечливості експертних оцінок (λmax, CI, RI, CR ≤ 0.10)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Вибір методу розрахунку RI: табличне значення Сааті або емпірична формула" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Багаторівневий ієрархічний синтез з ранжуванням альтернатив" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Збереження та завантаження задач у форматі JSON (.ahp.json)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Експорт детальних аналітичних звітів з розрахунками у файл TXT" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Динамічне перемикання тем оформлення (Світла / Темна) у реальному часі" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Bottom Card: Version, Platform & Close Button -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,0" Padding="18,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Версія 1.1" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryBlue}"/>
+                        <TextBlock Text="Побудовано на платформі .NET 10 WPF" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="Зрозуміло" Style="{StaticResource PrimaryBtnStyle}" Height="34" Padding="20,0" IsDefault="True" IsCancel="True" Click="BtnClose_Click"/>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+</Window>

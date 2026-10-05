@@ -818,15 +818,11 @@ public partial class MainWindow : Window
 
     private void MenuHelpAbout_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show(
-            "Метод аналізу ієрархій Томаса Сааті (AHP / МАІ)\n" +
-            "Версія: 1.1 (.NET 10 WPF)\n\n" +
-            "Системний аналіз та теорія прийняття рішень.\n" +
-            "Підтримує попарні порівняння, перевірку узгодженості (CI, RI, CR), " +
-            "ієрархічний синтез, збереження задач у JSON та експорт звітів.",
-            "Про програму",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
+        var aboutWindow = new AboutWindow
+        {
+            Owner = this
+        };
+        aboutWindow.ShowDialog();
     }
 
     private void SaveProjectToFile()
