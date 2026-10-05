@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
 using MAI.Models;
 using MAI.Services;
 
@@ -20,6 +24,7 @@ public partial class MainWindow : Window
 
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
+    private RiCalculationMode _currentRiMode = RiCalculationMode.SaatyTable;
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
@@ -104,21 +109,24 @@ public partial class MainWindow : Window
         // Top-left cell
         var corner = new Border
         {
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(6, 4, 6, 4),
             Margin = new Thickness(1)
         };
-        corner.Child = new TextBlock
+        corner.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+        corner.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+        var cornerText = new TextBlock
         {
             Text = "Критерій",
             FontWeight = FontWeights.Bold,
             FontSize = 11,
-            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")),
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Center
         };
+        cornerText.SetResourceReference(TextBlock.ForegroundProperty, "MatrixHeaderFg");
+        corner.Child = cornerText;
+
         Grid.SetRow(corner, 0);
         Grid.SetColumn(corner, 0);
         GridCritMatrixContainer.Children.Add(corner);
@@ -128,22 +136,25 @@ public partial class MainWindow : Window
         {
             var header = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(4),
                 Margin = new Thickness(1)
             };
-            header.Child = new TextBlock
+            header.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+            header.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var headerText = new TextBlock
             {
                 Text = _criteria[j].Id,
                 ToolTip = _criteria[j].Name,
                 FontWeight = FontWeights.Bold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
+            headerText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            header.Child = headerText;
+
             Grid.SetRow(header, 0);
             Grid.SetColumn(header, j + 1);
             GridCritMatrixContainer.Children.Add(header);
@@ -155,22 +166,25 @@ public partial class MainWindow : Window
             // Row header
             var rowHeader = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(8, 4, 8, 4),
                 Margin = new Thickness(1)
             };
-            rowHeader.Child = new TextBlock
+            rowHeader.SetResourceReference(Border.BackgroundProperty, "MatrixRowHeaderBg");
+            rowHeader.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var rowHeaderText = new TextBlock
             {
                 Text = $"{_criteria[i].Id} - {_criteria[i].Name}",
                 ToolTip = _criteria[i].Description,
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+            rowHeaderText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            rowHeader.Child = rowHeaderText;
+
             Grid.SetRow(rowHeader, i + 1);
             Grid.SetColumn(rowHeader, 0);
             GridCritMatrixContainer.Children.Add(rowHeader);
@@ -192,8 +206,6 @@ public partial class MainWindow : Window
                 {
                     tb.IsReadOnly = true;
                     tb.Text = "1";
-                    tb.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
-                    tb.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
                 }
                 else
                 {
@@ -227,7 +239,7 @@ public partial class MainWindow : Window
             {
                 _criteriaMatrix.SetComparison(row, col, val);
                 tb.Text = ComparisonMatrix.FormatSaatyValue(val);
-                tb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
 
                 // Sync reciprocal cell
                 if (_critTextBoxes != null && row < _critTextBoxes.GetLength(0) && col < _critTextBoxes.GetLength(1))
@@ -236,7 +248,7 @@ public partial class MainWindow : Window
                     if (recipTb != null)
                     {
                         recipTb.Text = ComparisonMatrix.FormatSaatyValue(1.0 / val);
-                        recipTb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                        recipTb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
                     }
                 }
 
@@ -249,33 +261,34 @@ public partial class MainWindow : Window
         }
         else
         {
-            tb.BorderBrush = (SolidColorBrush)FindResource("DangerRed");
+            tb.SetResourceReference(TextBox.BorderBrushProperty, "DangerRed");
         }
     }
 
     private void UpdateCriteriaDiagnostics()
     {
-        var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, "Матриця критеріїв");
+        var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, "Матриця критеріїв", _currentRiMode);
 
         TxtCritWeightsPreview.Text = "w = [" + string.Join(", ", _criteria.Select((c, idx) =>
             $"{c.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})")) + "]";
 
         TxtCritLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        TxtCritRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F4})";
+        string riLabel = _currentRiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
+        TxtCritRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
 
         if (result.IsConsistent)
         {
-            PillCritStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
-            PillCritStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
-            TxtCritStatus.Text = $"Узгоджено (CR = {result.CRTable:P1} <= 10%)";
-            TxtCritStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
+            PillCritStatus.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
+            PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
+            TxtCritStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= 10%)";
+            TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
         }
         else
         {
-            PillCritStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
-            PillCritStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
-            TxtCritStatus.Text = $"Неузгоджено (CR = {result.CRTable:P1} > 10%)";
-            TxtCritStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+            PillCritStatus.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
+            PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
+            TxtCritStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > 10%)";
+            TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
         }
     }
 
@@ -300,7 +313,7 @@ public partial class MainWindow : Window
 
             if (c.Id == _selectedCriterionId)
             {
-                btn.Background = (SolidColorBrush)FindResource("PrimaryBlue");
+                btn.SetResourceReference(Button.BackgroundProperty, "PrimaryBlue");
                 btn.Foreground = Brushes.White;
                 btn.BorderThickness = new Thickness(0);
             }
@@ -357,21 +370,24 @@ public partial class MainWindow : Window
         // Top-left corner
         var corner = new Border
         {
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(6, 4, 6, 4),
             Margin = new Thickness(1)
         };
-        corner.Child = new TextBlock
+        corner.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+        corner.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+        var cornerText = new TextBlock
         {
             Text = "Альтернатива",
             FontWeight = FontWeights.Bold,
             FontSize = 11,
-            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")),
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Center
         };
+        cornerText.SetResourceReference(TextBlock.ForegroundProperty, "MatrixHeaderFg");
+        corner.Child = cornerText;
+
         Grid.SetRow(corner, 0);
         Grid.SetColumn(corner, 0);
         GridAltMatrixContainer.Children.Add(corner);
@@ -381,22 +397,25 @@ public partial class MainWindow : Window
         {
             var header = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(4),
                 Margin = new Thickness(1)
             };
-            header.Child = new TextBlock
+            header.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+            header.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var headerText = new TextBlock
             {
                 Text = _alternatives[j].Id,
                 ToolTip = _alternatives[j].Name,
                 FontWeight = FontWeights.Bold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
+            headerText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            header.Child = headerText;
+
             Grid.SetRow(header, 0);
             Grid.SetColumn(header, j + 1);
             GridAltMatrixContainer.Children.Add(header);
@@ -408,22 +427,25 @@ public partial class MainWindow : Window
             // Row header
             var rowHeader = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(8, 4, 8, 4),
                 Margin = new Thickness(1)
             };
-            rowHeader.Child = new TextBlock
+            rowHeader.SetResourceReference(Border.BackgroundProperty, "MatrixRowHeaderBg");
+            rowHeader.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var rowHeaderText = new TextBlock
             {
                 Text = $"{_alternatives[i].Id} - {_alternatives[i].Name}",
                 ToolTip = _alternatives[i].Description,
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+            rowHeaderText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            rowHeader.Child = rowHeaderText;
+
             Grid.SetRow(rowHeader, i + 1);
             Grid.SetColumn(rowHeader, 0);
             GridAltMatrixContainer.Children.Add(rowHeader);
@@ -445,8 +467,6 @@ public partial class MainWindow : Window
                 {
                     tb.IsReadOnly = true;
                     tb.Text = "1";
-                    tb.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
-                    tb.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
                 }
                 else
                 {
@@ -482,7 +502,7 @@ public partial class MainWindow : Window
             {
                 altMatrix.SetComparison(row, col, val);
                 tb.Text = ComparisonMatrix.FormatSaatyValue(val);
-                tb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
 
                 // Sync reciprocal cell
                 if (_altTextBoxes != null && row < _altTextBoxes.GetLength(0) && col < _altTextBoxes.GetLength(1))
@@ -491,7 +511,7 @@ public partial class MainWindow : Window
                     if (recipTb != null)
                     {
                         recipTb.Text = ComparisonMatrix.FormatSaatyValue(1.0 / val);
-                        recipTb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                        recipTb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
                     }
                 }
 
@@ -504,7 +524,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            tb.BorderBrush = (SolidColorBrush)FindResource("DangerRed");
+            tb.SetResourceReference(TextBox.BorderBrushProperty, "DangerRed");
         }
     }
 
@@ -518,27 +538,28 @@ public partial class MainWindow : Window
 
         TxtAltLocalPriTitle.Text = $"Локальні пріоритети за критерієм: «{critTitle}»";
 
-        var result = AhpCalculator.CalculateMatrix(altMatrix, $"Альтернативи за {_selectedCriterionId}");
+        var result = AhpCalculator.CalculateMatrix(altMatrix, $"Альтернативи за {_selectedCriterionId}", _currentRiMode);
 
         TxtAltLocalPriPreview.Text = string.Join(", ", _alternatives.Select((a, idx) =>
             $"{a.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})"));
 
         TxtAltLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        TxtAltRIRatio.Text = $"RI(табл) = {result.RITable:F2} | CR = {result.CRTable:P1} ({result.CRTable:F4})";
+        string riLabel = _currentRiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
+        TxtAltRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
 
         if (result.IsConsistent)
         {
-            PillAltStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
-            PillAltStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
-            TxtAltStatus.Text = $"Узгоджено (CR = {result.CRTable:P1} <= 10%)";
-            TxtAltStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
+            PillAltStatus.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
+            PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
+            TxtAltStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= 10%)";
+            TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
         }
         else
         {
-            PillAltStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
-            PillAltStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
-            TxtAltStatus.Text = $"Неузгоджено (CR = {result.CRTable:P1} > 10%)";
-            TxtAltStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+            PillAltStatus.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
+            PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
+            TxtAltStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > 10%)";
+            TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
         }
     }
 
@@ -697,7 +718,8 @@ public partial class MainWindow : Window
                 _criteria.ToList(),
                 _alternatives.ToList(),
                 _criteriaMatrix,
-                _alternativeMatrices);
+                _alternativeMatrices,
+                _currentRiMode);
 
             var resultsWin = new ResultsWindow(result)
             {
@@ -711,4 +733,241 @@ public partial class MainWindow : Window
             MessageBox.Show($"Помилка під час ієрархічного синтезу:\n{ex.Message}", "Помилка обчислень", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+
+        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
+        {
+            SaveProjectToFile();
+            e.Handled = true;
+        }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.O)
+        {
+            OpenProjectFromFile();
+            e.Handled = true;
+        }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.E)
+        {
+            ExportReportToFile();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.F1)
+        {
+            MenuHelpAbout_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
+    }
+
+    #region Menu Event Handlers & Project Storage
+
+    private void MenuFileSaveAs_Click(object sender, RoutedEventArgs e)
+    {
+        SaveProjectToFile();
+    }
+
+    private void MenuFileOpen_Click(object sender, RoutedEventArgs e)
+    {
+        OpenProjectFromFile();
+    }
+
+    private void MenuFileExportReport_Click(object sender, RoutedEventArgs e)
+    {
+        ExportReportToFile();
+    }
+
+    private void MenuFileExit_Click(object sender, RoutedEventArgs e)
+    {
+        Application.Current.Shutdown();
+    }
+
+    private void MenuSettingsRiTable_Click(object sender, RoutedEventArgs e)
+    {
+        _currentRiMode = RiCalculationMode.SaatyTable;
+        MenuSettingsRiTable.IsChecked = true;
+        MenuSettingsRiEmpirical.IsChecked = false;
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuSettingsRiEmpirical_Click(object sender, RoutedEventArgs e)
+    {
+        _currentRiMode = RiCalculationMode.Empirical;
+        MenuSettingsRiEmpirical.IsChecked = true;
+        MenuSettingsRiTable.IsChecked = false;
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuThemeLight_Click(object sender, RoutedEventArgs e)
+    {
+        MenuThemeLight.IsChecked = true;
+        MenuThemeDark.IsChecked = false;
+        ThemeService.ApplyTheme(AppTheme.Light);
+        BuildAlternativesCriteriaSelector();
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuThemeDark_Click(object sender, RoutedEventArgs e)
+    {
+        MenuThemeDark.IsChecked = true;
+        MenuThemeLight.IsChecked = false;
+        ThemeService.ApplyTheme(AppTheme.Dark);
+        BuildAlternativesCriteriaSelector();
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuHelpAbout_Click(object sender, RoutedEventArgs e)
+    {
+        var aboutWindow = new AboutWindow
+        {
+            Owner = this
+        };
+        aboutWindow.ShowDialog();
+    }
+
+    private void SaveProjectToFile()
+    {
+        try
+        {
+            var sfd = new SaveFileDialog
+            {
+                Title = "Зберегти задачу МАІ як...",
+                Filter = "Файли задач AHP (*.ahp.json;*.json)|*.ahp.json;*.json|Усі файли (*.*)|*.*",
+                DefaultExt = ".ahp.json",
+                FileName = $"AHP_Task_{DateTime.Now:yyyyMMdd_HHmm}.ahp.json"
+            };
+
+            if (sfd.ShowDialog(this) == true)
+            {
+                var data = new AhpProjectData
+                {
+                    Title = "Задача багатокритеріального вибору",
+                    Description = $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
+                    RiMode = _currentRiMode,
+                    Criteria = _criteria.ToList(),
+                    Alternatives = _alternatives.ToList(),
+                    CriteriaMatrix = _criteriaMatrix.ToJaggedArray(),
+                    AlternativeMatrices = _alternativeMatrices.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.ToJaggedArray())
+                };
+
+                ProjectStorageService.SaveProject(sfd.FileName, data);
+                TxtBottomStatus.Text = $"Задачу успішно збережено у файл: {Path.GetFileName(sfd.FileName)}";
+                MessageBox.Show($"Задачу успішно збережено у файл:\n{sfd.FileName}", "Збереження виконано", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка збереження задачі:\n{ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void OpenProjectFromFile()
+    {
+        try
+        {
+            var ofd = new OpenFileDialog
+            {
+                Title = "Завантажити задачу МАІ...",
+                Filter = "Файли задач AHP (*.ahp.json;*.json)|*.ahp.json;*.json|Усі файли (*.*)|*.*"
+            };
+
+            if (ofd.ShowDialog(this) == true)
+            {
+                var data = ProjectStorageService.LoadProject(ofd.FileName);
+
+                _criteria.Clear();
+                foreach (var c in data.Criteria)
+                {
+                    _criteria.Add(c);
+                }
+
+                _alternatives.Clear();
+                foreach (var a in data.Alternatives)
+                {
+                    _alternatives.Add(a);
+                }
+
+                _criteriaMatrix = new ComparisonMatrix(_criteria.Count, _criteria.Select(c => c.Name).ToList());
+                if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
+                {
+                    _criteriaMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
+                }
+
+                _alternativeMatrices.Clear();
+                foreach (var c in _criteria)
+                {
+                    var altMat = new ComparisonMatrix(_alternatives.Count, _alternatives.Select(a => a.Name).ToList());
+                    if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
+                    {
+                        altMat.LoadFromJaggedArray(jaggedMat);
+                    }
+                    _alternativeMatrices[c.Id] = altMat;
+                }
+
+                _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
+
+                _currentRiMode = data.RiMode;
+                if (_currentRiMode == RiCalculationMode.Empirical)
+                {
+                    MenuSettingsRiEmpirical.IsChecked = true;
+                    MenuSettingsRiTable.IsChecked = false;
+                }
+                else
+                {
+                    MenuSettingsRiTable.IsChecked = true;
+                    MenuSettingsRiEmpirical.IsChecked = false;
+                }
+
+                UpdateCountsUI();
+                BuildCriteriaMatrixGrid();
+                BuildAlternativesCriteriaSelector();
+                BuildAlternativeMatrixGrid();
+                UpdateAllDiagnostics();
+
+                TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                MessageBox.Show($"Задачу успішно завантажено з файлу:\n{ofd.FileName}\n\n• Критеріїв: {_criteria.Count}\n• Альтернатив: {_alternatives.Count}", "Завантаження успішне", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка завантаження задачі:\n{ex.Message}", "Помилка завантаження", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ExportReportToFile()
+    {
+        try
+        {
+            var result = AhpCalculator.SolveHierarchy(
+                _criteria.ToList(),
+                _alternatives.ToList(),
+                _criteriaMatrix,
+                _alternativeMatrices,
+                _currentRiMode);
+
+            var sfd = new SaveFileDialog
+            {
+                Title = "Експорт повного звіту результатів МАІ",
+                Filter = "Текстовий файл (*.txt)|*.txt|Усі файли (*.*)|*.*",
+                DefaultExt = ".txt",
+                FileName = $"AHP_Report_{DateTime.Now:yyyyMMdd_HHmm}.txt"
+            };
+
+            if (sfd.ShowDialog(this) == true)
+            {
+                string report = ProjectStorageService.GenerateFullReportText(result);
+                File.WriteAllText(sfd.FileName, report, Encoding.UTF8);
+                TxtBottomStatus.Text = $"Звіт успішно експортовано у файл: {Path.GetFileName(sfd.FileName)}";
+                MessageBox.Show($"Звіт успішно сформовано та експортовано:\n{sfd.FileName}", "Експорт звіту", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Не вдалося сформувати звіт:\n{ex.Message}", "Помилка експорту", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    #endregion
 }

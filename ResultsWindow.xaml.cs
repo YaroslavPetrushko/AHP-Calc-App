@@ -6,9 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using Microsoft.Win32;
 using MAI.Models;
+using MAI.Services;
 
 namespace MAI;
 
@@ -69,6 +71,20 @@ public partial class ResultsWindow : Window
         InitSynthesisDataGrid();
         InitConsistencyDataGrid();
         InitMatrixSelector();
+
+        ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged(AppTheme theme)
+    {
+        InitHeaderAndBadges();
+        InitRankingsList();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
+        base.OnClosed(e);
     }
 
     private void InitHeaderAndBadges()
@@ -82,24 +98,26 @@ public partial class ResultsWindow : Window
             TxtWinnerName.Text = "Не визначено";
         }
 
-        TxtHierarchicalCR.Text = $"CRh = {_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F4})";
+        TxtHierarchicalCR.Text = $"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})";
+        TxtHierarchicalCR.ToolTip = $"Розрахунок за: {(_result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою (1.98·(n-2)/n)" : "таблицею Сааті")}\nCRh = {_result.ActiveHierarchicalCR:P2}";
 
         if (_result.IsHierarchyConsistent)
         {
-            BadgeConsistency.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
-            BadgeConsistency.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
-            TxtHierarchicalCR.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
+            BadgeConsistency.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
+            BadgeConsistency.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
+            TxtHierarchicalCR.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
         }
         else
         {
-            BadgeConsistency.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
-            BadgeConsistency.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
-            TxtHierarchicalCR.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+            BadgeConsistency.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
+            BadgeConsistency.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
+            TxtHierarchicalCR.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
         }
     }
 
     private void InitRankingsList()
     {
+        bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
         var items = _result.RankedAlternatives.Select(a =>
         {
             double pct = a.GlobalPriority * 100.0;
@@ -111,32 +129,32 @@ public partial class ResultsWindow : Window
                 Description = a.Description,
                 GlobalPriority = a.GlobalPriority,
                 PriorityPercent = pct,
-                PriorityPercentText = $"{pct:F2}% ({a.GlobalPriority:F4})",
+                PriorityPercentText = $"{pct:F1}% ({a.GlobalPriority:F3})",
                 RankBackground = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB")),
-                    3 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#10B981" : "#059669")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#3B82F6" : "#2563EB")),
+                    3 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#60A5FA" : "#3B82F6")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#64748B" : "#94A3B8"))
                 },
                 RankForeground = Brushes.White,
                 BarBrush = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#10B981" : "#059669")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#3B82F6" : "#2563EB")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#60A5FA" : "#60A5FA"))
                 },
                 BadgeBackground = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DBEAFE")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#064E3B" : "#DCFCE7")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#1E3A8A" : "#DBEAFE")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#334155" : "#F1F5F9"))
                 },
                 BadgeForeground = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1D4ED8")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#6EE7B7" : "#15803D")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#93C5FD" : "#1D4ED8")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#CBD5E1" : "#475569"))
                 },
                 BadgeText = a.Rank switch
                 {
@@ -158,7 +176,7 @@ public partial class ResultsWindow : Window
             Name = c.Name,
             Description = c.Description,
             Weight = c.Weight,
-            WeightPercentText = $"{c.Weight:P1} ({c.Weight:F4})"
+            WeightPercentText = $"{c.Weight:P1} ({c.Weight:F3})"
         }).ToList();
 
         ListCriteriaCards.ItemsSource = cards;
@@ -194,7 +212,12 @@ public partial class ResultsWindow : Window
             sb.AppendLine($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}.");
         }
 
-        sb.AppendLine($"4. Ієрархічна узгодженість системи: коефіцієнт CRh = {_result.HierarchicalCRTable:P2} (за емпіричним RI: {_result.HierarchicalCREmpirical:P2}), що є меншим за допустимий поріг 10% (CR ≤ 0.10). Це математично підтверджує внутрішню логічну несуперечливість експертних суджень.");
+        string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою Сааті" : "табличними значеннями Сааті";
+        string passFailStr = _result.IsHierarchyConsistent
+            ? "що задовольняє умову узгодженості (CRh ≤ 0.10). Судження експерта є несуперечливими."
+            : "що перевищує допустимий поріг 10% (CRh > 0.10). Рекомендується переглянути попарні порівняння.";
+
+        sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
 
         TxtRecommendation.Text = sb.ToString();
     }
@@ -224,12 +247,12 @@ public partial class ResultsWindow : Window
             {
                 double locPri = alt.LocalPriorities.TryGetValue(c.Id, out var lp) ? lp : 0.0;
                 double wScore = alt.WeightedScores.TryGetValue(c.Id, out var ws) ? ws : 0.0;
-                row[$"{c.Name} (Lij)"] = locPri.ToString("F4");
-                row[$"{c.Name} (Внесок)"] = wScore.ToString("F4");
+                row[$"{c.Name} (Lij)"] = locPri.ToString("F3");
+                row[$"{c.Name} (Внесок)"] = wScore.ToString("F3");
             }
 
-            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F4");
-            row["Частка (%)"] = $"{alt.GlobalPriority * 100:F2}%";
+            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F3");
+            row["Частка (%)"] = $"{alt.GlobalPriority * 100:F1}%";
             dt.Rows.Add(row);
         }
 
@@ -239,6 +262,7 @@ public partial class ResultsWindow : Window
     private void InitConsistencyDataGrid()
     {
         var list = new List<ConsistencyRowItem>();
+        string modeLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емп." : "табл.";
 
         // Матриця критеріїв
         var crCrit = _result.CriteriaMatrixResult;
@@ -250,10 +274,10 @@ public partial class ResultsWindow : Window
             CI = crCrit.CI.ToString("F4"),
             RITable = crCrit.RITable.ToString("F2"),
             RIEmpirical = crCrit.RIEmpirical.ToString("F2"),
-            CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F4})",
-            CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F4})",
+            CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})",
+            CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})",
             Status = crCrit.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = crCrit.IsConsistent ? "CR <= 0.10" : "CR > 0.10"
+            Verdict = crCrit.IsConsistent ? $"CR <= 0.10 ({modeLabel})" : $"CR > 0.10 ({modeLabel})"
         });
 
         // Матриці альтернатив
@@ -271,10 +295,10 @@ public partial class ResultsWindow : Window
                 CI = res.CI.ToString("F4"),
                 RITable = res.RITable.ToString("F2"),
                 RIEmpirical = res.RIEmpirical.ToString("F2"),
-                CRTable = $"{res.CRTable:P1} ({res.CRTable:F4})",
-                CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F4})",
+                CRTable = $"{res.CRTable:P1} ({res.CRTable:F3})",
+                CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F3})",
                 Status = res.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-                Verdict = res.IsConsistent ? "CR <= 0.10" : "CR > 0.10"
+                Verdict = res.IsConsistent ? $"CR <= 0.10 ({modeLabel})" : $"CR > 0.10 ({modeLabel})"
             });
         }
 
@@ -287,10 +311,10 @@ public partial class ResultsWindow : Window
             CI = _result.HierarchicalCI.ToString("F4"),
             RITable = _result.HierarchicalRITable.ToString("F3"),
             RIEmpirical = _result.HierarchicalRIEmpirical.ToString("F3"),
-            CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F4})",
-            CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F4})",
+            CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})",
+            CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})",
             Status = _result.IsHierarchyConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = _result.IsHierarchyConsistent ? "CRh <= 0.10" : "CRh > 0.10"
+            Verdict = _result.IsHierarchyConsistent ? $"CRh <= 0.10 ({modeLabel})" : $"CRh > 0.10 ({modeLabel})"
         });
 
         GridConsistency.ItemsSource = list;
@@ -325,7 +349,7 @@ public partial class ResultsWindow : Window
         if (idx < 0 || idx >= _allMatrixResults.Count) return;
 
         var mRes = _allMatrixResults[idx];
-        TxtSelectedMatrixInfo.Text = $"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.CRTable:P2} ({mRes.ConsistencyMessage})";
+        TxtSelectedMatrixInfo.Text = $"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.ActiveCR:P2} ({mRes.ConsistencyMessage})";
 
         // Показ нормалізованої матриці та ваг
         var dt = new DataTable();
@@ -379,64 +403,7 @@ public partial class ResultsWindow : Window
 
     private string GenerateFullReportText()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("================================================================================");
-        sb.AppendLine("        ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ (.NET 10)");
-        sb.AppendLine("================================================================================");
-        sb.AppendLine($"Дата та час розрахунку: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
-        sb.AppendLine();
-
-        sb.AppendLine("--- 1. ПІДСУМКОВИЙ РЕЙТИНГ АЛЬТЕРНАТИВ ---");
-        foreach (var alt in _result.RankedAlternatives)
-        {
-            sb.AppendLine($"#{alt.Rank,-2} {alt.Name,-35} | Глобальний пріоритет: {alt.GlobalPriority:F4} ({alt.GlobalPriority * 100,6:F2}%)");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("--- 2. ВАГОВІ КОЕФІЦІЄНТИ КРИТЕРІЇВ ---");
-        foreach (var c in _result.Criteria)
-        {
-            sb.AppendLine($"{c.Name,-35} | Вага: {c.Weight:F4} ({c.Weight * 100,5:F2}%)");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("--- 3. ПЕРЕВІРКА УЗГОДЖЕНОСТІ СУДЖЕНЬ (CI, RI, CR) ---");
-        sb.AppendLine($"Матриця критеріїв:           λmax={_result.CriteriaMatrixResult.LambdaMax:F4}, CI={_result.CriteriaMatrixResult.CI:F4}, CR(табл)={_result.CriteriaMatrixResult.CRTable:P2}, CR(емп)={_result.CriteriaMatrixResult.CREmpirical:P2} [{_result.CriteriaMatrixResult.ConsistencyMessage}]");
-
-        foreach (var kvp in _result.AlternativeMatrixResults)
-        {
-            var res = kvp.Value;
-            sb.AppendLine($"{res.Name,-28}: λmax={res.LambdaMax:F4}, CI={res.CI:F4}, CR(табл)={res.CRTable:P2}, CR(емп)={res.CREmpirical:P2} [{res.ConsistencyMessage}]");
-        }
-
-        sb.AppendLine($"Композиція всієї ієрархії:   CIh={_result.HierarchicalCI:F4}, CRh(табл)={_result.HierarchicalCRTable:P2}, CRh(емп)={_result.HierarchicalCREmpirical:P2} [{_result.HierarchyConsistencyMessage}]");
-        sb.AppendLine();
-
-        sb.AppendLine("--- 4. МАТРИЦЯ СИНТЕЗУ (Lij · wj) ---");
-        sb.Append($"{"Альтернатива",-30} | ");
-        foreach (var c in _result.Criteria)
-        {
-            sb.Append($"{c.Name,-16} | ");
-        }
-        sb.AppendLine("Підсумок (Pi)");
-
-        foreach (var alt in _result.RankedAlternatives)
-        {
-            sb.Append($"{alt.Name,-30} | ");
-            foreach (var c in _result.Criteria)
-            {
-                double score = alt.WeightedScores.TryGetValue(c.Id, out var ws) ? ws : 0.0;
-                sb.Append($"{score,16:F4} | ");
-            }
-            sb.AppendLine($"{alt.GlobalPriority:F4}");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine("--- 5. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---");
-        sb.AppendLine(TxtRecommendation.Text);
-        sb.AppendLine("================================================================================");
-
-        return sb.ToString();
+        return ProjectStorageService.GenerateFullReportText(_result, TxtRecommendation.Text);
     }
 
     private void BtnCopyReport_Click(object sender, RoutedEventArgs e)
@@ -472,6 +439,25 @@ public partial class ResultsWindow : Window
         catch (Exception ex)
         {
             MessageBox.Show($"Помилка збереження файлу: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void DataGrid_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
+    {
+        if (e.Column is DataGridBoundColumn boundColumn)
+        {
+            // Bind using indexer syntax to prevent WPF PropertyPath from misinterpreting '/', '.', or '()'
+            boundColumn.Binding = new Binding($"[{e.PropertyName}]");
+
+            // Format numeric values with right alignment and cell padding
+            if (e.PropertyName != "Ранг" && e.PropertyName != "Альтернатива" && e.PropertyName != "Елемент")
+            {
+                var style = new Style(typeof(TextBlock));
+                style.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right));
+                style.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+                style.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(6, 0, 6, 0)));
+                boundColumn.ElementStyle = style;
+            }
         }
     }
 

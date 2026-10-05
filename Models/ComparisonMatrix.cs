@@ -159,4 +159,40 @@ public class ComparisonMatrix
 
         return value.ToString("0.###", CultureInfo.InvariantCulture);
     }
+
+    /// <summary>
+    /// Експорт значень матриці у зубчастий масив double[][] для серіалізації в JSON.
+    /// </summary>
+    public double[][] ToJaggedArray()
+    {
+        var res = new double[Size][];
+        for (int i = 0; i < Size; i++)
+        {
+            res[i] = new double[Size];
+            for (int j = 0; j < Size; j++)
+            {
+                res[i][j] = Values[i, j];
+            }
+        }
+        return res;
+    }
+
+    /// <summary>
+    /// Завантаження значень із зубчастого масиву double[][].
+    /// </summary>
+    public void LoadFromJaggedArray(double[][] array)
+    {
+        if (array == null) return;
+        int n = Math.Min(Size, array.Length);
+        for (int i = 0; i < n; i++)
+        {
+            if (array[i] == null) continue;
+            int m = Math.Min(Size, array[i].Length);
+            for (int j = 0; j < m; j++)
+            {
+                Values[i, j] = array[i][j];
+            }
+        }
+    }
 }
+

@@ -48,7 +48,7 @@ public static class AhpCalculator
     /// <summary>
     /// Обчислення локальних пріоритетів та характеристик узгодженості для однієї матриці Сааті.
     /// </summary>
-    public static MatrixResult CalculateMatrix(ComparisonMatrix matrix, string matrixName = "")
+    public static MatrixResult CalculateMatrix(ComparisonMatrix matrix, string matrixName = "", RiCalculationMode riMode = RiCalculationMode.SaatyTable)
     {
         int n = matrix.Size;
         var result = new MatrixResult
@@ -58,7 +58,8 @@ public static class AhpCalculator
             Labels = new List<string>(matrix.Labels),
             Weights = new double[n],
             NormalizedMatrix = new double[n, n],
-            ColumnSums = new double[n]
+            ColumnSums = new double[n],
+            ActiveRiMode = riMode
         };
 
         if (n == 0) return result;
@@ -150,12 +151,14 @@ public static class AhpCalculator
         List<Criterion> criteria,
         List<Alternative> alternatives,
         ComparisonMatrix criteriaMatrix,
-        Dictionary<string, ComparisonMatrix> alternativeMatrices)
+        Dictionary<string, ComparisonMatrix> alternativeMatrices,
+        RiCalculationMode riMode = RiCalculationMode.SaatyTable)
     {
         var ahpResult = new AhpResult
         {
             Criteria = criteria.Select(c => new Criterion(c.Id, c.Name, c.Description)).ToList(),
-            Alternatives = alternatives.Select(a => new Alternative(a.Id, a.Name, a.Description)).ToList()
+            Alternatives = alternatives.Select(a => new Alternative(a.Id, a.Name, a.Description)).ToList(),
+            ActiveRiMode = riMode
         };
 
         int critCount = criteria.Count;
@@ -165,7 +168,7 @@ public static class AhpCalculator
             return ahpResult;
 
         // 1. Розрахунок матриці критеріїв
-        var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв");
+        var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв", riMode);
         ahpResult.CriteriaMatrixResult = critResult;
 
         for (int i = 0; i < critCount; i++)
@@ -182,7 +185,7 @@ public static class AhpCalculator
             var crit = criteria[j];
             if (alternativeMatrices.TryGetValue(crit.Id, out var altMatrix))
             {
-                var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}");
+                var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}", riMode);
                 ahpResult.AlternativeMatrixResults[crit.Id] = altResult;
 
                 for (int i = 0; i < altCount; i++)
