@@ -10,9 +10,19 @@ public class AhpProjectData
 {
     public string Title { get; set; } = "Задача багатокритеріального аналізу";
     public string Description { get; set; } = string.Empty;
-    public string Version { get; set; } = "1.1";
+    public string Version { get; set; } = "1.2";
     public DateTime SavedAt { get; set; } = DateTime.Now;
-    public RiCalculationMode RiMode { get; set; } = RiCalculationMode.SaatyTable;
+
+    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.ClassicSaatyProfile;
+
+    /// <summary>
+    /// Для зворотної сумісності з файлами версії 1.1.
+    /// </summary>
+    public RiCalculationMode RiMode
+    {
+        get => Options.RiMode;
+        set => Options.RiMode = value;
+    }
 
     public List<Criterion> Criteria { get; set; } = new();
     public List<Alternative> Alternatives { get; set; } = new();

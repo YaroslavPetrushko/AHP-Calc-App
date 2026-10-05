@@ -1,25 +1,57 @@
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace MAI.Models;
 
 /// <summary>
 /// Представляє альтернативу вибору у методі аналізу ієрархій.
 /// </summary>
-public class Alternative
+public class Alternative : INotifyPropertyChanged
 {
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    private string _id = string.Empty;
+    private string _name = string.Empty;
+    private string _description = string.Empty;
+    private double _globalPriority;
+    private int _rank;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string Id
+    {
+        get => _id;
+        set => SetField(ref _id, value);
+    }
+
+    public string Name
+    {
+        get => _name;
+        set => SetField(ref _name, value);
+    }
+
+    public string Description
+    {
+        get => _description;
+        set => SetField(ref _description, value);
+    }
 
     /// <summary>
     /// Глобальний пріоритет (частка від 0 до 1).
     /// </summary>
-    public double GlobalPriority { get; set; }
+    public double GlobalPriority
+    {
+        get => _globalPriority;
+        set => SetField(ref _globalPriority, value);
+    }
 
     /// <summary>
     /// Ранг за підсумковим пріоритетом (1 - найкращий).
     /// </summary>
-    public int Rank { get; set; }
+    public int Rank
+    {
+        get => _rank;
+        set => SetField(ref _rank, value);
+    }
 
     /// <summary>
     /// Локальні пріоритети альтернативи за окремими критеріями.
@@ -38,6 +70,14 @@ public class Alternative
         Id = id;
         Name = name;
         Description = description;
+    }
+
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        return true;
     }
 
     public override string ToString() => string.IsNullOrWhiteSpace(Description) ? Name : $"{Name} ({Description})";
