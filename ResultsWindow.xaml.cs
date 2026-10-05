@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using Microsoft.Win32;
 using MAI.Models;
@@ -438,6 +439,25 @@ public partial class ResultsWindow : Window
         catch (Exception ex)
         {
             MessageBox.Show($"Помилка збереження файлу: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void DataGrid_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
+    {
+        if (e.Column is DataGridBoundColumn boundColumn)
+        {
+            // Bind using indexer syntax to prevent WPF PropertyPath from misinterpreting '/', '.', or '()'
+            boundColumn.Binding = new Binding($"[{e.PropertyName}]");
+
+            // Format numeric values with right alignment and cell padding
+            if (e.PropertyName != "Ранг" && e.PropertyName != "Альтернатива" && e.PropertyName != "Елемент")
+            {
+                var style = new Style(typeof(TextBlock));
+                style.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right));
+                style.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+                style.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(6, 0, 6, 0)));
+                boundColumn.ElementStyle = style;
+            }
         }
     }
 
