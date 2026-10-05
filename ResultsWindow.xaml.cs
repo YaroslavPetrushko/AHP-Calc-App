@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -8,11 +8,49 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using Microsoft.Win32;
 using MAI.Models;
 using MAI.Services;
 
 namespace MAI;
+
+public class CriticalPointDisplayItem
+{
+    public string Alt1Name { get; set; } = string.Empty;
+    public string Alt2Name { get; set; } = string.Empty;
+    public string WeightTText { get; set; } = string.Empty;
+    public string PriorityPText { get; set; } = string.Empty;
+    public string ChangeTypeText { get; set; } = string.Empty;
+    public string EventDescription { get; set; } = string.Empty;
+}
+
+public class SensitivityLegendItem
+{
+    public string Label { get; set; } = string.Empty;
+    public Brush ColorBrush { get; set; } = Brushes.Blue;
+}
+
+public class SensitivityDynamicRankingDisplayItem
+{
+    public int Rank { get; set; }
+    public string RankText => $"#{Rank}";
+    public string AlternativeId { get; set; } = string.Empty;
+    public string AlternativeName { get; set; } = string.Empty;
+    public double CurrentPriority { get; set; }
+    public double OriginalPriority { get; set; }
+    public double DeltaPriority => CurrentPriority - OriginalPriority;
+    public string PriorityPercentText => $"{CurrentPriority * 100:F1}% ({CurrentPriority:F4})";
+    public string DeltaText => DeltaPriority switch
+    {
+        > 0.0005 => $"▲ +{DeltaPriority * 100:F1}%",
+        < -0.0005 => $"▼ {DeltaPriority * 100:F1}%",
+        _ => "— 0.0%"
+    };
+    public Brush RankBackground { get; set; } = Brushes.Gray;
+    public Brush DeltaBrush { get; set; } = Brushes.Gray;
+    public bool IsWinner => Rank == 1;
+}
 
 public class AlternativeDisplayItem
 {
@@ -59,6 +97,22 @@ public partial class ResultsWindow : Window
     private readonly AhpResult _result;
     private readonly List<MatrixResult> _allMatrixResults = new();
 
+    private CriterionSensitivityResult? _currentSensitivityResult;
+    private double _currentSensitivityT = 0.0;
+    private bool _isUpdatingSensitivityUi = false;
+
+    private static readonly Color[] AlternativeColors = new[]
+    {
+        Color.FromRgb(59, 130, 246),  // Blue (#3B82F6)
+        Color.FromRgb(16, 185, 129), // Emerald (#10B981)
+        Color.FromRgb(245, 158, 11), // Amber (#F59E0B)
+        Color.FromRgb(239, 68, 68),  // Red (#EF4444)
+        Color.FromRgb(139, 92, 246), // Purple (#8B5CF6)
+        Color.FromRgb(236, 72, 153), // Pink (#EC4899)
+        Color.FromRgb(20, 184, 166), // Teal (#14B8A6)
+        Color.FromRgb(249, 115, 22)  // Orange (#F97316)
+    };
+
     public ResultsWindow(AhpResult result)
     {
         InitializeComponent();
@@ -71,6 +125,7 @@ public partial class ResultsWindow : Window
         InitSynthesisDataGrid();
         InitConsistencyDataGrid();
         InitMatrixSelector();
+        InitSensitivityAnalysis();
 
         ThemeService.ThemeChanged += OnThemeChanged;
     }
@@ -79,6 +134,7 @@ public partial class ResultsWindow : Window
     {
         InitHeaderAndBadges();
         InitRankingsList();
+        UpdateSensitivityDynamicState(_currentSensitivityT);
     }
 
     protected override void OnClosed(EventArgs e)
@@ -499,6 +555,384 @@ public partial class ResultsWindow : Window
             }
         }
     }
+
+    #region Sensitivity Analysis Tab
+
+    private void InitSensitivityAnalysis()
+    {
+        ComboSensitivityCriterion.Items.Clear();
+        foreach (var c in _result.Criteria)
+        {
+            ComboSensitivityCriterion.Items.Add($"{c.Name} ({c.Id}, вага {c.Weight:P1})");
+        }
+
+        if (ComboSensitivityCriterion.Items.Count > 0)
+        {
+            ComboSensitivityCriterion.SelectedIndex = 0;
+        }
+    }
+
+    private void ComboSensitivityCriterion_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        int idx = ComboSensitivityCriterion.SelectedIndex;
+        if (idx < 0 || idx >= _result.Criteria.Count) return;
+
+        var selectedCrit = _result.Criteria[idx];
+        _currentSensitivityResult = AhpCalculator.CalculateSensitivity(_result, selectedCrit.Id);
+        _currentSensitivityT = _currentSensitivityResult.OriginalWeight;
+
+        _isUpdatingSensitivityUi = true;
+        try
+        {
+            TxtSensBaselineWeight.Text = $"Базова вага: {_currentSensitivityResult.OriginalWeight:P1}";
+            SliderSensitivityWeight.Value = _currentSensitivityResult.OriginalWeight * 100.0;
+            TxtSensCurrentWeight.Text = $"Поточна вага t = {_currentSensitivityT:P1}";
+            TxtSensStabilityComment.Text = _currentSensitivityResult.StabilitySummary;
+
+            // Інтервали лідерства
+            ListSensLeadershipIntervals.ItemsSource = _currentSensitivityResult.LeadershipIntervals;
+
+            // Таблиця критичних точок
+            var points = _currentSensitivityResult.Intersections.Select(p => new CriticalPointDisplayItem
+            {
+                Alt1Name = p.Alt1Name,
+                Alt2Name = p.Alt2Name,
+                WeightTText = $"{p.WeightT:P1} ({p.WeightT:F3})",
+                PriorityPText = $"{p.PriorityP:P1} ({p.PriorityP:F3})",
+                ChangeTypeText = p.IsLeadershipChange ? "⭐ Зміна лідера (#1)" : "Перетин рангів",
+                EventDescription = p.EventDescription
+            }).ToList();
+            GridCriticalPoints.ItemsSource = points;
+
+            // Легенда графіка
+            var legendItems = _currentSensitivityResult.Lines.Select((l, i) => new SensitivityLegendItem
+            {
+                Label = $"{l.AlternativeId}: {l.AlternativeName}",
+                ColorBrush = new SolidColorBrush(AlternativeColors[i % AlternativeColors.Length])
+            }).ToList();
+            ListSensLegend.ItemsSource = legendItems;
+        }
+        finally
+        {
+            _isUpdatingSensitivityUi = false;
+        }
+
+        UpdateSensitivityDynamicState(_currentSensitivityT);
+    }
+
+    private void SliderSensitivityWeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_isUpdatingSensitivityUi || _currentSensitivityResult == null) return;
+
+        _currentSensitivityT = SliderSensitivityWeight.Value / 100.0;
+        TxtSensCurrentWeight.Text = $"Поточна вага t = {_currentSensitivityT:P1}";
+
+        UpdateSensitivityDynamicState(_currentSensitivityT);
+    }
+
+    private void BtnResetSensWeight_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentSensitivityResult == null) return;
+        SliderSensitivityWeight.Value = _currentSensitivityResult.OriginalWeight * 100.0;
+    }
+
+    private void PlotBorder_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        RedrawSensitivityPlot(_currentSensitivityT);
+    }
+
+    private void UpdateSensitivityDynamicState(double t)
+    {
+        if (_currentSensitivityResult == null) return;
+
+        bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
+        var dynamicList = _currentSensitivityResult.Lines
+            .Select(l => new
+            {
+                Line = l,
+                Priority = l.PriorityAt(t)
+            })
+            .OrderByDescending(x => x.Priority)
+            .Select((x, rankIdx) =>
+            {
+                int rank = rankIdx + 1;
+                double delta = x.Priority - x.Line.OriginalPriority;
+                Brush rankBg = rank switch
+                {
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#10B981" : "#059669")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#3B82F6" : "#2563EB")),
+                    3 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#60A5FA" : "#3B82F6")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#64748B" : "#94A3B8"))
+                };
+
+                Brush deltaBrush = delta switch
+                {
+                    > 0.0005 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#34D399" : "#059669")),
+                    < -0.0005 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#F87171" : "#DC2626")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#94A3B8" : "#64748B"))
+                };
+
+                return new SensitivityDynamicRankingDisplayItem
+                {
+                    Rank = rank,
+                    AlternativeId = x.Line.AlternativeId,
+                    AlternativeName = x.Line.AlternativeName,
+                    CurrentPriority = x.Priority,
+                    OriginalPriority = x.Line.OriginalPriority,
+                    RankBackground = rankBg,
+                    DeltaBrush = deltaBrush
+                };
+            })
+            .ToList();
+
+        ListSensDynamicRankings.ItemsSource = dynamicList;
+
+        if (dynamicList.Count > 0)
+        {
+            var top = dynamicList[0];
+            TxtSensPlotLeader.Text = $"Поточний лідер: {top.AlternativeName} ({top.CurrentPriority:P1})";
+        }
+
+        RedrawSensitivityPlot(t);
+    }
+
+    private void RedrawSensitivityPlot(double currentT)
+    {
+        if (CanvasSensitivityPlot == null || _currentSensitivityResult == null) return;
+
+        CanvasSensitivityPlot.Children.Clear();
+
+        double width = CanvasSensitivityPlot.ActualWidth;
+        double height = CanvasSensitivityPlot.ActualHeight;
+
+        if (width <= 50 || height <= 50) return;
+
+        bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
+        var axisBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#64748B" : "#94A3B8"));
+        var gridBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#334155" : "#E2E8F0"));
+        var textBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#94A3B8" : "#475569"));
+        var baseLineBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#34D399" : "#059669"));
+        var currLineBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#60A5FA" : "#2563EB"));
+
+        double marginLeft = 48;
+        double marginRight = 20;
+        double marginTop = 20;
+        double marginBottom = 32;
+
+        double pw = width - marginLeft - marginRight;
+        double ph = height - marginTop - marginBottom;
+
+        if (pw <= 10 || ph <= 10) return;
+
+        // Визначаємо максимальний пріоритет для шкали Y
+        double maxPriorityVal = _currentSensitivityResult.Lines
+            .SelectMany(l => new[] { l.Beta, l.Alpha + l.Beta })
+            .DefaultIfEmpty(0.4)
+            .Max();
+
+        double maxY = Math.Max(0.40, Math.Ceiling(maxPriorityVal * 10.0) / 10.0);
+        if (maxY > 1.0) maxY = 1.0;
+
+        // Функції трансформації координат
+        double ToX(double t) => marginLeft + Math.Clamp(t, 0.0, 1.0) * pw;
+        double ToY(double p) => marginTop + (1.0 - Math.Clamp(p / maxY, 0.0, 1.0)) * ph;
+
+        // 1. Горизонтальні лінії сітки та мітки осі Y
+        int yDivisions = 5;
+        for (int i = 0; i <= yDivisions; i++)
+        {
+            double pVal = (maxY / yDivisions) * i;
+            double y = ToY(pVal);
+
+            var gridLine = new System.Windows.Shapes.Line
+            {
+                X1 = marginLeft,
+                Y1 = y,
+                X2 = marginLeft + pw,
+                Y2 = y,
+                Stroke = gridBrush,
+                StrokeThickness = 1,
+                StrokeDashArray = i == 0 ? null : new DoubleCollection { 2, 2 }
+            };
+            CanvasSensitivityPlot.Children.Add(gridLine);
+
+            var tb = new TextBlock
+            {
+                Text = $"{pVal * 100:F0}%",
+                FontSize = 10,
+                Foreground = textBrush,
+                Width = 40,
+                TextAlignment = TextAlignment.Right
+            };
+            Canvas.SetLeft(tb, marginLeft - 44);
+            Canvas.SetTop(tb, y - 7);
+            CanvasSensitivityPlot.Children.Add(tb);
+        }
+
+        // 2. Вертикальні лінії сітки та мітки осі X
+        for (int i = 0; i <= 10; i += 2)
+        {
+            double tVal = i / 10.0;
+            double x = ToX(tVal);
+
+            var gridLine = new System.Windows.Shapes.Line
+            {
+                X1 = x,
+                Y1 = marginTop,
+                X2 = x,
+                Y2 = marginTop + ph,
+                Stroke = gridBrush,
+                StrokeThickness = 1,
+                StrokeDashArray = (i == 0 || i == 10) ? null : new DoubleCollection { 2, 2 }
+            };
+            CanvasSensitivityPlot.Children.Add(gridLine);
+
+            var tb = new TextBlock
+            {
+                Text = $"{i * 10}%",
+                FontSize = 10,
+                Foreground = textBrush,
+                Width = 36,
+                TextAlignment = TextAlignment.Center
+            };
+            Canvas.SetLeft(tb, x - 18);
+            Canvas.SetTop(tb, marginTop + ph + 6);
+            CanvasSensitivityPlot.Children.Add(tb);
+        }
+
+        // 3. Основні осі графіка
+        var xAxis = new System.Windows.Shapes.Line
+        {
+            X1 = marginLeft,
+            Y1 = marginTop + ph,
+            X2 = marginLeft + pw,
+            Y2 = marginTop + ph,
+            Stroke = axisBrush,
+            StrokeThickness = 1.5
+        };
+        CanvasSensitivityPlot.Children.Add(xAxis);
+
+        var yAxis = new System.Windows.Shapes.Line
+        {
+            X1 = marginLeft,
+            Y1 = marginTop,
+            X2 = marginLeft,
+            Y2 = marginTop + ph,
+            Stroke = axisBrush,
+            StrokeThickness = 1.5
+        };
+        CanvasSensitivityPlot.Children.Add(yAxis);
+
+        // 4. Вертикальна лінія базової ваги w_k^0
+        double baseX = ToX(_currentSensitivityResult.OriginalWeight);
+        var baseLine = new System.Windows.Shapes.Line
+        {
+            X1 = baseX,
+            Y1 = marginTop,
+            X2 = baseX,
+            Y2 = marginTop + ph,
+            Stroke = baseLineBrush,
+            StrokeThickness = 1.8,
+            StrokeDashArray = new DoubleCollection { 4, 3 },
+            ToolTip = $"Базова вага критерію w_k^0 = {_currentSensitivityResult.OriginalWeight:P1}"
+        };
+        CanvasSensitivityPlot.Children.Add(baseLine);
+
+        // 5. Вертикальна лінія поточної ваги t
+        double currX = ToX(currentT);
+        var currLine = new System.Windows.Shapes.Line
+        {
+            X1 = currX,
+            Y1 = marginTop,
+            X2 = currX,
+            Y2 = marginTop + ph,
+            Stroke = currLineBrush,
+            StrokeThickness = 2.2,
+            ToolTip = $"Поточна вага t = {currentT:P1}"
+        };
+        CanvasSensitivityPlot.Children.Add(currLine);
+
+        // 6. Лінії пріоритетів для кожної альтернативи
+        for (int i = 0; i < _currentSensitivityResult.Lines.Count; i++)
+        {
+            var l = _currentSensitivityResult.Lines[i];
+            var color = AlternativeColors[i % AlternativeColors.Length];
+            var lineBrush = new SolidColorBrush(color);
+
+            double x0 = ToX(0.0);
+            double y0 = ToY(l.PriorityAt(0.0));
+            double x1 = ToX(1.0);
+            double y1 = ToY(l.PriorityAt(1.0));
+
+            var sensLine = new System.Windows.Shapes.Line
+            {
+                X1 = x0,
+                Y1 = y0,
+                X2 = x1,
+                Y2 = y1,
+                Stroke = lineBrush,
+                StrokeThickness = 2.5,
+                ToolTip = $"{l.AlternativeId} ({l.AlternativeName})\nP(t) = {l.Alpha:+0.000;-0.000}·t + {l.Beta:F3}\nПри t={currentT:P1}: P={l.PriorityAt(currentT):P1}"
+            };
+            CanvasSensitivityPlot.Children.Add(sensLine);
+
+            // Маркер поточної точки на лінії альтернативи
+            double cy = ToY(l.PriorityAt(currentT));
+            var dot = new System.Windows.Shapes.Ellipse
+            {
+                Width = 8,
+                Height = 8,
+                Fill = lineBrush,
+                Stroke = Brushes.White,
+                StrokeThickness = 1.5,
+                ToolTip = $"{l.AlternativeName}: P({currentT:P1}) = {l.PriorityAt(currentT):P1}"
+            };
+            Canvas.SetLeft(dot, currX - 4);
+            Canvas.SetTop(dot, cy - 4);
+            CanvasSensitivityPlot.Children.Add(dot);
+        }
+
+        // 7. Маркери критичних точок перетину
+        foreach (var pt in _currentSensitivityResult.Intersections)
+        {
+            if (!pt.IsInDomain) continue;
+
+            double ix = ToX(pt.WeightT);
+            double iy = ToY(pt.PriorityP);
+
+            if (pt.IsLeadershipChange)
+            {
+                var star = new System.Windows.Shapes.Ellipse
+                {
+                    Width = 10,
+                    Height = 10,
+                    Fill = Brushes.Gold,
+                    Stroke = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B45309")),
+                    StrokeThickness = 1.5,
+                    ToolTip = $"⭐ Точка зміни переможця:\n{pt.Alt1Name} = {pt.Alt2Name}\nКритична вага t* = {pt.WeightT:P1}, P* = {pt.PriorityP:P1}"
+                };
+                Canvas.SetLeft(star, ix - 5);
+                Canvas.SetTop(star, iy - 5);
+                CanvasSensitivityPlot.Children.Add(star);
+            }
+            else
+            {
+                var smallDot = new System.Windows.Shapes.Ellipse
+                {
+                    Width = 6,
+                    Height = 6,
+                    Fill = textBrush,
+                    Opacity = 0.7,
+                    ToolTip = $"Точка перетину: {pt.Alt1Name} = {pt.Alt2Name} при t* = {pt.WeightT:P1}"
+                };
+                Canvas.SetLeft(smallDot, ix - 3);
+                Canvas.SetTop(smallDot, iy - 3);
+                CanvasSensitivityPlot.Children.Add(smallDot);
+            }
+        }
+    }
+
+    #endregion
 
     private void BtnClose_Click(object sender, RoutedEventArgs e)
     {

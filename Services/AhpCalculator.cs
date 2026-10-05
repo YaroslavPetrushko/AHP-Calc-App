@@ -446,4 +446,183 @@ public static class AhpCalculator
             : AhpCalculationOptions.ClassicSaatyProfile;
         return SolveHierarchy(criteria, alternatives, criteriaMatrix, alternativeMatrices, opts);
     }
+
+    /// <summary>
+    /// Розрахунок аналізу чутливості ієрархічного синтезу за обраним критерієм.
+    /// Моделює пропорційне масштабування ваг решти критеріїв при зміні ваги t in [0, 1].
+    /// </summary>
+    public static CriterionSensitivityResult CalculateSensitivity(AhpResult result, string criterionId)
+    {
+        var crit = result.Criteria.FirstOrDefault(c => c.Id == criterionId)
+            ?? throw new ArgumentException($"Критерій з ID '{criterionId}' не знайдено в результатах.");
+
+        var res = new CriterionSensitivityResult
+        {
+            Criterion = crit,
+            OriginalWeight = crit.Weight
+        };
+
+        if (result.RankedAlternatives.Count > 0)
+        {
+            res.OptimalAlternativeId = result.RankedAlternatives[0].Id;
+            res.OptimalAlternativeName = result.RankedAlternatives[0].Name;
+        }
+
+        double wk0 = crit.Weight;
+        bool isWk0Edge = Math.Abs(wk0 - 1.0) < 1e-6;
+
+        // 1. Побудова лінійних функцій P_i(t) = alpha_i * t + beta_i
+        foreach (var alt in result.Alternatives)
+        {
+            int altIdx = result.Alternatives.IndexOf(alt);
+            double Lik = result.AlternativeMatrixResults.TryGetValue(criterionId, out var altMatrixRes) && altIdx < altMatrixRes.Weights.Length
+                ? altMatrixRes.Weights[altIdx]
+                : 0.0;
+
+            double beta;
+            double alpha;
+
+            if (isWk0Edge)
+            {
+                beta = 0.0;
+                alpha = Lik;
+            }
+            else
+            {
+                double Si = 0.0;
+                foreach (var otherCrit in result.Criteria)
+                {
+                    if (otherCrit.Id == criterionId) continue;
+                    if (result.AlternativeMatrixResults.TryGetValue(otherCrit.Id, out var otherMat) && altIdx < otherMat.Weights.Length)
+                    {
+                        Si += otherMat.Weights[altIdx] * otherCrit.Weight;
+                    }
+                }
+                beta = Si / (1.0 - wk0);
+                alpha = Lik - beta;
+            }
+
+            res.Lines.Add(new SensitivityLine
+            {
+                AlternativeId = alt.Id,
+                AlternativeName = alt.Name,
+                Alpha = alpha,
+                Beta = beta,
+                OriginalPriority = alt.GlobalPriority,
+                LocalPriorityUnderCriterion = Lik
+            });
+        }
+
+        // 2. Попарні точки перетину функцій: alpha_i * t + beta_i = alpha_j * t + beta_j
+        var rawIntersections = new List<CriticalIntersectionPoint>();
+        for (int i = 0; i < res.Lines.Count; i++)
+        {
+            for (int j = i + 1; j < res.Lines.Count; j++)
+            {
+                var line1 = res.Lines[i];
+                var line2 = res.Lines[j];
+                double dAlpha = line1.Alpha - line2.Alpha;
+                double dBeta = line2.Beta - line1.Beta;
+
+                if (Math.Abs(dAlpha) > 1e-6)
+                {
+                    double t = dBeta / dAlpha;
+                    if (t >= -0.0005 && t <= 1.0005)
+                    {
+                        double clampedT = Math.Clamp(t, 0.0, 1.0);
+                        double p = line1.PriorityAt(clampedT);
+
+                        // Перевіряємо, чи в цій точці це максимальний пріоритет (зміна лідера #1)
+                        double maxP = res.Lines.Max(l => l.PriorityAt(clampedT));
+                        bool isLeaderChange = Math.Abs(p - maxP) < 0.003;
+
+                        rawIntersections.Add(new CriticalIntersectionPoint
+                        {
+                            Alt1Id = line1.AlternativeId,
+                            Alt1Name = line1.AlternativeName,
+                            Alt2Id = line2.AlternativeId,
+                            Alt2Name = line2.AlternativeName,
+                            WeightT = clampedT,
+                            PriorityP = p,
+                            IsLeadershipChange = isLeaderChange,
+                            EventDescription = isLeaderChange
+                                ? $"Зміна лідера (#1) між «{line1.AlternativeName}» та «{line2.AlternativeName}»"
+                                : $"Перетин рейтингів між «{line1.AlternativeName}» та «{line2.AlternativeName}»"
+                        });
+                    }
+                }
+            }
+        }
+
+        res.Intersections = rawIntersections
+            .OrderBy(p => p.WeightT)
+            .ThenByDescending(p => p.IsLeadershipChange)
+            .ToList();
+
+        // 3. Інтервали лідерства на відрізку [0, 1]
+        var leaderPoints = res.Intersections
+            .Where(p => p.IsLeadershipChange && p.WeightT > 0.001 && p.WeightT < 0.999)
+            .Select(p => p.WeightT)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+
+        var partition = new List<double> { 0.0 };
+        partition.AddRange(leaderPoints);
+        partition.Add(1.0);
+
+        for (int k = 0; k < partition.Count - 1; k++)
+        {
+            double fromT = partition[k];
+            double toT = partition[k + 1];
+            if (toT - fromT < 1e-5) continue;
+
+            double midT = (fromT + toT) / 2.0;
+            var bestLine = res.Lines.OrderByDescending(l => l.PriorityAt(midT)).FirstOrDefault();
+            if (bestLine != null)
+            {
+                if (res.LeadershipIntervals.Count > 0 &&
+                    res.LeadershipIntervals[^1].AlternativeId == bestLine.AlternativeId)
+                {
+                    res.LeadershipIntervals[^1].ToT = toT;
+                }
+                else
+                {
+                    res.LeadershipIntervals.Add(new LeadershipInterval
+                    {
+                        AlternativeId = bestLine.AlternativeId,
+                        AlternativeName = bestLine.AlternativeName,
+                        FromT = fromT,
+                        ToT = toT
+                    });
+                }
+            }
+        }
+
+        // 4. Визначення діапазону стійкості для поточного оптимального вибору
+        var currentOptInterval = res.LeadershipIntervals.FirstOrDefault(intvl =>
+            wk0 >= intvl.FromT - 1e-5 && wk0 <= intvl.ToT + 1e-5);
+
+        if (currentOptInterval != null)
+        {
+            res.StabilityIntervalMin = currentOptInterval.FromT;
+            res.StabilityIntervalMax = currentOptInterval.ToT;
+
+            string boundLower = currentOptInterval.FromT <= 0.001 ? "0.0%" : $"{currentOptInterval.FromT:P1}";
+            string boundUpper = currentOptInterval.ToT >= 0.999 ? "100.0%" : $"{currentOptInterval.ToT:P1}";
+
+            res.StabilitySummary = $"Поточний оптимальний вибір «{currentOptInterval.AlternativeName}» є стійким при варіюванні ваги критерію «{crit.Name}» в інтервалі [{boundLower}; {boundUpper}] (вихідна вага: {wk0:P1}). " +
+                (currentOptInterval.ToT < 0.999
+                    ? $"Зміна лідера відбувається при зростанні ваги понад {boundUpper}."
+                    : "Альтернатива зберігає абсолютне лідерство навіть при зростанні ваги до 100%.");
+        }
+        else
+        {
+            res.StabilityIntervalMin = 0.0;
+            res.StabilityIntervalMax = 1.0;
+            res.StabilitySummary = $"Поточний вибір залишається лідером на всьому діапазоні ваг критерію «{crit.Name}».";
+        }
+
+        return res;
+    }
 }

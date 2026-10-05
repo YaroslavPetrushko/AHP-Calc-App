@@ -243,6 +243,188 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+
+            <!-- TAB 3: Аналіз чутливості (Sensitivity Analysis) -->
+            <TabItem Header="📈 Аналіз чутливості (Sensitivity)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,2,0,0">
+                    <StackPanel>
+                        <!-- Card 1: Criterion Selection & Interactive Slider Controls -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Дослідження стійкості рейтингу до ваги критерію" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="Моделювання варіювання ваги обраного критерію t ∈ [0, 1] із пропорційним масштабуванням решти критеріїв: Pi(t) = αi · t + βi." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                    </StackPanel>
+
+                                    <!-- Criterion Selector ComboBox -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Критерій:" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextDark}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox x:Name="ComboSensitivityCriterion" Width="240" Height="32" SelectionChanged="ComboSensitivityCriterion_SelectionChanged" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Separator Margin="0,12,0,12" Background="{DynamicResource BorderColor}"/>
+
+                                <!-- Interactive Slider and Real-time indicators -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <Border Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                                            <TextBlock x:Name="TxtSensBaselineWeight" Text="Базова вага: 27.8%" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                                        </Border>
+                                        <Border Background="{DynamicResource BadgeBg}" CornerRadius="6" Padding="8,4">
+                                            <TextBlock x:Name="TxtSensCurrentWeight" Text="Поточна вага t = 27.8%" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource BadgeFg}"/>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Slider -->
+                                    <Slider Grid.Column="1" x:Name="SliderSensitivityWeight" Minimum="0" Maximum="100" SmallChange="1" LargeChange="5" Value="27.8" TickFrequency="10" IsSnapToTickEnabled="False" VerticalAlignment="Center" ValueChanged="SliderSensitivityWeight_ValueChanged"/>
+
+                                    <!-- Reset to Baseline Button -->
+                                    <Button Grid.Column="2" x:Name="BtnResetSensWeight" Content="🔄 Скинути до базової" Style="{StaticResource SecondaryBtnStyle}" Margin="12,0,0,0" Padding="12,4" Height="32" Click="BtnResetSensWeight_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 2: Two Columns: Sensitivity Vector Plot (Left) & Real-time Ranking at t (Right) -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left: Graphic Plot -->
+                            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Графік чутливості пріоритетів Pi(t)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Grid.Column="1" x:Name="TxtSensPlotLeader" Text="Поточний лідер: RTX 5060 Ti" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}"/>
+                                    </Grid>
+
+                                    <!-- Canvas Plot Container -->
+                                    <Border x:Name="PlotBorder" Background="{DynamicResource MatrixContainerBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="6" Height="340" SizeChanged="PlotBorder_SizeChanged">
+                                        <Canvas x:Name="CanvasSensitivityPlot" ClipToBounds="True"/>
+                                    </Border>
+
+                                    <!-- Chart Legend -->
+                                    <ItemsControl x:Name="ListSensLegend" Margin="0,10,0,0">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" Background="{DynamicResource CardBg}" CornerRadius="6" Padding="6,3" Margin="0,0,8,4">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Rectangle Width="14" Height="10" RadiusX="2" RadiusY="2" Fill="{Binding ColorBrush}" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="{Binding Label}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Right: Dynamic Real-time Ranking at current t -->
+                            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Рейтинг альтернатив при поточному t" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,2"/>
+                                    <TextBlock Text="Динамічна зміна позицій при поточному значенні ваги." FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+
+                                    <ItemsControl x:Name="ListSensDynamicRankings">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderThickness="1" BorderBrush="{DynamicResource BorderColor}" Background="{DynamicResource CardBg}" CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="34"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Border Grid.Column="0" Background="{Binding RankBackground}" CornerRadius="4" Width="26" Height="26" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding RankText}" FontWeight="Bold" FontSize="12" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,8,0">
+                                                            <TextBlock Text="{Binding AlternativeName}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextDark}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding DeltaText}" FontSize="10" Foreground="{Binding DeltaBrush}"/>
+                                                        </StackPanel>
+
+                                                        <TextBlock Grid.Column="2" Text="{Binding PriorityPercentText}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource PrimaryBlue}" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Card 3: Leadership Intervals & Analytical Robustness Assessment -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Аналіз зон лідерства та стійкості вибору (Robustness Assessment)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock x:Name="TxtSensStabilityComment" Text="Оцінка стабільності оптимального вибору..." FontSize="13" LineHeight="19" Foreground="{DynamicResource TextDark}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="Діапазони домінування альтернатив на відрізку [0; 1]:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,6"/>
+                                <ItemsControl x:Name="ListSensLeadershipIntervals">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource MatrixContainerBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,8,6">
+                                                <TextBlock Text="{Binding DisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 4: Critical Intersection Points Table -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Критичні точки перетину функцій (точки інверсії ранжиру)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="Значення ваги критерію t*, при яких дві альтернативи мають однаковий глобальний пріоритет (α1 · t + β1 = α2 · t + β2)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+
+                                <DataGrid x:Name="GridCriticalPoints" AutoGenerateColumns="False" MaxHeight="220" HeadersVisibility="Column" SelectionMode="Single"
+                                          IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Альтернатива 1" Binding="{Binding Alt1Name}" Width="160"/>
+                                        <DataGridTextColumn Header="Альтернатива 2" Binding="{Binding Alt2Name}" Width="160"/>
+                                        <DataGridTextColumn Header="Критична вага t*" Binding="{Binding WeightTText}" Width="120"/>
+                                        <DataGridTextColumn Header="Пріоритет P*" Binding="{Binding PriorityPText}" Width="110"/>
+                                        <DataGridTextColumn Header="Тип інверсії" Binding="{Binding ChangeTypeText}" Width="150"/>
+                                        <DataGridTextColumn Header="Опис" Binding="{Binding EventDescription}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
         </TabControl>
 
         <!-- Bottom Action Bar -->

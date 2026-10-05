@@ -140,10 +140,35 @@ public static class ProjectStorageService
             sb.AppendLine($"{alt.GlobalPriority:F3}");
         }
 
+        sb.AppendLine();
+        sb.AppendLine("--- 5. АНАЛІЗ ЧУТЛИВОСТІ РЕЙТИНГУ ДО ВАГ КРИТЕРІЇВ (SENSITIVITY ANALYSIS) ---");
+        foreach (var c in result.Criteria)
+        {
+            try
+            {
+                var sens = AhpCalculator.CalculateSensitivity(result, c.Id);
+                sb.AppendLine($"Критерій: {c.Name} (вихідна вага: {c.Weight:P1})");
+                sb.AppendLine($"  {sens.StabilitySummary}");
+                if (sens.LeadershipIntervals.Count > 0)
+                {
+                    sb.AppendLine($"  Інтервали лідерства: {string.Join(" | ", sens.LeadershipIntervals.Select(i => i.DisplayText))}");
+                }
+                var leaderIntersections = sens.Intersections.Where(p => p.IsLeadershipChange).ToList();
+                if (leaderIntersections.Count > 0)
+                {
+                    sb.AppendLine($"  Критичні точки зміни лідера: " + string.Join("; ", leaderIntersections.Select(p => $"{p.Alt1Name} = {p.Alt2Name} при t*={p.WeightT:P1} (P*={p.PriorityP:F3})")));
+                }
+                sb.AppendLine();
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(recommendationText))
         {
-            sb.AppendLine();
-            sb.AppendLine("--- 5. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---");
+            sb.AppendLine("--- 6. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---");
             sb.AppendLine(recommendationText);
         }
 
