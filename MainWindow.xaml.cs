@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -586,6 +586,176 @@ public partial class MainWindow : Window
     }
 
     #region Criteria & Alternatives Management
+
+    private string _prevCellCritId = string.Empty;
+    private string _prevCellCritName = string.Empty;
+    private string _prevCellAltId = string.Empty;
+    private string _prevCellAltName = string.Empty;
+
+    private void GridCriteria_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+    {
+        if (e.Row.Item is Criterion crit)
+        {
+            _prevCellCritId = crit.Id;
+            _prevCellCritName = crit.Name;
+        }
+    }
+
+    private void GridCriteria_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+    {
+        if (e.EditAction != DataGridEditAction.Commit) return;
+        if (e.Row.Item is not Criterion crit) return;
+        if (e.EditingElement is not TextBox tb) return;
+
+        string colHeader = e.Column.Header?.ToString() ?? string.Empty;
+        string newVal = tb.Text.Trim();
+
+        if (colHeader.Contains("ID") || colHeader.Contains("Код") || e.Column.DisplayIndex == 0)
+        {
+            if (string.IsNullOrWhiteSpace(newVal))
+            {
+                tb.Text = _prevCellCritId;
+                crit.Id = _prevCellCritId;
+                TxtBottomStatus.Text = "Помилка валідації: Код критерію не може бути порожнім.";
+                return;
+            }
+
+            if (!string.Equals(newVal, _prevCellCritId, StringComparison.OrdinalIgnoreCase) &&
+                _criteria.Any(c => c != crit && string.Equals(c.Id, newVal, StringComparison.OrdinalIgnoreCase)))
+            {
+                tb.Text = _prevCellCritId;
+                crit.Id = _prevCellCritId;
+                MessageBox.Show($"Критерій з кодом «{newVal}» вже існує. Коди мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string oldId = _prevCellCritId;
+            crit.Id = newVal;
+
+            if (!string.Equals(oldId, newVal, StringComparison.OrdinalIgnoreCase))
+            {
+                if (_alternativeMatrices.TryGetValue(oldId, out var mat))
+                {
+                    _alternativeMatrices.Remove(oldId);
+                    _alternativeMatrices[newVal] = mat;
+                }
+
+                if (_selectedCriterionId == oldId)
+                {
+                    _selectedCriterionId = newVal;
+                }
+
+                Dispatcher.BeginInvoke(() =>
+                {
+                    BuildAlternativesCriteriaSelector();
+                    UpdateCountsUI();
+                });
+            }
+        }
+        else if (colHeader.Contains("Назва") || e.Column.DisplayIndex == 1)
+        {
+            if (string.IsNullOrWhiteSpace(newVal))
+            {
+                tb.Text = _prevCellCritName;
+                crit.Name = _prevCellCritName;
+                TxtBottomStatus.Text = "Помилка валідації: Назва критерію не може бути порожньою.";
+                return;
+            }
+
+            if (!string.Equals(newVal, _prevCellCritName, StringComparison.OrdinalIgnoreCase) &&
+                _criteria.Any(c => c != crit && string.Equals(c.Name, newVal, StringComparison.OrdinalIgnoreCase)))
+            {
+                tb.Text = _prevCellCritName;
+                crit.Name = _prevCellCritName;
+                MessageBox.Show($"Критерій з назвою «{newVal}» вже існує. Назви критеріїв мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            crit.Name = newVal;
+            Dispatcher.BeginInvoke(() =>
+            {
+                _criteriaMatrix.Labels = _criteria.Select(c => c.Name).ToList();
+                BuildCriteriaMatrixGrid();
+                BuildAlternativesCriteriaSelector();
+                UpdateAllDiagnostics();
+            });
+        }
+    }
+
+    private void GridAlternatives_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+    {
+        if (e.Row.Item is Alternative alt)
+        {
+            _prevCellAltId = alt.Id;
+            _prevCellAltName = alt.Name;
+        }
+    }
+
+    private void GridAlternatives_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+    {
+        if (e.EditAction != DataGridEditAction.Commit) return;
+        if (e.Row.Item is not Alternative alt) return;
+        if (e.EditingElement is not TextBox tb) return;
+
+        string colHeader = e.Column.Header?.ToString() ?? string.Empty;
+        string newVal = tb.Text.Trim();
+
+        if (colHeader.Contains("ID") || colHeader.Contains("Код") || e.Column.DisplayIndex == 0)
+        {
+            if (string.IsNullOrWhiteSpace(newVal))
+            {
+                tb.Text = _prevCellAltId;
+                alt.Id = _prevCellAltId;
+                TxtBottomStatus.Text = "Помилка валідації: Код альтернативи не може бути порожнім.";
+                return;
+            }
+
+            if (!string.Equals(newVal, _prevCellAltId, StringComparison.OrdinalIgnoreCase) &&
+                _alternatives.Any(a => a != alt && string.Equals(a.Id, newVal, StringComparison.OrdinalIgnoreCase)))
+            {
+                tb.Text = _prevCellAltId;
+                alt.Id = _prevCellAltId;
+                MessageBox.Show($"Альтернатива з кодом «{newVal}» вже існує. Коди мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            alt.Id = newVal;
+            Dispatcher.BeginInvoke(() =>
+            {
+                UpdateAllDiagnostics();
+            });
+        }
+        else if (colHeader.Contains("Назва") || e.Column.DisplayIndex == 1)
+        {
+            if (string.IsNullOrWhiteSpace(newVal))
+            {
+                tb.Text = _prevCellAltName;
+                alt.Name = _prevCellAltName;
+                TxtBottomStatus.Text = "Помилка валідації: Назва альтернативи не може бути порожньою.";
+                return;
+            }
+
+            if (!string.Equals(newVal, _prevCellAltName, StringComparison.OrdinalIgnoreCase) &&
+                _alternatives.Any(a => a != alt && string.Equals(a.Name, newVal, StringComparison.OrdinalIgnoreCase)))
+            {
+                tb.Text = _prevCellAltName;
+                alt.Name = _prevCellAltName;
+                MessageBox.Show($"Альтернатива з назвою «{newVal}» вже існує. Назви мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            alt.Name = newVal;
+            Dispatcher.BeginInvoke(() =>
+            {
+                foreach (var mat in _alternativeMatrices.Values)
+                {
+                    mat.Labels = _alternatives.Select(a => a.Name).ToList();
+                }
+                BuildAlternativeMatrixGrid();
+                UpdateAllDiagnostics();
+            });
+        }
+    }
 
     private string GenerateNextCriterionId()
     {

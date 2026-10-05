@@ -12,6 +12,18 @@
         Icon="Resources/app_icon.ico"
         Background="{DynamicResource AppBackground}">
 
+    <Window.Resources>
+        <Style x:Key="DataGridCellEditorTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextDark}"/>
+        </Style>
+    </Window.Resources>
+
     <DockPanel>
         <!-- Top Menu Bar -->
         <Menu DockPanel.Dock="Top" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4" FontSize="13">
@@ -147,14 +159,18 @@
                                         <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridCriteria" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                                              IsReadOnly="False"
+                                              BeginningEdit="GridCriteria_BeginningEdit" CellEditEnding="GridCriteria_CellEditEnding"
                                               HeadersVisibility="Column" RowHeaderWidth="0"
                                               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
-                                            <DataGridTextColumn Header="Назва критерію" Binding="{Binding Name}" Width="Auto" MinWidth="140">
+                                            <DataGridTextColumn Header="Код (ID)" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}"/>
+                                            <DataGridTextColumn Header="Назва критерію" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="140"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -163,7 +179,8 @@
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn Header="Опис / Зміст" Binding="{Binding Description}" Width="Auto" MinWidth="240">
+                                            <DataGridTextColumn Header="Опис / Зміст" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -189,14 +206,18 @@
                                         <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridAlternatives" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                                              IsReadOnly="False"
+                                              BeginningEdit="GridAlternatives_BeginningEdit" CellEditEnding="GridAlternatives_CellEditEnding"
                                               HeadersVisibility="Column" RowHeaderWidth="0"
                                               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
-                                            <DataGridTextColumn Header="Назва альтернативи" Binding="{Binding Name}" Width="Auto" MinWidth="160">
+                                            <DataGridTextColumn Header="Код (ID)" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}"/>
+                                            <DataGridTextColumn Header="Назва альтернативи" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="160"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -205,7 +226,8 @@
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn Header="Опис / Специфікація" Binding="{Binding Description}" Width="Auto" MinWidth="240">
+                                            <DataGridTextColumn Header="Опис / Специфікація" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
