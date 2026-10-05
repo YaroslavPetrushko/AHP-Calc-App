@@ -109,21 +109,24 @@ public partial class MainWindow : Window
         // Top-left cell
         var corner = new Border
         {
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(6, 4, 6, 4),
             Margin = new Thickness(1)
         };
-        corner.Child = new TextBlock
+        corner.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+        corner.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+        var cornerText = new TextBlock
         {
             Text = "Критерій",
             FontWeight = FontWeights.Bold,
             FontSize = 11,
-            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")),
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Center
         };
+        cornerText.SetResourceReference(TextBlock.ForegroundProperty, "MatrixHeaderFg");
+        corner.Child = cornerText;
+
         Grid.SetRow(corner, 0);
         Grid.SetColumn(corner, 0);
         GridCritMatrixContainer.Children.Add(corner);
@@ -133,22 +136,25 @@ public partial class MainWindow : Window
         {
             var header = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(4),
                 Margin = new Thickness(1)
             };
-            header.Child = new TextBlock
+            header.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+            header.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var headerText = new TextBlock
             {
                 Text = _criteria[j].Id,
                 ToolTip = _criteria[j].Name,
                 FontWeight = FontWeights.Bold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
+            headerText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            header.Child = headerText;
+
             Grid.SetRow(header, 0);
             Grid.SetColumn(header, j + 1);
             GridCritMatrixContainer.Children.Add(header);
@@ -160,22 +166,25 @@ public partial class MainWindow : Window
             // Row header
             var rowHeader = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(8, 4, 8, 4),
                 Margin = new Thickness(1)
             };
-            rowHeader.Child = new TextBlock
+            rowHeader.SetResourceReference(Border.BackgroundProperty, "MatrixRowHeaderBg");
+            rowHeader.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var rowHeaderText = new TextBlock
             {
                 Text = $"{_criteria[i].Id} - {_criteria[i].Name}",
                 ToolTip = _criteria[i].Description,
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+            rowHeaderText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            rowHeader.Child = rowHeaderText;
+
             Grid.SetRow(rowHeader, i + 1);
             Grid.SetColumn(rowHeader, 0);
             GridCritMatrixContainer.Children.Add(rowHeader);
@@ -197,8 +206,6 @@ public partial class MainWindow : Window
                 {
                     tb.IsReadOnly = true;
                     tb.Text = "1";
-                    tb.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
-                    tb.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
                 }
                 else
                 {
@@ -232,7 +239,7 @@ public partial class MainWindow : Window
             {
                 _criteriaMatrix.SetComparison(row, col, val);
                 tb.Text = ComparisonMatrix.FormatSaatyValue(val);
-                tb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
 
                 // Sync reciprocal cell
                 if (_critTextBoxes != null && row < _critTextBoxes.GetLength(0) && col < _critTextBoxes.GetLength(1))
@@ -241,7 +248,7 @@ public partial class MainWindow : Window
                     if (recipTb != null)
                     {
                         recipTb.Text = ComparisonMatrix.FormatSaatyValue(1.0 / val);
-                        recipTb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                        recipTb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
                     }
                 }
 
@@ -254,7 +261,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            tb.BorderBrush = (SolidColorBrush)FindResource("DangerRed");
+            tb.SetResourceReference(TextBox.BorderBrushProperty, "DangerRed");
         }
     }
 
@@ -271,17 +278,17 @@ public partial class MainWindow : Window
 
         if (result.IsConsistent)
         {
-            PillCritStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
-            PillCritStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
+            PillCritStatus.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
+            PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
             TxtCritStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= 10%)";
-            TxtCritStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
+            TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
         }
         else
         {
-            PillCritStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
-            PillCritStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
+            PillCritStatus.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
+            PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
             TxtCritStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > 10%)";
-            TxtCritStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+            TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
         }
     }
 
@@ -306,7 +313,7 @@ public partial class MainWindow : Window
 
             if (c.Id == _selectedCriterionId)
             {
-                btn.Background = (SolidColorBrush)FindResource("PrimaryBlue");
+                btn.SetResourceReference(Button.BackgroundProperty, "PrimaryBlue");
                 btn.Foreground = Brushes.White;
                 btn.BorderThickness = new Thickness(0);
             }
@@ -363,21 +370,24 @@ public partial class MainWindow : Window
         // Top-left corner
         var corner = new Border
         {
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(6, 4, 6, 4),
             Margin = new Thickness(1)
         };
-        corner.Child = new TextBlock
+        corner.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+        corner.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+        var cornerText = new TextBlock
         {
             Text = "Альтернатива",
             FontWeight = FontWeights.Bold,
             FontSize = 11,
-            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")),
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Center
         };
+        cornerText.SetResourceReference(TextBlock.ForegroundProperty, "MatrixHeaderFg");
+        corner.Child = cornerText;
+
         Grid.SetRow(corner, 0);
         Grid.SetColumn(corner, 0);
         GridAltMatrixContainer.Children.Add(corner);
@@ -387,22 +397,25 @@ public partial class MainWindow : Window
         {
             var header = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(4),
                 Margin = new Thickness(1)
             };
-            header.Child = new TextBlock
+            header.SetResourceReference(Border.BackgroundProperty, "MatrixHeaderBg");
+            header.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var headerText = new TextBlock
             {
                 Text = _alternatives[j].Id,
                 ToolTip = _alternatives[j].Name,
                 FontWeight = FontWeights.Bold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
+            headerText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            header.Child = headerText;
+
             Grid.SetRow(header, 0);
             Grid.SetColumn(header, j + 1);
             GridAltMatrixContainer.Children.Add(header);
@@ -414,22 +427,25 @@ public partial class MainWindow : Window
             // Row header
             var rowHeader = new Border
             {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC")),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1")),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(8, 4, 8, 4),
                 Margin = new Thickness(1)
             };
-            rowHeader.Child = new TextBlock
+            rowHeader.SetResourceReference(Border.BackgroundProperty, "MatrixRowHeaderBg");
+            rowHeader.SetResourceReference(Border.BorderBrushProperty, "BorderColor");
+
+            var rowHeaderText = new TextBlock
             {
                 Text = $"{_alternatives[i].Id} - {_alternatives[i].Name}",
                 ToolTip = _alternatives[i].Description,
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+            rowHeaderText.SetResourceReference(TextBlock.ForegroundProperty, "TextDark");
+            rowHeader.Child = rowHeaderText;
+
             Grid.SetRow(rowHeader, i + 1);
             Grid.SetColumn(rowHeader, 0);
             GridAltMatrixContainer.Children.Add(rowHeader);
@@ -451,8 +467,6 @@ public partial class MainWindow : Window
                 {
                     tb.IsReadOnly = true;
                     tb.Text = "1";
-                    tb.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
-                    tb.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
                 }
                 else
                 {
@@ -488,7 +502,7 @@ public partial class MainWindow : Window
             {
                 altMatrix.SetComparison(row, col, val);
                 tb.Text = ComparisonMatrix.FormatSaatyValue(val);
-                tb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
 
                 // Sync reciprocal cell
                 if (_altTextBoxes != null && row < _altTextBoxes.GetLength(0) && col < _altTextBoxes.GetLength(1))
@@ -497,7 +511,7 @@ public partial class MainWindow : Window
                     if (recipTb != null)
                     {
                         recipTb.Text = ComparisonMatrix.FormatSaatyValue(1.0 / val);
-                        recipTb.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+                        recipTb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
                     }
                 }
 
@@ -510,7 +524,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            tb.BorderBrush = (SolidColorBrush)FindResource("DangerRed");
+            tb.SetResourceReference(TextBox.BorderBrushProperty, "DangerRed");
         }
     }
 
@@ -535,17 +549,17 @@ public partial class MainWindow : Window
 
         if (result.IsConsistent)
         {
-            PillAltStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
-            PillAltStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
+            PillAltStatus.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
+            PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
             TxtAltStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= 10%)";
-            TxtAltStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
+            TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
         }
         else
         {
-            PillAltStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
-            PillAltStatus.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
+            PillAltStatus.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
+            PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
             TxtAltStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > 10%)";
-            TxtAltStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+            TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
         }
     }
 
@@ -788,12 +802,18 @@ public partial class MainWindow : Window
     {
         MenuThemeLight.IsChecked = true;
         MenuThemeDark.IsChecked = false;
+        ThemeService.ApplyTheme(AppTheme.Light);
+        BuildAlternativesCriteriaSelector();
+        UpdateAllDiagnostics();
     }
 
     private void MenuThemeDark_Click(object sender, RoutedEventArgs e)
     {
         MenuThemeDark.IsChecked = true;
         MenuThemeLight.IsChecked = false;
+        ThemeService.ApplyTheme(AppTheme.Dark);
+        BuildAlternativesCriteriaSelector();
+        UpdateAllDiagnostics();
     }
 
     private void MenuHelpAbout_Click(object sender, RoutedEventArgs e)

@@ -4,18 +4,67 @@
              xmlns:local="clr-namespace:MAI"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Modern Colors matching Lab1 -->
+        <!-- Light Theme default palette -->
+        <SolidColorBrush x:Key="AppBackground" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="TextDark" Color="#0F172A"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
         <SolidColorBrush x:Key="PrimaryBlue" Color="#2563EB"/>
         <SolidColorBrush x:Key="PrimaryBlueHover" Color="#1D4ED8"/>
         <SolidColorBrush x:Key="PrimaryBluePressed" Color="#1E40AF"/>
-        <SolidColorBrush x:Key="TextDark" Color="#0F172A"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
-        <SolidColorBrush x:Key="BorderColor" Color="#E2E8F0"/>
-        <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="AppBackground" Color="#F8FAFC"/>
         <SolidColorBrush x:Key="SuccessGreen" Color="#059669"/>
         <SolidColorBrush x:Key="WarningOrange" Color="#D97706"/>
         <SolidColorBrush x:Key="DangerRed" Color="#DC2626"/>
+
+        <SolidColorBrush x:Key="SecondaryBtnBg" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="SecondaryBtnFg" Color="#334155"/>
+        <SolidColorBrush x:Key="SecondaryBtnBorder" Color="#CBD5E1"/>
+        <SolidColorBrush x:Key="SecondaryBtnHoverBg" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="SecondaryBtnPressedBg" Color="#CBD5E1"/>
+
+        <SolidColorBrush x:Key="TabItemBg" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="TabItemSelectedBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TabItemHoverBg" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="TabItemFg" Color="#64748B"/>
+        <SolidColorBrush x:Key="TabItemBorder" Color="#CBD5E1"/>
+
+        <SolidColorBrush x:Key="MatrixContainerBg" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="MatrixHeaderBg" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="MatrixHeaderFg" Color="#475569"/>
+        <SolidColorBrush x:Key="MatrixRowHeaderBg" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="MatrixInputBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="MatrixInputFocusedBg" Color="#EFF6FF"/>
+        <SolidColorBrush x:Key="MatrixInputReadOnlyBg" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="MatrixInputReadOnlyFg" Color="#64748B"/>
+        <SolidColorBrush x:Key="InputBorder" Color="#CBD5E1"/>
+
+        <SolidColorBrush x:Key="DataGridRowBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="DataGridAltRowBg" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="DataGridHeaderBg" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="DataGridHeaderFg" Color="#475569"/>
+        <SolidColorBrush x:Key="DataGridGridLine" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="DataGridSelectedBg" Color="#EFF6FF"/>
+        <SolidColorBrush x:Key="DataGridSelectedFg" Color="#1E40AF"/>
+
+        <SolidColorBrush x:Key="BannerBg" Color="#EFF6FF"/>
+        <SolidColorBrush x:Key="BannerBorder" Color="#BFDBFE"/>
+        <SolidColorBrush x:Key="BannerTitle" Color="#1E3A8A"/>
+        <SolidColorBrush x:Key="BannerSubtitle" Color="#475569"/>
+
+        <SolidColorBrush x:Key="BadgeBg" Color="#DBEAFE"/>
+        <SolidColorBrush x:Key="BadgeFg" Color="#1E40AF"/>
+
+        <SolidColorBrush x:Key="PillConsistentBg" Color="#DCFCE7"/>
+        <SolidColorBrush x:Key="PillConsistentBorder" Color="#86EFAC"/>
+        <SolidColorBrush x:Key="PillConsistentFg" Color="#15803D"/>
+        <SolidColorBrush x:Key="PillInconsistentBg" Color="#FEE2E2"/>
+        <SolidColorBrush x:Key="PillInconsistentBorder" Color="#FCA5A5"/>
+        <SolidColorBrush x:Key="PillInconsistentFg" Color="#B91C1C"/>
+
+        <SolidColorBrush x:Key="MenuBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="MenuFg" Color="#1E293B"/>
+        <SolidColorBrush x:Key="MenuHoverBg" Color="#F1F5F9"/>
 
         <!-- Base TextBlock Style -->
         <Style TargetType="TextBlock">
@@ -25,13 +74,31 @@
         <!-- Base Label Style -->
         <Style TargetType="Label">
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Menu Bar Style -->
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+        </Style>
+
+        <!-- MenuItem Style -->
+        <Style TargetType="MenuItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+        </Style>
+
+        <!-- Separator Style -->
+        <Style TargetType="Separator">
+            <Setter Property="Background" Value="{DynamicResource BorderColor}"/>
+            <Setter Property="Margin" Value="0,2"/>
         </Style>
 
         <!-- Modern Primary Button -->
         <Style x:Key="PrimaryBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource PrimaryBlue}"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryBlue}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
@@ -47,10 +114,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBlueHover}"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource PrimaryBlueHover}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBluePressed}"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource PrimaryBluePressed}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#94A3B8"/>
@@ -64,15 +131,15 @@
 
         <!-- Secondary Button -->
         <Style x:Key="SecondaryBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="#F1F5F9"/>
-            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Background" Value="{DynamicResource SecondaryBtnBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryBtnFg}"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SecondaryBtnBorder}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -81,10 +148,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SecondaryBtnHoverBg}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#CBD5E1"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SecondaryBtnPressedBg}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -94,21 +161,13 @@
 
         <!-- Accent Action Button -->
         <Style x:Key="SuccessBtnStyle" TargetType="Button" BasedOn="{StaticResource PrimaryBtnStyle}">
-            <Setter Property="Background" Value="#059669"/>
+            <Setter Property="Background" Value="{DynamicResource SuccessGreen}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#047857"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#065F46"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -123,25 +182,25 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="TabBorder" Background="#E2E8F0" Margin="0,0,4,0" CornerRadius="8,8,0,0" Padding="{TemplateBinding Padding}" BorderThickness="1,1,1,0" BorderBrush="#CBD5E1">
+                        <Border x:Name="TabBorder" Background="{DynamicResource TabItemBg}" Margin="0,0,4,0" CornerRadius="8,8,0,0" Padding="{TemplateBinding Padding}" BorderThickness="1,1,1,0" BorderBrush="{DynamicResource TabItemBorder}">
                             <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="TabBorder" Property="Background" Value="#FFFFFF"/>
-                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#CBD5E1"/>
-                                <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource CardBg}"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="False">
-                                <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TabItemFg}"/>
                             </Trigger>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
                                     <Condition Property="IsSelected" Value="False"/>
                                     <Condition Property="IsMouseOver" Value="True"/>
                                 </MultiTrigger.Conditions>
-                                <Setter TargetName="TabBorder" Property="Background" Value="#F1F5F9"/>
-                                <Setter Property="Foreground" Value="#1E293B"/>
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource TabItemHoverBg}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -151,9 +210,9 @@
 
         <!-- Modern Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
             <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="18"/>
             <Setter Property="Margin" Value="0,0,0,14"/>
@@ -172,20 +231,20 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="Background" Value="{DynamicResource MatrixInputBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
             <Setter Property="Padding" Value="2"/>
             <Style.Triggers>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                     <Setter Property="BorderThickness" Value="1.5"/>
-                    <Setter Property="Background" Value="#EFF6FF"/>
+                    <Setter Property="Background" Value="{DynamicResource MatrixInputFocusedBg}"/>
                 </Trigger>
                 <Trigger Property="IsReadOnly" Value="True">
-                    <Setter Property="Background" Value="#F8FAFC"/>
-                    <Setter Property="Foreground" Value="#64748B"/>
+                    <Setter Property="Background" Value="{DynamicResource MatrixInputReadOnlyBg}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource MatrixInputReadOnlyFg}"/>
                     <Setter Property="FontWeight" Value="Medium"/>
                 </Trigger>
             </Style.Triggers>
@@ -193,13 +252,14 @@
 
         <!-- Modern DataGrid Style -->
         <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="RowBackground" Value="#FFFFFF"/>
-            <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+            <Setter Property="RowBackground" Value="{DynamicResource DataGridRowBg}"/>
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource DataGridAltRowBg}"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource DataGridGridLine}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="RowHeight" Value="34"/>
             <Setter Property="CanUserAddRows" Value="False"/>
@@ -209,6 +269,7 @@
 
         <Style TargetType="DataGridCell">
             <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
@@ -220,19 +281,19 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#EFF6FF"/>
-                    <Setter Property="Foreground" Value="#1E40AF"/>
+                    <Setter Property="Background" Value="{DynamicResource DataGridSelectedBg}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource DataGridSelectedFg}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#F1F5F9"/>
-            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="Background" Value="{DynamicResource DataGridHeaderBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource DataGridHeaderFg}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
-            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
             <Setter Property="Height" Value="36"/>
         </Style>
     </Application.Resources>

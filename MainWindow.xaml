@@ -6,123 +6,14 @@
         xmlns:local="clr-namespace:MAI"
         mc:Ignorable="d"
         Title="Метод аналізу ієрархій Томаса Сааті (МАІ / AHP)" 
-        Height="810" Width="1080"
+        Height="820" Width="1080"
         MinHeight="650" MinWidth="960"
         WindowStartupLocation="CenterScreen"
-        Background="#F8FAFC">
-
-    <Window.Resources>
-        <SolidColorBrush x:Key="PrimaryBlue" Color="#2563EB"/>
-        <SolidColorBrush x:Key="PrimaryBlueHover" Color="#1D4ED8"/>
-        <SolidColorBrush x:Key="PrimaryBluePressed" Color="#1E40AF"/>
-        <SolidColorBrush x:Key="TextDark" Color="#0F172A"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
-        <SolidColorBrush x:Key="BorderColor" Color="#E2E8F0"/>
-        <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="DangerRed" Color="#DC2626"/>
-
-        <Style TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-        </Style>
-
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BorderBrush" Value="#E2E8F0"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="18"/>
-            <Setter Property="Margin" Value="0,0,0,14"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.05"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="PrimaryBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource PrimaryBlue}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Padding" Value="18,6"/>
-            <Setter Property="Height" Value="34"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBlueHover}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBluePressed}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SecondaryBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="#F1F5F9"/>
-            <Setter Property="Foreground" Value="#334155"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="12,5"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="MatrixInputStyle" TargetType="TextBox">
-            <Setter Property="Width" Value="72"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="Foreground" Value="#0F172A"/>
-            <Setter Property="Padding" Value="2"/>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
-                    <Setter Property="BorderThickness" Value="1.5"/>
-                    <Setter Property="Background" Value="#EFF6FF"/>
-                </Trigger>
-                <Trigger Property="IsReadOnly" Value="True">
-                    <Setter Property="Background" Value="#F8FAFC"/>
-                    <Setter Property="Foreground" Value="#64748B"/>
-                    <Setter Property="FontWeight" Value="Medium"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </Window.Resources>
+        Background="{DynamicResource AppBackground}">
 
     <DockPanel>
         <!-- Top Menu Bar -->
-        <Menu DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,4" FontSize="13">
+        <Menu DockPanel.Dock="Top" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4" FontSize="13">
             <!-- Menu "Файл" -->
             <MenuItem Header="_Файл">
                 <MenuItem Header="_Зберегти задачу як..." InputGestureText="Ctrl+S" Click="MenuFileSaveAs_Click">
@@ -185,7 +76,7 @@
             </Grid.RowDefinitions>
 
         <!-- Top Header & Presets Bar -->
-        <Border Grid.Row="0" CornerRadius="12" Padding="20,16" Margin="0,0,0,16" BorderThickness="1" Background="#FFFFFF" BorderBrush="#E2E8F0">
+        <Border Grid.Row="0" CornerRadius="12" Padding="20,16" Margin="0,0,0,16" BorderThickness="1" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.04"/>
             </Border.Effect>
@@ -197,12 +88,12 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="#DBEAFE" CornerRadius="6" Padding="6,4" Margin="0,2,8,0">
-                            <TextBlock Text="AHP • МАІ" FontSize="11" FontWeight="Bold" Foreground="#1E40AF"/>
+                        <Border Background="{DynamicResource BadgeBg}" CornerRadius="6" Padding="6,4" Margin="0,2,8,0">
+                            <TextBlock Text="AHP • МАІ" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource BadgeFg}"/>
                         </Border>
-                        <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="#0F172A"/>
+                        <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                     </StackPanel>
-                    <TextBlock Text="Системний аналіз та теорія прийняття рішень • .NET 10 WPF Application" FontSize="12" Foreground="#64748B" Margin="0,3,0,0"/>
+                    <TextBlock Text="Системний аналіз та теорія прийняття рішень • .NET 10 WPF Application" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
                 </StackPanel>
 
                 <!-- Preset Toolbar -->
@@ -231,7 +122,7 @@
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
                                         <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
-                                        <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="#2563EB" HorizontalAlignment="Right"/>
+                                        <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
                                     <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
 
@@ -272,7 +163,7 @@
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
                                         <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
-                                        <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="#2563EB" HorizontalAlignment="Right"/>
+                                        <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
                                     <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
 
@@ -319,16 +210,16 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                        <TextBlock Text="• 1 — Однакова важливість (рівні умови)" FontSize="12" Foreground="#334155" Margin="0,2"/>
-                                        <TextBlock Text="• 3 — Помірна перевага одного над іншим" FontSize="12" Foreground="#334155" Margin="0,2"/>
-                                        <TextBlock Text="• 5 — Суттєва (сильна) перевага" FontSize="12" Foreground="#334155" Margin="0,2"/>
-                                        <TextBlock Text="• 7 — Значна (очевидна) перевага" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                        <TextBlock Text="• 1 — Однакова важливість (рівні умови)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="• 3 — Помірна перевага одного над іншим" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="• 5 — Суттєва (сильна) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="• 7 — Значна (очевидна) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="• 9 — Абсолютна (найвища можлива) перевага" FontSize="12" Foreground="#334155" Margin="0,2"/>
-                                        <TextBlock Text="• 2, 4, 6, 8 — Проміжні компромісні градації" FontSize="12" Foreground="#334155" Margin="0,2"/>
-                                        <TextBlock Text="• 1/2, 1/3, ..., 1/9 — Обернені оцінки (перевага стовпця над рядком)" FontSize="12" Foreground="#334155" Margin="0,2"/>
-                                        <TextBlock Text="💡 Порада: вводьте числа або дроби (наприклад 3 або 1/3). Симетричні клітинки заповнюються автоматично." FontSize="11" FontWeight="SemiBold" Foreground="#2563EB" Margin="0,4,0,0"/>
+                                        <TextBlock Text="• 9 — Абсолютна (найвища можлива) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="• 2, 4, 6, 8 — Проміжні компромісні градації" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="• 1/2, 1/3, ..., 1/9 — Обернені оцінки (перевага стовпця над рядком)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="💡 Порада: вводьте числа або дроби (наприклад 3 або 1/3). Симетричні клітинки заповнюються автоматично." FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -356,20 +247,20 @@
                                     </StackPanel>
 
                                     <!-- Quick Status Pill -->
-                                    <Border Grid.Column="1" x:Name="PillCritStatus" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="#15803D"/>
+                                    <Border Grid.Column="1" x:Name="PillCritStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
                                     </Border>
                                 </Grid>
 
                                 <!-- Dynamic Matrix Container -->
-                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                                <Border Background="{DynamicResource MatrixContainerBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                         <Grid x:Name="GridCritMatrixContainer"/>
                                     </ScrollViewer>
                                 </Border>
 
                                 <!-- Live Weights & Diagnostics -->
-                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -377,13 +268,13 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Розраховані ваги критеріїв (Вектор w):" FontSize="13" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="#2563EB" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Розраховані ваги критеріїв (Вектор w):" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
-                                            <TextBlock x:Name="TxtCritLambdaCI" Text="λmax = 4.0458 | CI = 0.0153" FontSize="12" Foreground="#64748B"/>
-                                            <TextBlock x:Name="TxtCritRIRatio" Text="RI(табл) = 0.90 | CR = 0.0170 (1.7%)" FontSize="12" FontWeight="SemiBold" Foreground="#059669"/>
+                                            <TextBlock x:Name="TxtCritLambdaCI" Text="λmax = 4.0458 | CI = 0.0153" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                            <TextBlock x:Name="TxtCritRIRatio" Text="RI(табл) = 0.90 | CR = 0.0170 (1.7%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SuccessGreen}"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -411,8 +302,8 @@
                                     </StackPanel>
 
                                     <!-- Quick Status Pill for Alternative Matrix -->
-                                    <Border Grid.Column="1" x:Name="PillAltStatus" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="#15803D"/>
+                                    <Border Grid.Column="1" x:Name="PillAltStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
                                     </Border>
                                 </Grid>
 
@@ -420,14 +311,14 @@
                                 <WrapPanel x:Name="PanelCritSelectors" Margin="0,0,0,12"/>
 
                                 <!-- Dynamic Matrix Container for Alternatives -->
-                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                                <Border Background="{DynamicResource MatrixContainerBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                         <Grid x:Name="GridAltMatrixContainer"/>
                                     </ScrollViewer>
                                 </Border>
 
                                 <!-- Live Local Priorities for selected criterion -->
-                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -435,13 +326,13 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock x:Name="TxtAltLocalPriTitle" Text="Локальні пріоритети альтернатив за обраним критерієм:" FontSize="13" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="#2563EB" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TxtAltLocalPriTitle" Text="Локальні пріоритети альтернатив за обраним критерієм:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
-                                            <TextBlock x:Name="TxtAltLambdaCI" Text="λmax = 5.1248 | CI = 0.0312" FontSize="12" Foreground="#64748B"/>
-                                            <TextBlock x:Name="TxtAltRIRatio" Text="RI = 1.12 | CR = 0.0278 (2.8%)" FontSize="12" FontWeight="SemiBold" Foreground="#059669"/>
+                                            <TextBlock x:Name="TxtAltLambdaCI" Text="λmax = 5.1248 | CI = 0.0312" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                            <TextBlock x:Name="TxtAltRIRatio" Text="RI = 1.12 | CR = 0.0278 (2.8%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SuccessGreen}"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -453,7 +344,7 @@
         </TabControl>
 
         <!-- Bottom Action Bar -->
-        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="16,12">
+        <Border Grid.Row="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="10" Padding="16,12">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.04"/>
             </Border.Effect>
@@ -464,8 +355,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
-                    <TextBlock Text="Натисніть кнопку праворуч для відкриття компактних та детальних результатів ієрархічного вибору." FontSize="11" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
+                    <TextBlock Text="Натисніть кнопку праворуч для відкриття компактних та детальних результатів ієрархічного вибору." FontSize="11" Foreground="{DynamicResource TextMuted}"/>
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="🚀 Розрахувати та показати результати" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>

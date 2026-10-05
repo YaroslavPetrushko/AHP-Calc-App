@@ -70,6 +70,20 @@ public partial class ResultsWindow : Window
         InitSynthesisDataGrid();
         InitConsistencyDataGrid();
         InitMatrixSelector();
+
+        ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged(AppTheme theme)
+    {
+        InitHeaderAndBadges();
+        InitRankingsList();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
+        base.OnClosed(e);
     }
 
     private void InitHeaderAndBadges()
@@ -88,20 +102,21 @@ public partial class ResultsWindow : Window
 
         if (_result.IsHierarchyConsistent)
         {
-            BadgeConsistency.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
-            BadgeConsistency.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
-            TxtHierarchicalCR.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
+            BadgeConsistency.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
+            BadgeConsistency.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
+            TxtHierarchicalCR.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
         }
         else
         {
-            BadgeConsistency.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
-            BadgeConsistency.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5"));
-            TxtHierarchicalCR.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+            BadgeConsistency.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
+            BadgeConsistency.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
+            TxtHierarchicalCR.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
         }
     }
 
     private void InitRankingsList()
     {
+        bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
         var items = _result.RankedAlternatives.Select(a =>
         {
             double pct = a.GlobalPriority * 100.0;
@@ -116,29 +131,29 @@ public partial class ResultsWindow : Window
                 PriorityPercentText = $"{pct:F1}% ({a.GlobalPriority:F3})",
                 RankBackground = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB")),
-                    3 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#10B981" : "#059669")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#3B82F6" : "#2563EB")),
+                    3 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#60A5FA" : "#3B82F6")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#64748B" : "#94A3B8"))
                 },
                 RankForeground = Brushes.White,
                 BarBrush = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#10B981" : "#059669")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#3B82F6" : "#2563EB")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#60A5FA" : "#60A5FA"))
                 },
                 BadgeBackground = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DBEAFE")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#064E3B" : "#DCFCE7")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#1E3A8A" : "#DBEAFE")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#334155" : "#F1F5F9"))
                 },
                 BadgeForeground = a.Rank switch
                 {
-                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D")),
-                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1D4ED8")),
-                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569"))
+                    1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#6EE7B7" : "#15803D")),
+                    2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#93C5FD" : "#1D4ED8")),
+                    _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#CBD5E1" : "#475569"))
                 },
                 BadgeText = a.Rank switch
                 {
