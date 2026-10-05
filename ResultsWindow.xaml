@@ -56,7 +56,7 @@
         <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,0,0,12">
             <!-- TAB 1: Компактні результати -->
             <TabItem Header="📊 Компактний підсумок (Рейтинг)">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,2,0,0">
                     <StackPanel>
                         <!-- Card 1: Leaderboard Table -->
                         <Border Style="{StaticResource CardStyle}">
@@ -149,7 +149,7 @@
 
             <!-- TAB 2: Детальний аналіз та матриці -->
             <TabItem Header="🔬 Детальний аналіз та матриці">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,2,0,0">
                     <StackPanel>
                         <!-- Synthesis Matrix Card -->
                         <Border Style="{StaticResource CardStyle}">

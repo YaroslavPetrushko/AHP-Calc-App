@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:MAI"
         mc:Ignorable="d"
         Title="Метод аналізу ієрархій Томаса Сааті (МАІ / AHP)" 
-        Height="820" Width="1080"
+        Height="810" Width="1080"
         MinHeight="650" MinWidth="960"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource AppBackground}">
@@ -42,19 +42,19 @@
 
             <!-- Menu "Налаштування" -->
             <MenuItem Header="_Налаштування">
-                <MenuItem Header="Розрахунок _RI" Padding="0,3,0,3">
+                <MenuItem Header="Розрахунок _RI">
                     <MenuItem.Icon>
                         <TextBlock Text="⚙️" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem x:Name="MenuSettingsRiTable" Header="Табличне значення Сааті" IsCheckable="True" IsChecked="True" Padding="0,3,0,3" Click="MenuSettingsRiTable_Click"/>
-                    <MenuItem x:Name="MenuSettingsRiEmpirical" Header="Емпірична формула (1.98 · (n-2) / n)" IsCheckable="True" IsChecked="False" Padding="0,3,0,3" Click="MenuSettingsRiEmpirical_Click"/>
+                    <MenuItem x:Name="MenuSettingsRiTable" Header="Табличне значення Сааті" IsCheckable="True" IsChecked="True" Click="MenuSettingsRiTable_Click"/>
+                    <MenuItem x:Name="MenuSettingsRiEmpirical" Header="Емпірична формула (1.98 · (n-2) / n)" IsCheckable="True" IsChecked="False" Click="MenuSettingsRiEmpirical_Click"/>
                 </MenuItem>
-                <MenuItem Header="_Тема оформлення" Padding="0,3,0,3">
+                <MenuItem Header="_Тема оформлення">
                     <MenuItem.Icon>
                         <TextBlock Text="🎨" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem x:Name="MenuThemeLight" Header="☀️ Світла" IsCheckable="True" IsChecked="True" Padding="0,3,0,3" Click="MenuThemeLight_Click"/>
-                    <MenuItem x:Name="MenuThemeDark" Header="🌙 Темна" IsCheckable="True" IsChecked="False" Padding="0,3,0,3" Click="MenuThemeDark_Click"/>
+                    <MenuItem x:Name="MenuThemeLight" Header="☀️ Світла" IsCheckable="True" IsChecked="True" Click="MenuThemeLight_Click"/>
+                    <MenuItem x:Name="MenuThemeDark" Header="🌙 Темна" IsCheckable="True" IsChecked="False" Click="MenuThemeDark_Click"/>
                 </MenuItem>
             </MenuItem>
 
@@ -106,12 +106,12 @@
         </Border>
 
         <!-- Main Navigation Tabs -->
-        <TabControl Grid.Row="1" x:Name="MainTabControl" Background="Transparent" BorderThickness="0" Margin="0,0,0,14" SelectionChanged="MainTabControl_SelectionChanged">
+        <TabControl Grid.Row="1" x:Name="MainTabControl" Background="Transparent" BorderThickness="0" Margin="0,0,0,10" SelectionChanged="MainTabControl_SelectionChanged">
             <!-- TAB 1: Критерії та Альтернативи -->
             <TabItem Header="1. Критерії та Альтернативи">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
                     <StackPanel>
-                        <Grid Margin="0,0,0,14">
+                        <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
@@ -121,12 +121,13 @@
                             <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                        <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridCriteria" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                                              HeadersVisibility="Column" RowHeaderWidth="0"
                                               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
@@ -162,12 +163,13 @@
                             <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                        <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8)." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridAlternatives" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                                              HeadersVisibility="Column" RowHeaderWidth="0"
                                               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
@@ -203,7 +205,7 @@
                         <!-- Saaty Scale Reference Card -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Довідка: Фундаментальна 9-бальна шкала важливості Сааті" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Довідка: Фундаментальна 9-бальна шкала важливості Сааті" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -230,7 +232,7 @@
 
             <!-- TAB 2: Порівняння критеріїв -->
             <TabItem Header="2. Порівняння критеріїв">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
                     <StackPanel>
                         <!-- Criteria Matrix Card -->
                         <Border Style="{StaticResource CardStyle}">
@@ -242,8 +244,8 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Матриця попарних порівнянь критеріїв" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
-                                        <TextBlock Text="Вкажіть перевагу критерію в лівому рядку над критерієм у верхньому стовпці." FontSize="12" Foreground="{StaticResource TextMuted}"/>
+                                        <TextBlock Text="Матриця попарних порівнянь критеріїв" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="Вкажіть перевагу критерію в лівому рядку над критерієм у верхньому стовпці." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
                                     <!-- Quick Status Pill -->
@@ -286,7 +288,7 @@
 
             <!-- TAB 3: Оцінка альтернатив -->
             <TabItem Header="3. Оцінка альтернатив">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
                     <StackPanel>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
@@ -297,8 +299,8 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Матриці попарних порівнянь альтернатив" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
-                                        <TextBlock Text="Оберіть критерій та заповніть попарні оцінки альтернатив за ним." FontSize="12" Foreground="{StaticResource TextMuted}"/>
+                                        <TextBlock Text="Матриці попарних порівнянь альтернатив" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="Оберіть критерій та заповніть попарні оцінки альтернатив за ним." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
                                     <!-- Quick Status Pill for Alternative Matrix -->
@@ -344,7 +346,7 @@
         </TabControl>
 
         <!-- Bottom Action Bar -->
-        <Border Grid.Row="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="10" Padding="16,12">
+        <Border Grid.Row="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="10" Padding="16,8">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.04"/>
             </Border.Effect>
