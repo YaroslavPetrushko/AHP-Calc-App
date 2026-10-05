@@ -7,6 +7,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
+        Icon="Resources/app_icon.ico"
         Background="{DynamicResource AppBackground}">
     <Border Padding="20">
         <StackPanel>
@@ -20,7 +21,7 @@
 
                     <!-- Icon / Badge -->
                     <Border Grid.Column="0" Width="46" Height="46" CornerRadius="10" Background="{DynamicResource BadgeBg}" Margin="0,0,14,0" VerticalAlignment="Center">
-                        <TextBlock Text="📊" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="Resources/app_icon.png" Width="36" Height="36" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
 
                     <!-- Title & Discipline -->

@@ -9,6 +9,7 @@
         Height="750" Width="1100"
         MinHeight="620" MinWidth="960"
         WindowStartupLocation="CenterOwner"
+        Icon="Resources/app_icon.ico"
         Background="{DynamicResource AppBackground}">
 
     <Grid Margin="20">

@@ -9,6 +9,7 @@
         Height="810" Width="1080"
         MinHeight="650" MinWidth="960"
         WindowStartupLocation="CenterScreen"
+        Icon="Resources/app_icon.ico"
         Background="{DynamicResource AppBackground}">
 
     <DockPanel>
