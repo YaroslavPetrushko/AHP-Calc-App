@@ -1,0 +1,91 @@
+name: Build & Release Portable App
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.1.0)'
+        required: false
+        default: 'v1.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Determine Version
+        id: get_version
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $ver = "${{ github.ref_name }}"
+          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch" -and "${{ github.event.inputs.version }}" -ne "") {
+            $ver = "${{ github.event.inputs.version }}"
+          } else {
+            [xml]$proj = Get-Content MAI.csproj
+            $nodeVer = $proj.Project.PropertyGroup.Version
+            if ($nodeVer) {
+              $ver = "v$nodeVer"
+            } else {
+              $ver = "v1.1.0"
+            }
+          }
+          Write-Host "Resolved release version: $ver"
+          "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore MAI.csproj
+
+      - name: Publish Self-Contained Single-File Executable
+        shell: pwsh
+        run: |
+          $cleanVer = "${{ steps.get_version.outputs.VERSION }}".TrimStart('v')
+          dotnet publish MAI.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:Version=$cleanVer `
+            -p:FileVersion=$cleanVer.0 `
+            -p:AssemblyVersion=$cleanVer.0 `
+            -o ./publish
+
+      - name: Package Portable ZIP Archive
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.get_version.outputs.VERSION }}"
+          $archiveName = "AHP_Decision_Support_System_${ver}_win-x64.zip"
+          Compress-Archive -Path "./publish/MAI.exe" -DestinationPath "./$archiveName"
+          Write-Host "Archive created: $archiveName"
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }} - AHP Decision Support System
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ./publish/MAI.exe
+            ./*.zip
