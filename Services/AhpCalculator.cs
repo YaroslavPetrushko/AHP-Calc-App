@@ -7,6 +7,7 @@ namespace MAI.Services;
 
 /// <summary>
 /// Математичне ядро методу аналізу ієрархій (МАІ) Томаса Сааті.
+/// Підтримує різні профілі та методи розрахунку ваг і показників узгодженості (ЛР №4, Класичний Сааті).
 /// </summary>
 public static class AhpCalculator
 {
@@ -46,11 +47,95 @@ public static class AhpCalculator
     }
 
     /// <summary>
-    /// Обчислення локальних пріоритетів та характеристик узгодженості для однієї матриці Сааті.
+    /// Степеневий метод (Power Iteration) для знаходження головного власного вектора (пріоритетів)
+    /// та відповідного найбільшого власного числа lambda_max згідно з класичною теорією Т. Сааті.
+    /// A * w = lambda_max * w.
     /// </summary>
-    public static MatrixResult CalculateMatrix(ComparisonMatrix matrix, string matrixName = "", RiCalculationMode riMode = RiCalculationMode.SaatyTable)
+    public static (double[] Weights, double LambdaMax) CalculatePrincipalEigenvector(
+        double[,] a, int n, int maxIterations = 1000, double tolerance = 1e-12)
     {
+        if (n == 0) return ([], 0.0);
+        if (n == 1) return ([1.0], 1.0);
+
+        var w = Enumerable.Repeat(1.0 / n, n).ToArray();
+        double lambda = n;
+
+        for (int it = 0; it < maxIterations; it++)
+        {
+            var v = new double[n];
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    v[i] += a[i, j] * w[j];
+                }
+            }
+
+            double s = v.Sum();
+            if (s <= 0 || double.IsNaN(s) || double.IsInfinity(s)) break;
+
+            var next = new double[n];
+            for (int i = 0; i < n; i++) next[i] = v[i] / s;
+
+            double diff = 0.0;
+            for (int i = 0; i < n; i++)
+            {
+                double d = Math.Abs(next[i] - w[i]);
+                if (d > diff) diff = d;
+            }
+
+            w = next;
+            lambda = s;
+
+            if (diff < tolerance) break;
+        }
+
+        return (w, lambda);
+    }
+
+    /// <summary>
+    /// Розрахунок ваг методом середнього геометричного рядків (коренів n-го степеня / LLSM):
+    /// r_i = n-th root(prod_j a_ij), w_i = r_i / sum_k(r_k).
+    /// </summary>
+    public static double[] CalculateGeometricMeanWeights(double[,] a, int n)
+    {
+        if (n == 0) return [];
+        if (n == 1) return [1.0];
+
+        var w = new double[n];
+        double sum = 0.0;
+
+        for (int i = 0; i < n; i++)
+        {
+            double prod = 1.0;
+            for (int j = 0; j < n; j++)
+            {
+                prod *= a[i, j];
+            }
+            w[i] = Math.Pow(prod, 1.0 / n);
+            sum += w[i];
+        }
+
+        if (sum > 0)
+        {
+            for (int i = 0; i < n; i++) w[i] /= sum;
+        }
+
+        return w;
+    }
+
+    /// <summary>
+    /// Обчислення локальних пріоритетів та характеристик узгодженості для однієї матриці Сааті
+    /// згідно із заданими опціями розрахунку (AhpCalculationOptions).
+    /// </summary>
+    public static MatrixResult CalculateMatrix(
+        ComparisonMatrix matrix,
+        string matrixName = "",
+        AhpCalculationOptions? options = null)
+    {
+        var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
         int n = matrix.Size;
+
         var result = new MatrixResult
         {
             Name = matrixName,
@@ -59,7 +144,7 @@ public static class AhpCalculator
             Weights = new double[n],
             NormalizedMatrix = new double[n, n],
             ColumnSums = new double[n],
-            ActiveRiMode = riMode
+            Options = opts
         };
 
         if (n == 0) return result;
@@ -89,55 +174,131 @@ public static class AhpCalculator
             result.ColumnSums[j] = colSum;
         }
 
-        // 2. Нормалізація матриці та обчислення середніх по рядках (вектор ваг)
+        // 2. Нормалізація матриці (завжди виконується для візуалізації в таблицях)
         for (int i = 0; i < n; i++)
         {
-            double rowSumNorm = 0.0;
             for (int j = 0; j < n; j++)
             {
-                double normVal = result.ColumnSums[j] > 0
+                result.NormalizedMatrix[i, j] = result.ColumnSums[j] > 0
                     ? matrix.Values[i, j] / result.ColumnSums[j]
                     : 1.0 / n;
-                result.NormalizedMatrix[i, j] = normVal;
-                rowSumNorm += normVal;
             }
-            result.Weights[i] = rowSumNorm / n;
         }
 
-        // 3. Обчислення максимального власного числа lambda_max:
-        // v = A * w; lambda_i = v_i / w_i; lambda_max = average(lambda_i)
-        double lambdaSum = 0.0;
-        int validRows = 0;
-        for (int i = 0; i < n; i++)
+        // 3. Розрахунок вектора пріоритетів (ваг) згідно з обраним методом
+        double eigenLambda = n;
+        switch (opts.WeightMethod)
         {
-            double vi = 0.0;
-            for (int j = 0; j < n; j++)
-            {
-                vi += matrix.Values[i, j] * result.Weights[j];
-            }
+            case WeightCalculationMethod.ColumnNormalization:
+                for (int i = 0; i < n; i++)
+                {
+                    double rowSum = 0.0;
+                    for (int j = 0; j < n; j++) rowSum += result.NormalizedMatrix[i, j];
+                    result.Weights[i] = rowSum / n;
+                }
+                break;
 
-            if (result.Weights[i] > 1e-9)
-            {
-                lambdaSum += vi / result.Weights[i];
-                validRows++;
-            }
+            case WeightCalculationMethod.GeometricMean:
+                result.Weights = CalculateGeometricMeanWeights(matrix.Values, n);
+                break;
+
+            case WeightCalculationMethod.PrincipalEigenvector:
+            default:
+                var (eigenW, lam) = CalculatePrincipalEigenvector(matrix.Values, n);
+                result.Weights = eigenW;
+                eigenLambda = lam;
+                break;
         }
 
-        result.LambdaMax = validRows > 0 ? lambdaSum / validRows : n;
+        // 4. Обчислення найбільшого власного числа lambda_max
+        switch (opts.LambdaMethod)
+        {
+            case LambdaCalculationMethod.ColumnSumProduct:
+                // Метод Лабораторної роботи №4: lambda_max = sum(сума_стовпця_j * w_j)
+                double colProductSum = 0.0;
+                for (int j = 0; j < n; j++)
+                {
+                    colProductSum += result.ColumnSums[j] * result.Weights[j];
+                }
+                result.LambdaMax = colProductSum;
+                break;
 
-        // 4. Індекс узгодженості CI = (lambda_max - n) / (n - 1)
+            case LambdaCalculationMethod.RowRatioMean:
+                // Середнє відношень векторів: 1/n sum_i ((Aw)_i / w_i)
+                double ratioSum = 0.0;
+                int validRows = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    double vi = 0.0;
+                    for (int j = 0; j < n; j++)
+                    {
+                        vi += matrix.Values[i, j] * result.Weights[j];
+                    }
+
+                    if (result.Weights[i] > 1e-9)
+                    {
+                        ratioSum += vi / result.Weights[i];
+                        validRows++;
+                    }
+                }
+                result.LambdaMax = validRows > 0 ? ratioSum / validRows : n;
+                break;
+
+            case LambdaCalculationMethod.ExactEigenvalue:
+            default:
+                if (opts.WeightMethod == WeightCalculationMethod.PrincipalEigenvector)
+                {
+                    result.LambdaMax = eigenLambda;
+                }
+                else
+                {
+                    // Для sum(w)=1 сума (Aw)_i є точною оцінкою
+                    double vSum = 0.0;
+                    for (int i = 0; i < n; i++)
+                    {
+                        for (int j = 0; j < n; j++)
+                        {
+                            vSum += matrix.Values[i, j] * result.Weights[j];
+                        }
+                    }
+                    result.LambdaMax = vSum;
+                }
+                break;
+        }
+
+        // Захист: lambda_max не може бути строго менше n для зворотно-симетричної матриці Сааті
+        if (result.LambdaMax < n)
+        {
+            result.LambdaMax = n;
+        }
+
+        // 5. Індекс узгодженості CI = (lambda_max - n) / (n - 1)
         double ciRaw = (result.LambdaMax - n) / (n - 1);
         result.CI = Math.Max(0.0, ciRaw);
 
-        // 5. Випадкові індекси RI
+        // 6. Випадкові індекси RI
         result.RITable = GetRITable(n);
         result.RIEmpirical = GetRIEmpirical(n);
 
-        // 6. Коефіцієнт узгодженості CR = CI / RI
+        // 7. Коефіцієнти узгодженості CR = CI / RI
         result.CRTable = result.RITable > 0 ? result.CI / result.RITable : 0.0;
         result.CREmpirical = result.RIEmpirical > 0 ? result.CI / result.RIEmpirical : 0.0;
 
         return result;
+    }
+
+    /// <summary>
+    /// Перевантаження для зворотної сумісності (за RiCalculationMode).
+    /// </summary>
+    public static MatrixResult CalculateMatrix(
+        ComparisonMatrix matrix,
+        string matrixName,
+        RiCalculationMode riMode)
+    {
+        var opts = riMode == RiCalculationMode.Empirical
+            ? AhpCalculationOptions.Lab4Profile
+            : AhpCalculationOptions.ClassicSaatyProfile;
+        return CalculateMatrix(matrix, matrixName, opts);
     }
 
     /// <summary>
@@ -152,13 +313,15 @@ public static class AhpCalculator
         List<Alternative> alternatives,
         ComparisonMatrix criteriaMatrix,
         Dictionary<string, ComparisonMatrix> alternativeMatrices,
-        RiCalculationMode riMode = RiCalculationMode.SaatyTable)
+        AhpCalculationOptions? options = null)
     {
+        var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
+
         var ahpResult = new AhpResult
         {
             Criteria = criteria.Select(c => new Criterion(c.Id, c.Name, c.Description)).ToList(),
             Alternatives = alternatives.Select(a => new Alternative(a.Id, a.Name, a.Description)).ToList(),
-            ActiveRiMode = riMode
+            Options = opts
         };
 
         int critCount = criteria.Count;
@@ -168,7 +331,7 @@ public static class AhpCalculator
             return ahpResult;
 
         // 1. Розрахунок матриці критеріїв
-        var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв", riMode);
+        var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв", opts);
         ahpResult.CriteriaMatrixResult = critResult;
 
         for (int i = 0; i < critCount; i++)
@@ -177,7 +340,6 @@ public static class AhpCalculator
         }
 
         // 2. Розрахунок локальних пріоритетів альтернатив для кожного критерію
-        // L[altIndex, critIndex]
         double[,] localPriorities = new double[altCount, critCount];
 
         for (int j = 0; j < critCount; j++)
@@ -193,7 +355,7 @@ public static class AhpCalculator
                 throw new InvalidOperationException($"Розмірність матриці альтернатив для критерію «{crit.Name}» ({altMatrix.Size}) не відповідає кількості альтернатив ({altCount}).");
             }
 
-            var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}", riMode);
+            var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}", opts);
             ahpResult.AlternativeMatrixResults[crit.Id] = altResult;
 
             for (int i = 0; i < altCount; i++)
@@ -202,7 +364,7 @@ public static class AhpCalculator
             }
         }
 
-        // 3. Ієрархічний синтез глобальних пріоритетів
+        // 3. Ієрархічний синтез глобальних пріоритетів: P = L * w
         for (int i = 0; i < altCount; i++)
         {
             var alt = ahpResult.Alternatives[i];
@@ -267,5 +429,21 @@ public static class AhpCalculator
             : 0.0;
 
         return ahpResult;
+    }
+
+    /// <summary>
+    /// Перевантаження для зворотної сумісності (за RiCalculationMode).
+    /// </summary>
+    public static AhpResult SolveHierarchy(
+        List<Criterion> criteria,
+        List<Alternative> alternatives,
+        ComparisonMatrix criteriaMatrix,
+        Dictionary<string, ComparisonMatrix> alternativeMatrices,
+        RiCalculationMode riMode)
+    {
+        var opts = riMode == RiCalculationMode.Empirical
+            ? AhpCalculationOptions.Lab4Profile
+            : AhpCalculationOptions.ClassicSaatyProfile;
+        return SolveHierarchy(criteria, alternatives, criteriaMatrix, alternativeMatrices, opts);
     }
 }

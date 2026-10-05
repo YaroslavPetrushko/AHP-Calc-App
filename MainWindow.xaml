@@ -43,12 +43,31 @@
 
             <!-- Menu "Налаштування" -->
             <MenuItem Header="_Налаштування">
-                <MenuItem Header="Розрахунок _RI">
+                <MenuItem Header="_Профіль розрахунку">
                     <MenuItem.Icon>
-                        <TextBlock Text="⚙️" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock Text="🎯" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem x:Name="MenuSettingsRiTable" Header="Табличне значення Сааті" IsCheckable="True" IsChecked="True" Click="MenuSettingsRiTable_Click"/>
-                    <MenuItem x:Name="MenuSettingsRiEmpirical" Header="Емпірична формула (1.98 · (n-2) / n)" IsCheckable="True" IsChecked="False" Click="MenuSettingsRiEmpirical_Click"/>
+                    <MenuItem x:Name="MenuProfileLab4" Header="🔬 Еталон ЛР №4" IsCheckable="True" IsChecked="True" Click="MenuProfileLab4_Click"/>
+                    <MenuItem x:Name="MenuProfileClassic" Header="🏛️ Класичний метод Т. Сааті" IsCheckable="True" IsChecked="False" Click="MenuProfileClassic_Click"/>
+                    <MenuItem x:Name="MenuProfileCustom" Header="⚙️ Власний профіль (Custom)" IsCheckable="True" IsChecked="False" IsEnabled="False"/>
+                    <Separator/>
+                    <MenuItem Header="Метод розрахунку ваг">
+                        <MenuItem x:Name="MenuWeightColumnNorm" Header="Нормалізація стовпців (Column Normalization)" IsCheckable="True" Click="MenuWeightColumnNorm_Click"/>
+                        <MenuItem x:Name="MenuWeightGeometric" Header="Геометричне середнє (Geometric Mean / LLSM)" IsCheckable="True" Click="MenuWeightGeometric_Click"/>
+                        <MenuItem x:Name="MenuWeightPowerIteration" Header="Степеневий метод (Power Iteration / Сааті)" IsCheckable="True" Click="MenuWeightPowerIteration_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="Метод власного значення (λmax)">
+                        <MenuItem x:Name="MenuLambdaColSum" Header="Добуток сум стовпців: Σ(ColSum_j · w_j) [ЛР №4]" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
+                        <MenuItem x:Name="MenuLambdaExact" Header="Точне власне значення: (A·w)_i / w_i [Сааті]" IsCheckable="True" Click="MenuLambdaExact_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="Індекс випадкової узгодженості (RI)">
+                        <MenuItem x:Name="MenuRiEmpirical" Header="Емпірична формула: 1.98 · (n-2) / n" IsCheckable="True" Click="MenuRiEmpirical_Click"/>
+                        <MenuItem x:Name="MenuRiTable" Header="Табличне значення Сааті (RI table)" IsCheckable="True" Click="MenuRiTable_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="Поріг узгодженості (CR max)">
+                        <MenuItem x:Name="MenuThresholdUniform" Header="Фіксований 10% для всіх n (ЛР №4)" IsCheckable="True" Click="MenuThresholdUniform_Click"/>
+                        <MenuItem x:Name="MenuThresholdAdaptive" Header="Адаптивний Сааті (5% при n=3, 8% при n=4, 10% при n≥5)" IsCheckable="True" Click="MenuThresholdAdaptive_Click"/>
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Тема оформлення">
                     <MenuItem.Icon>
@@ -93,6 +112,9 @@
                             <TextBlock Text="AHP • МАІ" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource BadgeFg}"/>
                         </Border>
                         <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                        <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="6,4,0,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtActiveProfile" Text="Профіль: ЛР №4" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                        </Border>
                     </StackPanel>
                     <TextBlock Text="Системний аналіз та теорія прийняття рішень • .NET 10 WPF Application" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
                 </StackPanel>
@@ -359,7 +381,7 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
-                    <TextBlock Text="Натисніть кнопку праворуч для відкриття компактних та детальних результатів ієрархічного вибору." FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: Еталон ЛР №4 • Нормалізація стовпців • Σ(ColSum_j · w_j) • Емпіричний RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="🚀 Розрахувати та показати результати" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>

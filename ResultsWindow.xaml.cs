@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -98,8 +98,27 @@ public partial class ResultsWindow : Window
             TxtWinnerName.Text = "Не визначено";
         }
 
+        string profileName = _result.Options != null &&
+                             _result.Options.WeightMethod == WeightCalculationMethod.ColumnNormalization &&
+                             _result.Options.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
+                             _result.Options.RiMode == RiCalculationMode.Empirical &&
+                             _result.Options.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent
+                             ? "Еталон ЛР №4"
+                             : _result.Options != null &&
+                               _result.Options.WeightMethod == WeightCalculationMethod.PrincipalEigenvector &&
+                               _result.Options.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
+                               _result.Options.RiMode == RiCalculationMode.SaatyTable &&
+                               _result.Options.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive
+                               ? "Класичний метод Т. Сааті"
+                               : "Власний профіль (Custom)";
+
+        TxtBannerSubtitle.Text = $"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}";
+
         TxtHierarchicalCR.Text = $"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})";
-        TxtHierarchicalCR.ToolTip = $"Розрахунок за: {(_result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою (1.98·(n-2)/n)" : "таблицею Сааті")}\nCRh = {_result.ActiveHierarchicalCR:P2}";
+        string weightDesc = _result.Options?.WeightMethod.ToString() ?? "Default";
+        string lambdaDesc = _result.Options?.LambdaMethod.ToString() ?? "Default";
+        string riLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпірична формула (1.98·(n-2)/n)" : "таблиця Сааті";
+        TxtHierarchicalCR.ToolTip = $"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}";
 
         if (_result.IsHierarchyConsistent)
         {
@@ -213,9 +232,10 @@ public partial class ResultsWindow : Window
         }
 
         string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою Сааті" : "табличними значеннями Сааті";
+        string thresholdStr = $"{_result.HierarchyThreshold:P0}";
         string passFailStr = _result.IsHierarchyConsistent
-            ? "що задовольняє умову узгодженості (CRh ≤ 0.10). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень)."
-            : "що перевищує допустимий поріг 10% (CRh > 0.10). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.";
+            ? $"що задовольняє умову узгодженості (CRh ≤ {thresholdStr}). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень)."
+            : $"що перевищує допустимий поріг {thresholdStr} (CRh > {thresholdStr}). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.";
 
         sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
 
@@ -296,7 +316,7 @@ public partial class ResultsWindow : Window
             CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})",
             CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})",
             Status = crCrit.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = crCrit.IsConsistent ? $"CR <= 0.10 ({modeLabel})" : $"CR > 0.10 ({modeLabel})"
+            Verdict = crCrit.IsConsistent ? $"CR <= {crCrit.Threshold:P0} ({modeLabel})" : $"CR > {crCrit.Threshold:P0} ({modeLabel})"
         });
 
         // Матриці альтернатив
@@ -317,7 +337,7 @@ public partial class ResultsWindow : Window
                 CRTable = $"{res.CRTable:P1} ({res.CRTable:F3})",
                 CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F3})",
                 Status = res.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-                Verdict = res.IsConsistent ? $"CR <= 0.10 ({modeLabel})" : $"CR > 0.10 ({modeLabel})"
+                Verdict = res.IsConsistent ? $"CR <= {res.Threshold:P0} ({modeLabel})" : $"CR > {res.Threshold:P0} ({modeLabel})"
             });
         }
 
@@ -333,7 +353,7 @@ public partial class ResultsWindow : Window
             CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})",
             CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})",
             Status = _result.IsHierarchyConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = _result.IsHierarchyConsistent ? $"CRh <= 0.10 ({modeLabel})" : $"CRh > 0.10 ({modeLabel})"
+            Verdict = _result.IsHierarchyConsistent ? $"CRh <= {_result.HierarchyThreshold:P0} ({modeLabel})" : $"CRh > {_result.HierarchyThreshold:P0} ({modeLabel})"
         });
 
         GridConsistency.ItemsSource = list;

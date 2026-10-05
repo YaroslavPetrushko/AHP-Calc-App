@@ -29,7 +29,7 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <TextBlock Text="Підсумкові результати методу аналізу ієрархій" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource BannerTitle}"/>
-                    <TextBlock Text="Ієрархічний синтез за шкалою Сааті: Мета → Критерії → Альтернативи" FontSize="13" Foreground="{DynamicResource BannerSubtitle}" Margin="0,3,0,0"/>
+                    <TextBlock x:Name="TxtBannerSubtitle" Text="Ієрархічний синтез за шкалою Сааті: Мета → Критерії → Альтернативи" FontSize="13" Foreground="{DynamicResource BannerSubtitle}" Margin="0,3,0,0"/>
                 </StackPanel>
 
                 <!-- Winner & Consistency Badges -->

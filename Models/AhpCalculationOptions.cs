@@ -1,0 +1,164 @@
+namespace MAI.Models;
+
+/// <summary>
+/// Метод розрахунку вектора локальних пріоритетів (ваг) матриці Сааті.
+/// </summary>
+public enum WeightCalculationMethod
+{
+    /// <summary>
+    /// Нормалізація стовпців: a'_ij = a_ij / sum_k(a_kj), w_i = 1/n sum_j(a'_ij) (метод з ЛР №4).
+    /// </summary>
+    ColumnNormalization,
+
+    /// <summary>
+    /// Середнє геометричне елементів рядків (корені n-го степеня / LLSM):
+    /// r_i = n-th root(prod_j a_ij), w_i = r_i / sum_k(r_k).
+    /// </summary>
+    GeometricMean,
+
+    /// <summary>
+    /// Головний власний вектор за степеневим методом (класичний точний розв'язок Т. Сааті: A * w = lambda_max * w).
+    /// </summary>
+    PrincipalEigenvector
+}
+
+/// <summary>
+/// Метод обчислення максимального власного числа lambda_max.
+/// </summary>
+public enum LambdaCalculationMethod
+{
+    /// <summary>
+    /// Добуток сум стовпців вихідної матриці на вектор ваг: lambda_max = sum_j (ColumnSum_j * w_j) (метод з ЛР №4).
+    /// </summary>
+    ColumnSumProduct,
+
+    /// <summary>
+    /// Середнє арифметичне відношень елементів вектора Aw до w: lambda_max = 1/n sum_i ((Aw)_i / w_i).
+    /// </summary>
+    RowRatioMean,
+
+    /// <summary>
+    /// Точне власне число, отримане зі степеневого методу (Power Iteration).
+    /// </summary>
+    ExactEigenvalue
+}
+
+/// <summary>
+/// Режим порогу узгодженості для перевірки несуперечливості суджень (CR <= поріг).
+/// </summary>
+public enum ConsistencyThresholdMode
+{
+    /// <summary>
+    /// Класичний адаптивний поріг Т. Сааті: для n=3 CR <= 0.05, для n=4 CR <= 0.08, для n>=5 CR <= 0.10.
+    /// </summary>
+    SaatyAdaptive,
+
+    /// <summary>
+    /// Фіксований поріг 10% для всіх розмірностей (CR <= 0.10) (спрощений підхід з ЛР №4).
+    /// </summary>
+    Uniform10Percent
+}
+
+/// <summary>
+/// Повний профіль параметрів та алгоритмів математичного розрахунку МАІ.
+/// </summary>
+public class AhpCalculationOptions
+{
+    public WeightCalculationMethod WeightMethod { get; set; } = WeightCalculationMethod.PrincipalEigenvector;
+    public LambdaCalculationMethod LambdaMethod { get; set; } = LambdaCalculationMethod.ExactEigenvalue;
+    public RiCalculationMode RiMode { get; set; } = RiCalculationMode.SaatyTable;
+    public ConsistencyThresholdMode ThresholdMode { get; set; } = ConsistencyThresholdMode.SaatyAdaptive;
+
+    public AhpCalculationOptions()
+    {
+    }
+
+    public AhpCalculationOptions(
+        WeightCalculationMethod weightMethod,
+        LambdaCalculationMethod lambdaMethod,
+        RiCalculationMode riMode,
+        ConsistencyThresholdMode thresholdMode)
+    {
+        WeightMethod = weightMethod;
+        LambdaMethod = lambdaMethod;
+        RiMode = riMode;
+        ThresholdMode = thresholdMode;
+    }
+
+    public AhpCalculationOptions Clone()
+    {
+        return new AhpCalculationOptions(WeightMethod, LambdaMethod, RiMode, ThresholdMode);
+    }
+
+    /// <summary>
+    /// Еталонний профіль Лабораторної роботи №4:
+    /// нормалізація стовпців, колонковий добуток lambda_max, емпіричний RI, фіксований поріг 10%.
+    /// </summary>
+    public static AhpCalculationOptions Lab4Profile => new(
+        WeightCalculationMethod.ColumnNormalization,
+        LambdaCalculationMethod.ColumnSumProduct,
+        RiCalculationMode.Empirical,
+        ConsistencyThresholdMode.Uniform10Percent);
+
+    /// <summary>
+    /// Класичний академічний профіль Томаса Сааті:
+    /// власний вектор (степеневий метод), точне lambda_max, табличний RI Сааті, адаптивний поріг 5%/8%/10%.
+    /// </summary>
+    public static AhpCalculationOptions ClassicSaatyProfile => new(
+        WeightCalculationMethod.PrincipalEigenvector,
+        LambdaCalculationMethod.ExactEigenvalue,
+        RiCalculationMode.SaatyTable,
+        ConsistencyThresholdMode.SaatyAdaptive);
+
+    /// <summary>
+    /// Перевірка чи відповідає поточна конфігурація профілю ЛР №4.
+    /// </summary>
+    public bool IsLab4Profile =>
+        WeightMethod == WeightCalculationMethod.ColumnNormalization &&
+        LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
+        RiMode == RiCalculationMode.Empirical &&
+        ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
+
+    /// <summary>
+    /// Перевірка чи відповідає поточна конфігурація класичному профілю Сааті.
+    /// </summary>
+    public bool IsClassicSaatyProfile =>
+        WeightMethod == WeightCalculationMethod.PrincipalEigenvector &&
+        LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
+        RiMode == RiCalculationMode.SaatyTable &&
+        ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
+
+    public string ProfileName
+    {
+        get
+        {
+            if (IsLab4Profile) return "Еталон ЛР №4";
+            if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
+            return "Користувацький профіль";
+        }
+    }
+
+    public double GetAcceptableCR(int n)
+    {
+        if (ThresholdMode == ConsistencyThresholdMode.Uniform10Percent) return 0.1001;
+        return n switch
+        {
+            <= 2 => 0.0001,
+            3 => 0.0501,
+            4 => 0.0801,
+            _ => 0.1001
+        };
+    }
+
+    public string GetThresholdDescription(int n)
+    {
+        if (ThresholdMode == ConsistencyThresholdMode.Uniform10Percent) return "CR <= 10%";
+        return n switch
+        {
+            <= 2 => "CR = 0% (ідеально)",
+            3 => "CR <= 5%",
+            4 => "CR <= 8%",
+            _ => "CR <= 10%"
+        };
+    }
+}
