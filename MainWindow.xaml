@@ -69,8 +69,9 @@
                         <MenuItem x:Name="MenuWeightPowerIteration" Header="Степеневий метод (Power Iteration / Сааті)" IsCheckable="True" Click="MenuWeightPowerIteration_Click"/>
                     </MenuItem>
                     <MenuItem Header="Метод власного значення (λmax)">
-                        <MenuItem x:Name="MenuLambdaColSum" Header="Добуток сум стовпців: Σ(ColSum_j · w_j) [ЛР №4]" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
-                        <MenuItem x:Name="MenuLambdaExact" Header="Точне власне значення: (A·w)_i / w_i [Сааті]" IsCheckable="True" Click="MenuLambdaExact_Click"/>
+                        <MenuItem x:Name="MenuLambdaColSum" Header="λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
+                        <MenuItem x:Name="MenuLambdaRowRatio" Header="λmax = середнє (A·w)ᵢ / wᵢ" IsCheckable="True" Click="MenuLambdaRowRatio_Click"/>
+                        <MenuItem x:Name="MenuLambdaExact" Header="λmax — головне власне число (степеневий метод)" IsCheckable="True" Click="MenuLambdaExact_Click"/>
                     </MenuItem>
                     <MenuItem Header="Індекс випадкової узгодженості (RI)">
                         <MenuItem x:Name="MenuRiEmpirical" Header="Емпірична формула: 1.98 · (n-2) / n" IsCheckable="True" Click="MenuRiEmpirical_Click"/>

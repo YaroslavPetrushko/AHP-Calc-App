@@ -1102,6 +1102,7 @@ public partial class MainWindow : Window
         MenuWeightPowerIteration.IsChecked = _calculationOptions.WeightMethod == WeightCalculationMethod.PrincipalEigenvector;
 
         MenuLambdaColSum.IsChecked = _calculationOptions.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct;
+        MenuLambdaRowRatio.IsChecked = _calculationOptions.LambdaMethod == LambdaCalculationMethod.RowRatioMean;
         MenuLambdaExact.IsChecked = _calculationOptions.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue;
 
         MenuRiEmpirical.IsChecked = _calculationOptions.RiMode == RiCalculationMode.Empirical;
@@ -1121,12 +1122,7 @@ public partial class MainWindow : Window
             _ => _calculationOptions.WeightMethod.ToString()
         };
 
-        string lambdaDesc = _calculationOptions.LambdaMethod switch
-        {
-            LambdaCalculationMethod.ColumnSumProduct => "Σ(ColSum_j · w_j)",
-            LambdaCalculationMethod.ExactEigenvalue => "(A·w)_i / w_i",
-            _ => _calculationOptions.LambdaMethod.ToString()
-        };
+        string lambdaDesc = AhpCalculationOptions.GetLambdaMethodDescription(_calculationOptions.LambdaMethod);
 
         string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "Емпіричний RI" : "Табличний RI";
         string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent ? "CR ≤ 10%" : "Адаптивний CR";
@@ -1173,6 +1169,13 @@ public partial class MainWindow : Window
     private void MenuLambdaColSum_Click(object sender, RoutedEventArgs e)
     {
         _calculationOptions.LambdaMethod = LambdaCalculationMethod.ColumnSumProduct;
+        SyncCalculationOptionsUI();
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuLambdaRowRatio_Click(object sender, RoutedEventArgs e)
+    {
+        _calculationOptions.LambdaMethod = LambdaCalculationMethod.RowRatioMean;
         SyncCalculationOptionsUI();
         UpdateAllDiagnostics();
     }

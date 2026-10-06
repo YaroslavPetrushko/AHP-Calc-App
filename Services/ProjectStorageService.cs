@@ -70,12 +70,7 @@ public static class ProjectStorageService
             WeightCalculationMethod.PrincipalEigenvector => "Степеневий метод (Power Iteration)",
             _ => result.Options.WeightMethod.ToString()
         };
-        string lambdaDesc = result.Options.LambdaMethod switch
-        {
-            LambdaCalculationMethod.ColumnSumProduct => "Добуток сум стовпців Σ(ColSum_j · w_j) [ЛР №4]",
-            LambdaCalculationMethod.ExactEigenvalue => "Точне власне значення (A·w)_i / w_i [Сааті]",
-            _ => result.Options.LambdaMethod.ToString()
-        };
+        string lambdaDesc = AhpCalculationOptions.GetLambdaMethodDescription(result.Options.LambdaMethod);
         string riDesc = result.ActiveRiMode == RiCalculationMode.Empirical
             ? "Емпірична формула (1.98 · (n-2) / n)"
             : "Табличні значення Сааті";

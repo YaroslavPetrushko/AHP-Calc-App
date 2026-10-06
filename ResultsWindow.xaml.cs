@@ -172,7 +172,9 @@ public partial class ResultsWindow : Window
 
         TxtHierarchicalCR.Text = $"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})";
         string weightDesc = _result.Options?.WeightMethod.ToString() ?? "Default";
-        string lambdaDesc = _result.Options?.LambdaMethod.ToString() ?? "Default";
+        string lambdaDesc = _result.Options != null
+            ? AhpCalculationOptions.GetLambdaMethodDescription(_result.Options.LambdaMethod)
+            : "Default";
         string riLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпірична формула (1.98·(n-2)/n)" : "таблиця Сааті";
         TxtHierarchicalCR.ToolTip = $"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}";
 

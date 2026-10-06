@@ -252,16 +252,8 @@ public static class AhpCalculator
                 }
                 else
                 {
-                    // Для sum(w)=1 сума (Aw)_i є точною оцінкою
-                    double vSum = 0.0;
-                    for (int i = 0; i < n; i++)
-                    {
-                        for (int j = 0; j < n; j++)
-                        {
-                            vSum += matrix.Values[i, j] * result.Weights[j];
-                        }
-                    }
-                    result.LambdaMax = vSum;
+                    var (_, lam) = CalculatePrincipalEigenvector(matrix.Values, n);
+                    result.LambdaMax = lam;
                 }
                 break;
         }

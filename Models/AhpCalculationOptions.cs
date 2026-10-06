@@ -28,17 +28,17 @@ public enum WeightCalculationMethod
 public enum LambdaCalculationMethod
 {
     /// <summary>
-    /// Добуток сум стовпців вихідної матриці на вектор ваг: lambda_max = sum_j (ColumnSum_j * w_j) (метод з ЛР №4).
+    /// λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4).
     /// </summary>
     ColumnSumProduct,
 
     /// <summary>
-    /// Середнє арифметичне відношень елементів вектора Aw до w: lambda_max = 1/n sum_i ((Aw)_i / w_i).
+    /// λmax = середнє (A·w)ᵢ / wᵢ.
     /// </summary>
     RowRatioMean,
 
     /// <summary>
-    /// Точне власне число, отримане зі степеневого методу (Power Iteration).
+    /// λmax — головне власне число (степеневий метод).
     /// </summary>
     ExactEigenvalue
 }
@@ -161,4 +161,12 @@ public class AhpCalculationOptions
             _ => "CR <= 10%"
         };
     }
+
+    public static string GetLambdaMethodDescription(LambdaCalculationMethod method) => method switch
+    {
+        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)",
+        LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
+        LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
+        _ => method.ToString()
+    };
 }
