@@ -43,9 +43,9 @@ public class SensitivityDynamicRankingDisplayItem
     public string PriorityPercentText => $"{CurrentPriority * 100:F1}% ({CurrentPriority:F4})";
     public string DeltaText => DeltaPriority switch
     {
-        > 0.0005 => $"▲ +{DeltaPriority * 100:F1}%",
-        < -0.0005 => $"▼ {DeltaPriority * 100:F1}%",
-        _ => "— 0.0%"
+        > 0.0005 => $"▲ +{DeltaPriority * 100:F1} п.п.",
+        < -0.0005 => $"▼ {DeltaPriority * 100:F1} п.п.",
+        _ => "— 0.0 п.п."
     };
     public Brush RankBackground { get; set; } = Brushes.Gray;
     public Brush DeltaBrush { get; set; } = Brushes.Gray;

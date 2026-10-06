@@ -669,25 +669,89 @@ public static class AhpCalculator
 
         // 4. Визначення діапазону стійкості для поточного оптимального вибору
         var currentOptInterval = res.LeadershipIntervals.FirstOrDefault(intvl =>
-            wk0 >= intvl.FromT - 1e-5 && wk0 <= intvl.ToT + 1e-5);
+            wk0 >= intvl.FromT - 1e-6 && wk0 <= intvl.ToT + 1e-6);
 
         if (currentOptInterval != null)
         {
-            res.StabilityIntervalMin = currentOptInterval.FromT;
-            res.StabilityIntervalMax = currentOptInterval.ToT;
+            double lo = currentOptInterval.FromT;
+            double hi = currentOptInterval.ToT;
 
-            string boundLower = currentOptInterval.FromT <= 0.001 ? "0.0%" : $"{currentOptInterval.FromT:P1}";
-            string boundUpper = currentOptInterval.ToT >= 0.999 ? "100.0%" : $"{currentOptInterval.ToT:P1}";
+            res.StabilityIntervalMin = lo;
+            res.StabilityIntervalMax = hi;
 
-            res.StabilitySummary = $"Поточний оптимальний вибір «{currentOptInterval.AlternativeName}» є стійким при варіюванні ваги критерію «{crit.Name}» в інтервалі [{boundLower}; {boundUpper}] (вихідна вага: {wk0:P1}). " +
-                (currentOptInterval.ToT < 0.999
-                    ? $"Зміна лідера відбувається при зростанні ваги понад {boundUpper}."
-                    : "Альтернатива зберігає абсолютне лідерство навіть при зростанні ваги до 100%.");
+            bool isLoZero = lo <= 1e-6;
+            bool isHiOne = hi >= 1.0 - 1e-6;
+
+            if (!isLoZero)
+            {
+                res.LowerMarginPp = (wk0 - lo) * 100.0;
+                var prevInterval = res.LeadershipIntervals.FirstOrDefault(i => Math.Abs(i.ToT - lo) < 1e-6);
+                res.LowerSuccessorName = prevInterval?.AlternativeName;
+            }
+            else
+            {
+                res.LowerMarginPp = null;
+                res.LowerSuccessorName = null;
+            }
+
+            if (!isHiOne)
+            {
+                res.UpperMarginPp = (hi - wk0) * 100.0;
+                var nextInterval = res.LeadershipIntervals.FirstOrDefault(i => Math.Abs(i.FromT - hi) < 1e-6);
+                res.UpperSuccessorName = nextInterval?.AlternativeName;
+            }
+            else
+            {
+                res.UpperMarginPp = null;
+                res.UpperSuccessorName = null;
+            }
+
+            double loPct = lo * 100.0;
+            double hiPct = hi * 100.0;
+            double w0Pct = wk0 * 100.0;
+
+            string marginPart;
+            if (res.LowerMarginPp.HasValue && res.UpperMarginPp.HasValue)
+            {
+                marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз, +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+            }
+            else if (res.LowerMarginPp.HasValue)
+            {
+                marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз.";
+            }
+            else if (res.UpperMarginPp.HasValue)
+            {
+                marginPart = $"Запас стійкості: +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+            }
+            else
+            {
+                marginPart = "Запас стійкості: абсолютний на всьому інтервалі.";
+            }
+
+            string successorPart = "";
+            if (!string.IsNullOrEmpty(res.LowerSuccessorName) && !string.IsNullOrEmpty(res.UpperSuccessorName))
+            {
+                successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}», вище {hiPct:0.0} % — «{res.UpperSuccessorName}».";
+            }
+            else if (!string.IsNullOrEmpty(res.LowerSuccessorName))
+            {
+                successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}».";
+            }
+            else if (!string.IsNullOrEmpty(res.UpperSuccessorName))
+            {
+                successorPart = $" Вище {hiPct:0.0} % лідером стає «{res.UpperSuccessorName}».";
+            }
+
+            res.StabilitySummary = $"Лідер «{currentOptInterval.AlternativeName}» зберігається, поки вага критерію «{crit.Name}» лежить у межах {loPct:0.0} %–{hiPct:0.0} % (поточна {w0Pct:0.0} %). {marginPart}{successorPart}";
         }
         else
         {
             res.StabilityIntervalMin = 0.0;
             res.StabilityIntervalMax = 1.0;
+            res.LowerMarginPp = null;
+            res.UpperMarginPp = null;
+            res.LowerSuccessorName = null;
+            res.UpperSuccessorName = null;
             res.StabilitySummary = $"Поточний вибір залишається лідером на всьому діапазоні ваг критерію «{crit.Name}».";
         }
 

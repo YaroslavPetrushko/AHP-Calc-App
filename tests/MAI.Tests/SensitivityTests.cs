@@ -125,4 +125,60 @@ public class SensitivityTests
         Assert.InRange(a1a4Intersection.WeightT, 0.365 - 0.005, 0.365 + 0.005);
         Assert.False(a1a4Intersection.IsLeadershipChange, "Перетин A1/A4 не повинен бути зміною лідера, оскільки лежить нижче A3");
     }
+
+    [Fact]
+    public void Sensitivity_ClassicSaaty_StabilitySummaryMatchesAppendixA5()
+    {
+        var preset = PresetService.GetLab34Preset();
+        var result = AhpCalculator.SolveHierarchy(
+            preset.Criteria,
+            preset.Alternatives,
+            preset.CriteriaMatrix,
+            preset.AlternativeMatrices,
+            AhpCalculationOptions.ClassicSaatyProfile);
+
+        const double tolBound = 2e-3;
+        const double tolMargin = 0.2; // 0.2 п.п.
+
+        // 1. Критерій P
+        var sensP = AhpCalculator.CalculateSensitivity(result, "P");
+        Assert.InRange(sensP.StabilityIntervalMin, 0.064 - tolBound, 0.064 + tolBound);
+        Assert.InRange(sensP.StabilityIntervalMax, 0.429 - tolBound, 0.429 + tolBound);
+        Assert.NotNull(sensP.LowerMarginPp);
+        Assert.InRange(sensP.LowerMarginPp.Value, 30.2 - tolMargin, 30.2 + tolMargin);
+        Assert.NotNull(sensP.UpperMarginPp);
+        Assert.InRange(sensP.UpperMarginPp.Value, 6.3 - tolMargin, 6.3 + tolMargin);
+        Assert.Contains("3050", sensP.LowerSuccessorName);
+        Assert.Contains("7700", sensP.UpperSuccessorName);
+
+        // 2. Критерій F
+        var sensF = AhpCalculator.CalculateSensitivity(result, "F");
+        Assert.InRange(sensF.StabilityIntervalMin, 0.188 - tolBound, 0.188 + tolBound);
+        Assert.InRange(sensF.StabilityIntervalMax, 1.0 - tolBound, 1.0 + tolBound);
+        Assert.NotNull(sensF.LowerMarginPp);
+        Assert.InRange(sensF.LowerMarginPp.Value, 4.4 - tolMargin, 4.4 + tolMargin);
+        Assert.Null(sensF.UpperMarginPp);
+        Assert.Contains("7700", sensF.LowerSuccessorName);
+        Assert.Null(sensF.UpperSuccessorName);
+
+        // 3. Критерій A
+        var sensA = AhpCalculator.CalculateSensitivity(result, "A");
+        Assert.InRange(sensA.StabilityIntervalMin, 0.021 - tolBound, 0.021 + tolBound);
+        Assert.InRange(sensA.StabilityIntervalMax, 1.0 - tolBound, 1.0 + tolBound);
+        Assert.NotNull(sensA.LowerMarginPp);
+        Assert.InRange(sensA.LowerMarginPp.Value, 10.3 - tolMargin, 10.3 + tolMargin);
+        Assert.Null(sensA.UpperMarginPp);
+        Assert.Contains("7700", sensA.LowerSuccessorName);
+        Assert.Null(sensA.UpperSuccessorName);
+
+        // 4. Критерій C
+        var sensC = AhpCalculator.CalculateSensitivity(result, "C");
+        Assert.InRange(sensC.StabilityIntervalMin, 0.0 - tolBound, 0.0 + tolBound);
+        Assert.InRange(sensC.StabilityIntervalMax, 0.355 - tolBound, 0.355 + tolBound);
+        Assert.Null(sensC.LowerMarginPp);
+        Assert.NotNull(sensC.UpperMarginPp);
+        Assert.InRange(sensC.UpperMarginPp.Value, 7.7 - tolMargin, 7.7 + tolMargin);
+        Assert.Null(sensC.LowerSuccessorName);
+        Assert.Contains("4060", sensC.UpperSuccessorName);
+    }
 }
