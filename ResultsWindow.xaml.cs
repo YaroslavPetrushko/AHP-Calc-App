@@ -295,6 +295,11 @@ public partial class ResultsWindow : Window
 
         sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
 
+        if (_result.InconsistentMatrices.Count > 0)
+        {
+            sb.AppendLine($"   Увага: виявлено матриці з порушенням власного порогу узгодженості: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"«{m}»"))}. Рекомендується скоригувати судження в цих матрицях.");
+        }
+
         TxtRecommendation.Text = sb.ToString();
     }
 

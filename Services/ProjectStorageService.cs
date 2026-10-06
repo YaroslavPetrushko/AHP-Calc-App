@@ -119,6 +119,10 @@ public static class ProjectStorageService
         }
 
         sb.AppendLine($"Композиція всієї ієрархії:   CIh={result.HierarchicalCI:F4}, CRh(табл)={result.HierarchicalCRTable:P1}, CRh(емп)={result.HierarchicalCREmpirical:P1} [{result.HierarchyConsistencyMessage}]");
+        if (result.InconsistentMatrices.Count > 0)
+        {
+            sb.AppendLine($"УВАГА: Матриці з порушенням порогу: {string.Join(", ", result.InconsistentMatrices)}");
+        }
         sb.AppendLine();
 
         sb.AppendLine("--- 4. МАТРИЦЯ СИНТЕЗУ (Lij · wj) ---");
