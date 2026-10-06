@@ -221,7 +221,7 @@ public partial class ResultsWindow : Window
             return new AlternativeDisplayItem
             {
                 Rank = a.Rank,
-                RankText = $"#{a.Rank}",
+                RankText = $"#{a.RankText}",
                 Name = a.Name,
                 Description = a.Description,
                 GlobalPriority = a.GlobalPriority,
@@ -253,13 +253,7 @@ public partial class ResultsWindow : Window
                     2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#93C5FD" : "#1D4ED8")),
                     _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#CBD5E1" : "#475569"))
                 },
-                BadgeText = a.Rank switch
-                {
-                    1 => "🏆 Оптимум (1)",
-                    2 => "2 місце",
-                    3 => "3 місце",
-                    _ => $"{a.Rank} місце"
-                }
+                BadgeText = a.RankText == "1" ? "🏆 Оптимум (1)" : $"{a.RankText} місце"
             };
         }).ToList();
 
@@ -362,7 +356,7 @@ public partial class ResultsWindow : Window
         foreach (var alt in _result.RankedAlternatives)
         {
             var row = dt.NewRow();
-            row["Ранг"] = $"#{alt.Rank}";
+            row["Ранг"] = $"#{alt.RankText}";
             row["Альтернатива"] = alt.Name;
 
             foreach (var item in critColMap)

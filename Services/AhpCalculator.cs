@@ -388,14 +388,21 @@ public static class AhpCalculator
             alt.GlobalPriority = globalScore;
         }
 
-        // 4. Ранжування альтернатив
+        // 4. Ранжування альтернатив з допуском 1e-9 («змагальна» нумерація: 1, 2, 2, 4)
         ahpResult.RankedAlternatives = ahpResult.Alternatives
             .OrderByDescending(a => a.GlobalPriority)
             .ToList();
 
         for (int rank = 0; rank < ahpResult.RankedAlternatives.Count; rank++)
         {
-            ahpResult.RankedAlternatives[rank].Rank = rank + 1;
+            var alt = ahpResult.RankedAlternatives[rank];
+            double p = alt.GlobalPriority;
+
+            int higherCount = ahpResult.RankedAlternatives.Count(other => other.GlobalPriority > p + 1e-9);
+            alt.Rank = 1 + higherCount;
+
+            bool isTied = ahpResult.RankedAlternatives.Any(other => !ReferenceEquals(other, alt) && Math.Abs(other.GlobalPriority - p) <= 1e-9);
+            alt.RankText = isTied ? $"{alt.Rank}=" : alt.Rank.ToString();
         }
 
         // 5. Композиційна узгодженість ієрархії

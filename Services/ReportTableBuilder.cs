@@ -214,7 +214,7 @@ public static class ReportTableBuilder
                 row[j + 1] = FormatNumber(localPriority);
             }
             row[nCrit + 1] = FormatNumber(alt.GlobalPriority);
-            row[nCrit + 2] = alt.Rank.ToString();
+            row[nCrit + 2] = alt.RankText;
             summaryRows.Add(row);
         }
         tables.Add(new ReportTable("Зведення локальних пріоритетів", summaryHeaders, summaryRows));

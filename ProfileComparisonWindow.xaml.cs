@@ -146,7 +146,7 @@ public partial class ProfileComparisonWindow : Window
                 var prof = _comparisonResult.Profiles[pIdx];
                 var matched = prof.Result.RankedAlternatives.FirstOrDefault(a => a.Id == alt.Id);
                 double priority = matched?.GlobalPriority ?? 0.0;
-                string rank = matched?.Rank.ToString() ?? "-";
+                string rank = matched?.RankText ?? "-";
                 row[$"col_p_{pIdx}"] = priority.ToString("0.0000", UkCulture);
                 row[$"col_r_{pIdx}"] = rank;
             }

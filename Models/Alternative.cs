@@ -53,6 +53,17 @@ public class Alternative : INotifyPropertyChanged
         set => SetField(ref _rank, value);
     }
 
+    private string _rankText = string.Empty;
+
+    /// <summary>
+    /// Текстове представлення рангу (наприклад "1", або "2=" при рівності балів з іншою альтернативою).
+    /// </summary>
+    public string RankText
+    {
+        get => string.IsNullOrEmpty(_rankText) ? _rank.ToString() : _rankText;
+        set => SetField(ref _rankText, value);
+    }
+
     /// <summary>
     /// Локальні пріоритети альтернативи за окремими критеріями.
     /// </summary>

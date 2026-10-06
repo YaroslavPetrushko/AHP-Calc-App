@@ -91,7 +91,7 @@ public class ProfileComparisonResult
                 var prof = Profiles[pIdx];
                 var matched = prof.Result.RankedAlternatives.FirstOrDefault(a => a.Id == alt.Id);
                 double pVal = matched?.GlobalPriority ?? 0.0;
-                string rankVal = matched?.Rank.ToString() ?? "-";
+                string rankVal = matched?.RankText ?? "-";
                 row[1 + pIdx * 2] = FormatNumber(pVal);
                 row[1 + pIdx * 2 + 1] = rankVal;
             }
