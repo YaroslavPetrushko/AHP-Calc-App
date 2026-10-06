@@ -146,6 +146,7 @@ public static class AhpCalculator
             Name = matrixName,
             Size = n,
             Labels = new List<string>(matrix.Labels),
+            PairwiseMatrix = (double[,])matrix.Values.Clone(),
             Weights = new double[n],
             NormalizedMatrix = new double[n, n],
             ColumnSums = new double[n],

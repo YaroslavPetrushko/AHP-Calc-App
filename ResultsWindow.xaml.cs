@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Win32;
+using System.Windows.Media.Imaging;
 using MAI.Models;
 using MAI.Services;
 
@@ -940,6 +941,153 @@ public partial class ResultsWindow : Window
     }
 
     #endregion
+
+    private void BtnExport_Click(object sender, RoutedEventArgs e)
+    {
+        if (BtnExport.ContextMenu != null)
+        {
+            BtnExport.ContextMenu.PlacementTarget = BtnExport;
+            BtnExport.ContextMenu.IsOpen = true;
+        }
+    }
+
+    private void MenuExportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти звіт у форматі CSV...",
+            Filter = "Файли CSV (*.csv)|*.csv|Усі файли (*.*)|*.*",
+            FileName = "ahp_report.csv"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                var tables = ReportTableBuilder.Build(_result);
+                ReportExporter.SaveCsv(sfd.FileName, tables);
+                TxtResultsStatus.Text = $"Звіт успішно збережено у файл CSV: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту CSV: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportMarkdown_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти звіт у форматі Markdown...",
+            Filter = "Файли Markdown (*.md)|*.md|Усі файли (*.*)|*.*",
+            FileName = "ahp_report.md"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                var tables = ReportTableBuilder.Build(_result);
+                ReportExporter.SaveMarkdown(sfd.FileName, tables);
+                TxtResultsStatus.Text = $"Звіт успішно збережено у файл Markdown: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту Markdown: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportHtml_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти звіт у форматі HTML (Word)...",
+            Filter = "Файли HTML (*.html)|*.html|Документ Word (*.htm)|*.htm|Усі файли (*.*)|*.*",
+            FileName = "ahp_report.html"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                var tables = ReportTableBuilder.Build(_result);
+                ReportExporter.SaveHtml(sfd.FileName, tables);
+                TxtResultsStatus.Text = $"Звіт успішно збережено у файл HTML: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту HTML: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportRankingPng_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти діаграму рейтингу в PNG...",
+            Filter = "Зображення PNG (*.png)|*.png",
+            FileName = "ranking.png"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                ExportElementToPng(CardRankingContainer, sfd.FileName, 192.0);
+                TxtResultsStatus.Text = $"Діаграму рейтингу збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту діаграми в PNG: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportSensitivityPng_Click(object sender, RoutedEventArgs e)
+    {
+        string critName = _currentSensitivityResult?.Criterion?.Name ?? _currentSensitivityResult?.Criterion?.Id ?? "criterion";
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти графік чутливості в PNG...",
+            Filter = "Зображення PNG (*.png)|*.png",
+            FileName = $"sensitivity_{critName}.png"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                ExportElementToPng(SensitivityPlotContainer, sfd.FileName, 192.0);
+                TxtResultsStatus.Text = $"Графік чутливості збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту графіка чутливості в PNG: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private static void ExportElementToPng(FrameworkElement element, string filePath, double dpi = 192.0)
+    {
+        double scale = dpi / 96.0;
+        int width = (int)Math.Max(1, Math.Ceiling(element.ActualWidth * scale));
+        int height = (int)Math.Max(1, Math.Ceiling(element.ActualHeight * scale));
+
+        var rtb = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
+
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+            var brush = new VisualBrush(element);
+            dc.DrawRectangle(brush, null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+        }
+
+        rtb.Render(dv);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(rtb));
+        using var stream = File.Create(filePath);
+        encoder.Save(stream);
+    }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e)
     {

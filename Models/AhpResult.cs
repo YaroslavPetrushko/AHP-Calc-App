@@ -11,6 +11,7 @@ public class MatrixResult
     public string Name { get; set; } = string.Empty;
     public int Size { get; set; }
     public List<string> Labels { get; set; } = new();
+    public double[,] PairwiseMatrix { get; set; } = new double[0, 0];
     public double[] Weights { get; set; } = [];
     public double[,] NormalizedMatrix { get; set; } = new double[0, 0];
     public double[] ColumnSums { get; set; } = [];
