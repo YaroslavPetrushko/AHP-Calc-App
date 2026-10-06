@@ -1294,6 +1294,25 @@ public partial class MainWindow : Window
             {
                 var data = ProjectStorageService.LoadProject(ofd.FileName);
 
+                // Транзакційне застосування: спочатку готуємо всі матриці локально
+                var newCriteriaMatrix = new ComparisonMatrix(data.Criteria.Count, data.Criteria.Select(c => c.Name).ToList());
+                if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
+                {
+                    newCriteriaMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
+                }
+
+                var newAlternativeMatrices = new Dictionary<string, ComparisonMatrix>();
+                foreach (var c in data.Criteria)
+                {
+                    var altMat = new ComparisonMatrix(data.Alternatives.Count, data.Alternatives.Select(a => a.Name).ToList());
+                    if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
+                    {
+                        altMat.LoadFromJaggedArray(jaggedMat);
+                    }
+                    newAlternativeMatrices[c.Id] = altMat;
+                }
+
+                // Усі структури успішно підготовлено без винятків — фіксуємо стан застосунку
                 _criteria.Clear();
                 foreach (var c in data.Criteria)
                 {
@@ -1306,23 +1325,8 @@ public partial class MainWindow : Window
                     _alternatives.Add(a);
                 }
 
-                _criteriaMatrix = new ComparisonMatrix(_criteria.Count, _criteria.Select(c => c.Name).ToList());
-                if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
-                {
-                    _criteriaMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
-                }
-
-                _alternativeMatrices.Clear();
-                foreach (var c in _criteria)
-                {
-                    var altMat = new ComparisonMatrix(_alternatives.Count, _alternatives.Select(a => a.Name).ToList());
-                    if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
-                    {
-                        altMat.LoadFromJaggedArray(jaggedMat);
-                    }
-                    _alternativeMatrices[c.Id] = altMat;
-                }
-
+                _criteriaMatrix = newCriteriaMatrix;
+                _alternativeMatrices = newAlternativeMatrices;
                 _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
 
                 if (data.Options != null)

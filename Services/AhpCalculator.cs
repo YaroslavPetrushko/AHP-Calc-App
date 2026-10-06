@@ -136,6 +136,11 @@ public static class AhpCalculator
         var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
         int n = matrix.Size;
 
+        if (n > 10 && opts.RiMode == RiCalculationMode.SaatyTable)
+        {
+            throw new InvalidOperationException("Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
+        }
+
         var result = new MatrixResult
         {
             Name = matrixName,
@@ -321,6 +326,11 @@ public static class AhpCalculator
 
         if (critCount == 0 || altCount == 0)
             return ahpResult;
+
+        if ((critCount > 10 || altCount > 10) && opts.RiMode == RiCalculationMode.SaatyTable)
+        {
+            throw new InvalidOperationException("Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
+        }
 
         // 1. Розрахунок матриці критеріїв
         var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв", opts);

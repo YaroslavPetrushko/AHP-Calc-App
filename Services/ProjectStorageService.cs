@@ -31,7 +31,186 @@ public static class ProjectStorageService
     }
 
     /// <summary>
-    /// Завантаження задачі з файлу JSON.
+    /// Валідація структури та числових даних проєкту МАІ. Повертає список виявлених помилок (порожній, якщо проєкт валідний).
+    /// </summary>
+    public static List<string> ValidateProject(AhpProjectData data)
+    {
+        var errors = new List<string>();
+
+        if (data == null)
+        {
+            errors.Add("Дані проєкту відсутні (null).");
+            return errors;
+        }
+
+        // 1. Кількість критеріїв і альтернатив у межах 2–10
+        int critCount = data.Criteria?.Count ?? 0;
+        if (data.Criteria == null || critCount < 2 || critCount > 10)
+        {
+            errors.Add($"Кількість критеріїв повинна бути в межах від 2 до 10 (отримано: {critCount}).");
+        }
+
+        int altCount = data.Alternatives?.Count ?? 0;
+        if (data.Alternatives == null || altCount < 2 || altCount > 10)
+        {
+            errors.Add($"Кількість альтернатив повинна бути в межах від 2 до 10 (отримано: {altCount}).");
+        }
+
+        // 2. Унікальні Id критеріїв, унікальні Id альтернатив
+        if (data.Criteria != null)
+        {
+            var duplicateCritIds = data.Criteria
+                .GroupBy(c => c.Id, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (duplicateCritIds.Count > 0)
+            {
+                errors.Add($"Виявлено дублікати ID критеріїв: {string.Join(", ", duplicateCritIds)}.");
+            }
+        }
+
+        if (data.Alternatives != null)
+        {
+            var duplicateAltIds = data.Alternatives
+                .GroupBy(a => a.Id, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (duplicateAltIds.Count > 0)
+            {
+                errors.Add($"Виявлено дублікати ID альтернатив: {string.Join(", ", duplicateAltIds)}.");
+            }
+        }
+
+        // 3. Унікальні назви критеріїв (регістронезалежно) та назви альтернатив
+        if (data.Criteria != null)
+        {
+            var duplicateCritNames = data.Criteria
+                .GroupBy(c => c.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (duplicateCritNames.Count > 0)
+            {
+                errors.Add($"Виявлено повторювані назви критеріїв: {string.Join(", ", duplicateCritNames)}.");
+            }
+        }
+
+        if (data.Alternatives != null)
+        {
+            var duplicateAltNames = data.Alternatives
+                .GroupBy(a => a.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (duplicateAltNames.Count > 0)
+            {
+                errors.Add($"Виявлено повторювані назви альтернатив: {string.Join(", ", duplicateAltNames)}.");
+            }
+        }
+
+        // 4. Розмір CriteriaMatrix дорівнює кількості критеріїв; для кожного критерію є матриця потрібного розміру
+        if (data.Criteria != null && critCount >= 2 && critCount <= 10)
+        {
+            if (data.CriteriaMatrix == null || data.CriteriaMatrix.Length != critCount)
+            {
+                errors.Add($"Розмір матриці критеріїв ({data.CriteriaMatrix?.Length ?? 0}) не відповідає кількості критеріїв ({critCount}).");
+            }
+            else
+            {
+                for (int i = 0; i < critCount; i++)
+                {
+                    if (data.CriteriaMatrix[i] == null || data.CriteriaMatrix[i].Length != critCount)
+                    {
+                        errors.Add($"Рядок {i + 1} матриці критеріїв має некоректний розмір ({data.CriteriaMatrix[i]?.Length ?? 0} замість {critCount}).");
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (data.Criteria != null && data.Alternatives != null && critCount >= 2 && critCount <= 10 && altCount >= 2 && altCount <= 10)
+        {
+            if (data.AlternativeMatrices == null)
+            {
+                errors.Add("Словник матриць порівняння альтернатив відсутній.");
+            }
+            else
+            {
+                foreach (var c in data.Criteria)
+                {
+                    if (!data.AlternativeMatrices.TryGetValue(c.Id, out var altMat) || altMat == null)
+                    {
+                        errors.Add($"Відсутня матриця альтернатив для критерію «{c.Name}» (ID: {c.Id}).");
+                        continue;
+                    }
+
+                    if (altMat.Length != altCount)
+                    {
+                        errors.Add($"Розмір матриці альтернатив для критерію «{c.Name}» ({altMat.Length}) не відповідає кількості альтернатив ({altCount}).");
+                        continue;
+                    }
+
+                    for (int i = 0; i < altCount; i++)
+                    {
+                        if (altMat[i] == null || altMat[i].Length != altCount)
+                        {
+                            errors.Add($"Рядок {i + 1} матриці альтернатив для критерію «{c.Name}» має некоректний розмір ({altMat[i]?.Length ?? 0} замість {altCount}).");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. Усі значення з верхнього трикутника в межах [1/9; 9] з допуском 1e-6
+        const double minAllowed = (1.0 / 9.0) - 1e-6;
+        const double maxAllowed = 9.0 + 1e-6;
+
+        if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length == critCount)
+        {
+            for (int i = 0; i < critCount; i++)
+            {
+                if (data.CriteriaMatrix[i] == null || data.CriteriaMatrix[i].Length != critCount) continue;
+                for (int j = i + 1; j < critCount; j++)
+                {
+                    double v = data.CriteriaMatrix[i][j];
+                    if (double.IsNaN(v) || double.IsInfinity(v) || v < minAllowed || v > maxAllowed)
+                    {
+                        errors.Add($"Значення в матриці критеріїв на позиції [{i + 1}, {j + 1}] дорівнює {v}, що виходить за межі шкали Сааті [1/9; 9].");
+                    }
+                }
+            }
+        }
+
+        if (data.AlternativeMatrices != null && data.Criteria != null && altCount >= 2)
+        {
+            foreach (var c in data.Criteria)
+            {
+                if (data.AlternativeMatrices.TryGetValue(c.Id, out var altMat) && altMat != null && altMat.Length == altCount)
+                {
+                    for (int i = 0; i < altCount; i++)
+                    {
+                        if (altMat[i] == null || altMat[i].Length != altCount) continue;
+                        for (int j = i + 1; j < altCount; j++)
+                        {
+                            double v = altMat[i][j];
+                            if (double.IsNaN(v) || double.IsInfinity(v) || v < minAllowed || v > maxAllowed)
+                            {
+                                errors.Add($"Значення в матриці альтернатив для «{c.Name}» на позиції [{i + 1}, {j + 1}] дорівнює {v}, що виходить за межі шкали Сааті [1/9; 9].");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return errors;
+    }
+
+    /// <summary>
+    /// Завантаження задачі з файлу JSON із повною валідацією структури та числових обмежень.
     /// </summary>
     public static AhpProjectData LoadProject(string filePath)
     {
@@ -44,11 +223,11 @@ public static class ProjectStorageService
         if (data == null)
             throw new InvalidOperationException("Не вдалося десеріалізувати дані проєкту. Файл пошкоджений або порожній.");
 
-        if (data.Criteria == null || data.Criteria.Count < 2)
-            throw new InvalidOperationException("У завантаженому файлі недостатньо критеріїв (необхідно мінімум 2).");
-
-        if (data.Alternatives == null || data.Alternatives.Count < 2)
-            throw new InvalidOperationException("У завантаженому файлі недостатньо альтернатив (необхідно мінімум 2).");
+        var errors = ValidateProject(data);
+        if (errors.Count > 0)
+        {
+            throw new InvalidOperationException("Помилки валідації файлу проєкту:\n" + string.Join("\n", errors.Select(e => $"• {e}")));
+        }
 
         return data;
     }
