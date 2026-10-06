@@ -296,10 +296,13 @@
                                         <TextBlock Text="Вкажіть перевагу критерію в лівому рядку над критерієм у верхньому стовпці." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
-                                    <!-- Quick Status Pill -->
-                                    <Border Grid.Column="1" x:Name="PillCritStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
-                                    </Border>
+                                    <!-- Quick Status Pill & Progress -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtCritJudgedProgress" Text="Заповнено 6 з 6 порівнянь" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Border x:Name="PillCritStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                                        </Border>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- Dynamic Matrix Container -->
@@ -359,10 +362,13 @@
                                         <TextBlock Text="Оберіть критерій та заповніть попарні оцінки альтернатив за ним." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
-                                    <!-- Quick Status Pill for Alternative Matrix -->
-                                    <Border Grid.Column="1" x:Name="PillAltStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
-                                    </Border>
+                                    <!-- Quick Status Pill & Progress for Alternative Matrix -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtAltJudgedProgress" Text="Заповнено 10 з 10 порівнянь" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Border x:Name="PillAltStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                                        </Border>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- Criteria Tab Strip for Alternatives -->

@@ -13,10 +13,54 @@ public class ComparisonMatrix
     public List<string> Labels { get; set; } = new();
     public double[,] Values { get; private set; }
 
+    private bool[,] _judgedPairs;
+
+    /// <summary>
+    /// Загальна кількість парних порівнянь над головною діагоналлю: n * (n - 1) / 2.
+    /// </summary>
+    public int TotalPairs => Size * (Size - 1) / 2;
+
+    /// <summary>
+    /// Кількість оцінених експертом пар порівнянь.
+    /// </summary>
+    public int JudgedCount
+    {
+        get
+        {
+            if (_judgedPairs == null) return 0;
+            int count = 0;
+            int n = Math.Min(Size, _judgedPairs.GetLength(0));
+            int m = Math.Min(Size, _judgedPairs.GetLength(1));
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = i + 1; j < m; j++)
+                {
+                    if (_judgedPairs[i, j]) count++;
+                }
+            }
+            return count;
+        }
+    }
+
+    /// <summary>
+    /// Чи всі пари в матриці були оцінені експертом.
+    /// </summary>
+    public bool IsFullyJudged => JudgedCount >= TotalPairs;
+
+    public bool IsPairJudged(int row, int col)
+    {
+        if (_judgedPairs == null || row < 0 || col < 0 || row >= Size || col >= Size || row == col)
+            return false;
+        int i = Math.Min(row, col);
+        int j = Math.Max(row, col);
+        return _judgedPairs[i, j];
+    }
+
     public ComparisonMatrix(int size, IEnumerable<string>? labels = null)
     {
         Size = Math.Max(1, size);
         Values = new double[Size, Size];
+        _judgedPairs = new bool[Size, Size];
         ResetToIdentity();
 
         if (labels != null)
@@ -34,6 +78,7 @@ public class ComparisonMatrix
     /// </summary>
     public void ResetToIdentity()
     {
+        _judgedPairs = new bool[Size, Size];
         for (int i = 0; i < Size; i++)
         {
             for (int j = 0; j < Size; j++)
@@ -69,6 +114,17 @@ public class ComparisonMatrix
         double snapped = SnapToSaatyScale(value);
         Values[row, col] = snapped;
         Values[col, row] = 1.0 / snapped;
+
+        if (_judgedPairs != null)
+        {
+            int min = Math.Min(row, col);
+            int max = Math.Max(row, col);
+            if (min < _judgedPairs.GetLength(0) && max < _judgedPairs.GetLength(1))
+            {
+                _judgedPairs[min, max] = true;
+                _judgedPairs[max, min] = true;
+            }
+        }
     }
 
     /// <summary>
@@ -82,6 +138,7 @@ public class ComparisonMatrix
 
         int newSize = Size - 1;
         var newValues = new double[newSize, newSize];
+        var newJudged = new bool[newSize, newSize];
 
         for (int i = 0, ni = 0; i < Size; i++)
         {
@@ -89,12 +146,18 @@ public class ComparisonMatrix
             for (int j = 0, nj = 0; j < Size; j++)
             {
                 if (j == index) continue;
-                newValues[ni, nj++] = Values[i, j];
+                newValues[ni, nj] = Values[i, j];
+                if (_judgedPairs != null)
+                {
+                    newJudged[ni, nj] = _judgedPairs[i, j];
+                }
+                nj++;
             }
             ni++;
         }
 
         Values = newValues;
+        _judgedPairs = newJudged;
         Size = newSize;
 
         if (index < Labels.Count)
@@ -111,10 +174,12 @@ public class ComparisonMatrix
         if (newSize < 1) return;
 
         var oldValues = Values;
+        var oldJudged = _judgedPairs;
         int oldSize = Size;
 
         Size = newSize;
         Values = new double[Size, Size];
+        _judgedPairs = new bool[Size, Size];
         ResetToIdentity();
 
         int copySize = Math.Min(oldSize, newSize);
@@ -123,6 +188,10 @@ public class ComparisonMatrix
             for (int j = 0; j < copySize; j++)
             {
                 Values[i, j] = oldValues[i, j];
+                if (oldJudged != null)
+                {
+                    _judgedPairs[i, j] = oldJudged[i, j];
+                }
             }
         }
 
@@ -304,6 +373,35 @@ public class ComparisonMatrix
                 }
                 Values[i, j] = val;
                 Values[j, i] = 1.0 / val;
+            }
+        }
+
+        // Після завантаження проєкту з JSON: матриця, де всі значення поза діагоналлю дорівнюють 1,
+        // вважається неоціненою (0); решта — повністю оціненою (TotalPairs).
+        bool hasNonUnitOffDiagonal = false;
+        for (int i = 0; i < Size; i++)
+        {
+            for (int j = i + 1; j < Size; j++)
+            {
+                if (Math.Abs(Values[i, j] - 1.0) > 1e-6)
+                {
+                    hasNonUnitOffDiagonal = true;
+                    break;
+                }
+            }
+            if (hasNonUnitOffDiagonal) break;
+        }
+
+        _judgedPairs = new bool[Size, Size];
+        if (hasNonUnitOffDiagonal)
+        {
+            for (int i = 0; i < Size; i++)
+            {
+                for (int j = i + 1; j < Size; j++)
+                {
+                    _judgedPairs[i, j] = true;
+                    _judgedPairs[j, i] = true;
+                }
             }
         }
     }

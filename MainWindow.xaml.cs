@@ -284,6 +284,7 @@ public partial class MainWindow : Window
         string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
         double threshold = result.Threshold;
         TxtCritRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
+        TxtCritJudgedProgress.Text = $"Заповнено {_criteriaMatrix.JudgedCount} з {_criteriaMatrix.TotalPairs} порівнянь";
 
         if (result.IsConsistent)
         {
@@ -585,6 +586,7 @@ public partial class MainWindow : Window
         string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
         double threshold = result.Threshold;
         TxtAltRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
+        TxtAltJudgedProgress.Text = $"Заповнено {altMatrix.JudgedCount} з {altMatrix.TotalPairs} порівнянь";
 
         if (result.IsConsistent)
         {
@@ -1132,6 +1134,31 @@ public partial class MainWindow : Window
             MessageBox.Show($"Виявлено дублювання назви альтернативи: «{altDuplicate.Key}».\nУсі альтернативи повинні мати унікальні назви для однозначного ранжування.",
                 "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
+        }
+
+        // 4. Перевірка заповненості матриць парних порівнянь
+        var incompleteMatrices = new List<string>();
+        if (!_criteriaMatrix.IsFullyJudged)
+        {
+            incompleteMatrices.Add($"Матриця критеріїв (заповнено {_criteriaMatrix.JudgedCount} з {_criteriaMatrix.TotalPairs})");
+        }
+        foreach (var c in _criteria)
+        {
+            if (_alternativeMatrices.TryGetValue(c.Id, out var mat) && !mat.IsFullyJudged)
+            {
+                incompleteMatrices.Add($"Матриця альтернатив за «{c.Name}» (заповнено {mat.JudgedCount} з {mat.TotalPairs})");
+            }
+        }
+
+        if (incompleteMatrices.Count > 0)
+        {
+            string listText = string.Join("\n• ", incompleteMatrices);
+            string confirmMsg = $"Виявлено не повністю заповнені матриці порівнянь:\n• {listText}\n\nНе оцінені пари вважаються рівними (1). Продовжити?";
+            var dr = MessageBox.Show(confirmMsg, "Неповні оцінки матриць", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (dr != MessageBoxResult.Yes)
+            {
+                return;
+            }
         }
 
         try
