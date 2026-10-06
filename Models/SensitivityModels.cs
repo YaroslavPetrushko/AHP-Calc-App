@@ -38,6 +38,10 @@ public class CriticalIntersectionPoint
     public double PriorityP { get; set; } // Пріоритет у точці перетину P(t*)
     public bool IsInDomain => WeightT >= 0.0 && WeightT <= 1.0;
     public bool IsLeadershipChange { get; set; } // Чи відбувається зміна переможця (#1)
+    public string? OldLeaderId { get; set; }
+    public string? OldLeaderName { get; set; }
+    public string? NewLeaderId { get; set; }
+    public string? NewLeaderName { get; set; }
     public string EventDescription { get; set; } = string.Empty;
 }
 
