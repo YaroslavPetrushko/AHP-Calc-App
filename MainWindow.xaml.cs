@@ -268,7 +268,7 @@ public partial class MainWindow : Window
             // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
             tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
             tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
-            TxtBottomStatus.Text = $"Некоректне значення «{text}». Значення за шкалою Сааті має бути числом або дробом у діапазоні [1/9; 9].";
+            TxtBottomStatus.Text = "Значення має бути в межах від 1/9 до 9";
         }
     }
 
@@ -537,7 +537,7 @@ public partial class MainWindow : Window
             // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
             tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
             tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
-            TxtBottomStatus.Text = $"Некоректне значення «{text}». Значення за шкалою Сааті має бути числом або дробом у діапазоні [1/9; 9].";
+            TxtBottomStatus.Text = "Значення має бути в межах від 1/9 до 9";
         }
     }
 

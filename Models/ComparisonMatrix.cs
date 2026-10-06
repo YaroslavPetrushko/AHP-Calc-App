@@ -61,8 +61,14 @@ public class ComparisonMatrix
         if (value <= 0 || double.IsNaN(value) || double.IsInfinity(value))
             return;
 
-        Values[row, col] = value;
-        Values[col, row] = 1.0 / value;
+        const double minAllowed = (1.0 / 9.0) - 1e-9;
+        const double maxAllowed = 9.0 + 1e-9;
+        if (value < minAllowed || value > maxAllowed)
+            return;
+
+        double snapped = SnapToSaatyScale(value);
+        Values[row, col] = snapped;
+        Values[col, row] = 1.0 / snapped;
     }
 
     /// <summary>
@@ -135,8 +141,49 @@ public class ComparisonMatrix
     }
 
     /// <summary>
+    /// Значення стандартної 9-бальної шкали важливості Томаса Сааті (від 1/9 до 9).
+    /// </summary>
+    public static readonly double[] SaatyScale =
+    {
+        1.0 / 9.0, 1.0 / 8.0, 1.0 / 7.0, 1.0 / 6.0, 1.0 / 5.0, 1.0 / 4.0, 1.0 / 3.0, 1.0 / 2.0,
+        1.0,
+        2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0
+    };
+
+    /// <summary>
+    /// Прив'язка значення до найближчого значення шкали Сааті, якщо відносна різниця менша за 0.5% (0.005).
+    /// </summary>
+    public static double SnapToSaatyScale(double v)
+    {
+        if (v <= 0 || double.IsNaN(v) || double.IsInfinity(v))
+            return v;
+
+        double closest = SaatyScale[0];
+        double minDiff = Math.Abs(v - closest);
+
+        for (int i = 1; i < SaatyScale.Length; i++)
+        {
+            double diff = Math.Abs(v - SaatyScale[i]);
+            if (diff < minDiff)
+            {
+                minDiff = diff;
+                closest = SaatyScale[i];
+            }
+        }
+
+        if (minDiff / closest < 0.005)
+        {
+            return closest;
+        }
+
+        return v;
+    }
+
+    /// <summary>
     /// Парсинг значення зі строки (підтримує "3", "1/3", "0.333", "0.5").
-    /// Перевіряє діапазон шкали Сааті [1/9; 9].
+    /// Стиль NumberStyles.Float, CultureInfo.InvariantCulture.
+    /// Відхиляє значення поза [1/9; 9] (допуск 1e-9), нечислові, 1/0, від'ємні.
+    /// Після успішного розбору застосовує SnapToSaatyScale.
     /// </summary>
     public static bool TryParseSaatyValue(string input, out double result)
     {
@@ -144,51 +191,47 @@ public class ComparisonMatrix
         if (string.IsNullOrWhiteSpace(input))
             return false;
 
-        input = input.Trim().Replace(',', '.');
+        string normalized = input.Trim().Replace(',', '.');
 
-        double parsedVal = 0.0;
-        bool success = false;
-
-        if (input.Contains('/'))
+        double parsedVal;
+        if (normalized.Contains('/'))
         {
-            var parts = input.Split('/');
-            if (parts.Length == 2 &&
-                double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double num) &&
-                double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double den) &&
-                den > 0 && num > 0)
+            var parts = normalized.Split('/');
+            if (parts.Length != 2)
+                return false;
+
+            if (!double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double num) ||
+                !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double den))
             {
-                parsedVal = num / den;
-                success = true;
+                return false;
             }
+
+            if (num <= 0 || den <= 0 || double.IsNaN(num) || double.IsNaN(den) || double.IsInfinity(num) || double.IsInfinity(den))
+                return false;
+
+            parsedVal = num / den;
         }
-        else if (double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out double val) && val > 0)
+        else
         {
+            if (!double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out double val))
+                return false;
+
+            if (val <= 0 || double.IsNaN(val) || double.IsInfinity(val))
+                return false;
+
             parsedVal = val;
-            success = true;
         }
 
-        if (!success)
+        if (double.IsNaN(parsedVal) || double.IsInfinity(parsedVal))
             return false;
 
-        // Перевірка допустимого діапазону шкали Сааті [1/9; 9]
-        if (parsedVal < (1.0 / 9.0) - 1e-3 || parsedVal > 9.0 + 1e-3)
+        const double minAllowed = (1.0 / 9.0) - 1e-9;
+        const double maxAllowed = 9.0 + 1e-9;
+
+        if (parsedVal < minAllowed || parsedVal > maxAllowed)
             return false;
 
-        // Прив'язка близьких десяткових значень (наприклад, 0.333 -> 1/3, 0.143 -> 1/7, 0.111 -> 1/9)
-        // Тільки якщо вхідний рядок не містив явного дробу зі слешем
-        if (!input.Contains('/'))
-        {
-            for (int k = 2; k <= 9; k++)
-            {
-                if (Math.Abs(parsedVal - (1.0 / k)) < 0.005)
-                {
-                    parsedVal = 1.0 / k;
-                    break;
-                }
-            }
-        }
-
-        result = parsedVal;
+        result = SnapToSaatyScale(parsedVal);
         return true;
     }
 
