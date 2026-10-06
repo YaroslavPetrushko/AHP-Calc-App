@@ -29,6 +29,7 @@ public partial class MainWindow : Window
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
     private TextBox[,] _altTextBoxes = new TextBox[0, 0];
+    private static readonly System.Globalization.CultureInfo UkCulture = new("uk-UA");
 
     public MainWindow()
     {
@@ -290,6 +291,9 @@ public partial class MainWindow : Window
             PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
             TxtCritStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= {threshold:P0})";
             TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
+
+            ClearCriteriaCellHighlights();
+            BorderCritInconsistentHint.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -297,6 +301,27 @@ public partial class MainWindow : Window
             PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
             TxtCritStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > {threshold:P0})";
             TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
+
+            var hint = AhpCalculator.FindMostInconsistentCell(_criteriaMatrix, result.Weights);
+            if (hint != null)
+            {
+                int r = hint.Value.Row;
+                int c = hint.Value.Col;
+                string nameA = r < _criteria.Count ? _criteria[r].Name : $"C{r + 1}";
+                string nameB = c < _criteria.Count ? _criteria[c].Name : $"C{c + 1}";
+                string x = ComparisonMatrix.FormatSaatyValue(hint.Value.Current);
+                string y = hint.Value.Implied.ToString("0.00", UkCulture);
+                string z = ComparisonMatrix.FormatSaatyValue(hint.Value.Recommended);
+
+                TxtCritInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                BorderCritInconsistentHint.Visibility = Visibility.Visible;
+                HighlightCriteriaCells(r, c);
+            }
+            else
+            {
+                ClearCriteriaCellHighlights();
+                BorderCritInconsistentHint.Visibility = Visibility.Collapsed;
+            }
         }
     }
 
@@ -567,6 +592,9 @@ public partial class MainWindow : Window
             PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
             TxtAltStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= {threshold:P0})";
             TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
+
+            ClearAlternativeCellHighlights();
+            BorderAltInconsistentHint.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -574,6 +602,111 @@ public partial class MainWindow : Window
             PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
             TxtAltStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > {threshold:P0})";
             TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
+
+            var hint = AhpCalculator.FindMostInconsistentCell(altMatrix, result.Weights);
+            if (hint != null)
+            {
+                int r = hint.Value.Row;
+                int c = hint.Value.Col;
+                string nameA = r < _alternatives.Count ? _alternatives[r].Name : $"A{r + 1}";
+                string nameB = c < _alternatives.Count ? _alternatives[c].Name : $"A{c + 1}";
+                string x = ComparisonMatrix.FormatSaatyValue(hint.Value.Current);
+                string y = hint.Value.Implied.ToString("0.00", UkCulture);
+                string z = ComparisonMatrix.FormatSaatyValue(hint.Value.Recommended);
+
+                TxtAltInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                BorderAltInconsistentHint.Visibility = Visibility.Visible;
+                HighlightAlternativeCells(r, c);
+            }
+            else
+            {
+                ClearAlternativeCellHighlights();
+                BorderAltInconsistentHint.Visibility = Visibility.Collapsed;
+            }
+        }
+    }
+
+    private void ClearCriteriaCellHighlights()
+    {
+        if (_critTextBoxes == null) return;
+        int rows = _critTextBoxes.GetLength(0);
+        int cols = _critTextBoxes.GetLength(1);
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                var tb = _critTextBoxes[i, j];
+                if (tb != null)
+                {
+                    tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
+                    tb.BorderThickness = new Thickness(1);
+                }
+            }
+        }
+    }
+
+    private void HighlightCriteriaCells(int r, int c)
+    {
+        ClearCriteriaCellHighlights();
+        var orange = (Brush)FindResource("WarningOrange");
+        var thick = new Thickness(2);
+
+        if (_critTextBoxes != null && r < _critTextBoxes.GetLength(0) && c < _critTextBoxes.GetLength(1))
+        {
+            var tb1 = _critTextBoxes[r, c];
+            if (tb1 != null)
+            {
+                tb1.BorderBrush = orange;
+                tb1.BorderThickness = thick;
+            }
+            var tb2 = _critTextBoxes[c, r];
+            if (tb2 != null)
+            {
+                tb2.BorderBrush = orange;
+                tb2.BorderThickness = thick;
+            }
+        }
+    }
+
+    private void ClearAlternativeCellHighlights()
+    {
+        if (_altTextBoxes == null) return;
+        int rows = _altTextBoxes.GetLength(0);
+        int cols = _altTextBoxes.GetLength(1);
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                var tb = _altTextBoxes[i, j];
+                if (tb != null)
+                {
+                    tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
+                    tb.BorderThickness = new Thickness(1);
+                }
+            }
+        }
+    }
+
+    private void HighlightAlternativeCells(int r, int c)
+    {
+        ClearAlternativeCellHighlights();
+        var orange = (Brush)FindResource("WarningOrange");
+        var thick = new Thickness(2);
+
+        if (_altTextBoxes != null && r < _altTextBoxes.GetLength(0) && c < _altTextBoxes.GetLength(1))
+        {
+            var tb1 = _altTextBoxes[r, c];
+            if (tb1 != null)
+            {
+                tb1.BorderBrush = orange;
+                tb1.BorderThickness = thick;
+            }
+            var tb2 = _altTextBoxes[c, r];
+            if (tb2 != null)
+            {
+                tb2.BorderBrush = orange;
+                tb2.BorderThickness = thick;
+            }
         }
     }
 

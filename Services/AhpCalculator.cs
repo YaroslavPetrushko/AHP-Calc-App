@@ -760,4 +760,80 @@ public static class AhpCalculator
 
         return res;
     }
+
+    /// <summary>
+    /// Знаходить пару порівнянь (i < j), яка вносить найбільше логарифмічне відхилення
+    /// від узгодженого співвідношення ваг w_i / w_j.
+    /// Метрика: |ln(a_ij * w_j / w_i)| лише для i < j.
+    /// Implied = w_i / w_j.
+    /// Recommended — значення шкали Сааті, найближче до Implied у логарифмічному масштабі.
+    /// </summary>
+    public static (int Row, int Col, double Current, double Implied, double Recommended)? FindMostInconsistentCell(
+        ComparisonMatrix matrix,
+        double[] weights)
+    {
+        if (matrix == null || weights == null || matrix.Size < 3 || weights.Length != matrix.Size)
+            return null;
+
+        int n = matrix.Size;
+        double maxError = -1.0;
+        int bestI = -1;
+        int bestJ = -1;
+
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = i + 1; j < n; j++)
+            {
+                double aij = matrix.Values[i, j];
+                double wi = weights[i];
+                double wj = weights[j];
+
+                if (aij <= 0.0 || wi <= 0.0 || wj <= 0.0)
+                    continue;
+
+                // Метрика: |ln(a_ij * w_j / w_i)|
+                double error = Math.Abs(Math.Log(aij * wj / wi));
+                if (error > maxError)
+                {
+                    maxError = error;
+                    bestI = i;
+                    bestJ = j;
+                }
+            }
+        }
+
+        if (bestI < 0 || bestJ < 0 || maxError < 1e-6)
+            return null;
+
+        double current = matrix.Values[bestI, bestJ];
+        double implied = weights[bestI] / weights[bestJ];
+        double recommended = GetClosestSaatyScaleValueLog(implied);
+
+        return (bestI, bestJ, current, implied, recommended);
+    }
+
+    /// <summary>
+    /// Знаходить значення шкали Сааті, найближче до x у логарифмічному масштабі: min |ln(x) - ln(s)|.
+    /// </summary>
+    public static double GetClosestSaatyScaleValueLog(double implied)
+    {
+        if (implied <= 0.0) return 1.0;
+
+        double logVal = Math.Log(implied);
+        double closest = ComparisonMatrix.SaatyScale[0];
+        double minDiff = Math.Abs(logVal - Math.Log(closest));
+
+        for (int i = 1; i < ComparisonMatrix.SaatyScale.Length; i++)
+        {
+            double s = ComparisonMatrix.SaatyScale[i];
+            double diff = Math.Abs(logVal - Math.Log(s));
+            if (diff < minDiff)
+            {
+                minDiff = diff;
+                closest = s;
+            }
+        }
+
+        return closest;
+    }
 }

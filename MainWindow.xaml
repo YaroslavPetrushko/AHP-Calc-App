@@ -309,6 +309,14 @@
                                     </ScrollViewer>
                                 </Border>
 
+                                <!-- Inconsistency Hint for Criteria -->
+                                <Border x:Name="BorderCritInconsistentHint" Visibility="Collapsed" Background="#1AF59E0B" BorderBrush="{DynamicResource WarningOrange}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💡 " FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCritInconsistentHint" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource WarningOrange}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- Live Weights & Diagnostics -->
                                 <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
                                     <Grid>
@@ -365,6 +373,14 @@
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                         <Grid x:Name="GridAltMatrixContainer"/>
                                     </ScrollViewer>
+                                </Border>
+
+                                <!-- Inconsistency Hint for Alternatives -->
+                                <Border x:Name="BorderAltInconsistentHint" Visibility="Collapsed" Background="#1AF59E0B" BorderBrush="{DynamicResource WarningOrange}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💡 " FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtAltInconsistentHint" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource WarningOrange}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Border>
 
                                 <!-- Live Local Priorities for selected criterion -->
