@@ -62,7 +62,7 @@
 
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock Text="Версія 1.2" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryBlue}"/>
-                        <TextBlock Text="Побудовано на платформі .NET 10 WPF" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                        <TextBlock Text="СумДУ • Побудовано на платформі .NET 10 WPF" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
 
                     <Button Grid.Column="1" Content="Зрозуміло" Style="{StaticResource PrimaryBtnStyle}" Height="34" Padding="20,0" IsDefault="True" IsCancel="True" Click="BtnClose_Click"/>
