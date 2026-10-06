@@ -1020,7 +1020,12 @@ public partial class MainWindow : Window
                 _alternativeMatrices,
                 _calculationOptions);
 
-            var resultsWin = new ResultsWindow(result)
+            var resultsWin = new ResultsWindow(
+                result,
+                _criteria.ToList(),
+                _alternatives.ToList(),
+                _criteriaMatrix,
+                _alternativeMatrices)
             {
                 Owner = this
             };
@@ -1052,10 +1057,36 @@ public partial class MainWindow : Window
             ExportReportToFile();
             e.Handled = true;
         }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.P)
+        {
+            MenuCompareProfiles_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
         else if (e.Key == Key.F1)
         {
             MenuHelpAbout_Click(this, new RoutedEventArgs());
             e.Handled = true;
+        }
+    }
+
+    private void MenuCompareProfiles_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var win = new ProfileComparisonWindow(
+                _criteria.ToList(),
+                _alternatives.ToList(),
+                _criteriaMatrix,
+                _alternativeMatrices,
+                _calculationOptions)
+            {
+                Owner = this
+            };
+            win.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка відкриття порівняння профілів:\n{ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

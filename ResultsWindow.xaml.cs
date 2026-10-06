@@ -114,10 +114,29 @@ public partial class ResultsWindow : Window
         Color.FromRgb(249, 115, 22)  // Orange (#F97316)
     };
 
+    private readonly List<Criterion>? _rawCriteria;
+    private readonly List<Alternative>? _rawAlternatives;
+    private readonly ComparisonMatrix? _rawCriteriaMatrix;
+    private readonly Dictionary<string, ComparisonMatrix>? _rawAltMatrices;
+
     public ResultsWindow(AhpResult result)
+        : this(result, null, null, null, null)
+    {
+    }
+
+    public ResultsWindow(
+        AhpResult result,
+        List<Criterion>? criteria,
+        List<Alternative>? alternatives,
+        ComparisonMatrix? criteriaMatrix,
+        Dictionary<string, ComparisonMatrix>? altMatrices)
     {
         InitializeComponent();
         _result = result;
+        _rawCriteria = criteria;
+        _rawAlternatives = alternatives;
+        _rawCriteriaMatrix = criteriaMatrix;
+        _rawAltMatrices = altMatrices;
 
         InitHeaderAndBadges();
         InitRankingsList();
@@ -1087,6 +1106,29 @@ public partial class ResultsWindow : Window
         encoder.Frames.Add(BitmapFrame.Create(rtb));
         using var stream = File.Create(filePath);
         encoder.Save(stream);
+    }
+
+    private void BtnCompareProfiles_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            ProfileComparisonWindow win;
+            if (_rawCriteria != null && _rawAlternatives != null && _rawCriteriaMatrix != null && _rawAltMatrices != null)
+            {
+                win = new ProfileComparisonWindow(_rawCriteria, _rawAlternatives, _rawCriteriaMatrix, _rawAltMatrices, _result.Options);
+            }
+            else
+            {
+                var preset = PresetService.GetLab34Preset();
+                win = new ProfileComparisonWindow(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, _result.Options);
+            }
+            win.Owner = this;
+            win.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка відкриття порівняння профілів: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e)

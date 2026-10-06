@@ -432,6 +432,7 @@
             <Grid>
                 <TextBlock x:Name="TxtResultsStatus" Text="Розрахунок виконано математичним рушієм AHP (.NET 10)" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnCompareProfiles" Content="⚖️ Порівняти профілі" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,10,0" Click="BtnCompareProfiles_Click"/>
                     <Button x:Name="BtnExport" Content="📥 Експорт таблиць та графіків ▾" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,10,0" Click="BtnExport_Click">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="ExportContextMenu">

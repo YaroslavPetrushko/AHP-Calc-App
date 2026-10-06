@@ -111,6 +111,16 @@ public class AhpCalculationOptions
         ConsistencyThresholdMode.SaatyAdaptive);
 
     /// <summary>
+    /// Профіль геометричного середнього (LLSM / Logarithmic Least Squares):
+    /// середнє геометричне рядків, степеневе точне lambda_max, табличний RI Сааті, адаптивний поріг.
+    /// </summary>
+    public static AhpCalculationOptions GeometricMeanProfile => new(
+        WeightCalculationMethod.GeometricMean,
+        LambdaCalculationMethod.ExactEigenvalue,
+        RiCalculationMode.SaatyTable,
+        ConsistencyThresholdMode.SaatyAdaptive);
+
+    /// <summary>
     /// Перевірка чи відповідає поточна конфігурація профілю ЛР №4.
     /// </summary>
     public bool IsLab4Profile =>
@@ -128,12 +138,35 @@ public class AhpCalculationOptions
         RiMode == RiCalculationMode.SaatyTable &&
         ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
+    /// <summary>
+    /// Перевірка чи відповідає поточна конфігурація профілю геометричного середнього.
+    /// </summary>
+    public bool IsGeometricMeanProfile =>
+        WeightMethod == WeightCalculationMethod.GeometricMean &&
+        LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
+        RiMode == RiCalculationMode.SaatyTable &&
+        ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
+
+    public bool ValueEquals(AhpCalculationOptions? other)
+    {
+        if (other is null) return false;
+        return WeightMethod == other.WeightMethod &&
+               LambdaMethod == other.LambdaMethod &&
+               RiMode == other.RiMode &&
+               ThresholdMode == other.ThresholdMode;
+    }
+
+    public override bool Equals(object? obj) => obj is AhpCalculationOptions other && ValueEquals(other);
+
+    public override int GetHashCode() => System.HashCode.Combine(WeightMethod, LambdaMethod, RiMode, ThresholdMode);
+
     public string ProfileName
     {
         get
         {
             if (IsLab4Profile) return "Еталон ЛР №4";
             if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
+            if (IsGeometricMeanProfile) return "Класичний, геометричне середнє";
             return "Користувацький профіль";
         }
     }

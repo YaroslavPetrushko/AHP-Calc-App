@@ -55,6 +55,8 @@
 
             <!-- Menu "Налаштування" -->
             <MenuItem Header="_Налаштування">
+                <MenuItem Header="⚖️ _Порівняти профілі..." InputGestureText="Ctrl+P" Click="MenuCompareProfiles_Click"/>
+                <Separator/>
                 <MenuItem Header="_Профіль розрахунку">
                     <MenuItem.Icon>
                         <TextBlock Text="🎯" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
