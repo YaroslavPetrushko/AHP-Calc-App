@@ -40,6 +40,15 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
+                <MenuItem Header="_Тестові набори (Пресети)">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </MenuItem.Icon>
+                    <MenuItem Header="📁 Тестовий набір №1 (ЛР №3–4)" Click="BtnPresetLab34_Click"/>
+                    <MenuItem Header="📘 Курсова робота (ЧЕРНЕТКА)" Click="BtnPresetCoursework_Click"/>
+                    <MenuItem Header="📗 Курсова робота (Остаточні обґрунтовані судження)" Click="BtnPresetCourseworkFinal_Click"/>
+                </MenuItem>
+                <Separator/>
                 <MenuItem Header="_Експорт звіту в TXT..." InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="📋" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -123,11 +132,8 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="{DynamicResource BadgeBg}" CornerRadius="6" Padding="6,4" Margin="0,2,8,0">
-                            <TextBlock Text="AHP • МАІ" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource BadgeFg}"/>
-                        </Border>
                         <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                        <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="6,4,0,0" VerticalAlignment="Center">
+                        <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="12,4,0,0" VerticalAlignment="Center">
                             <TextBlock x:Name="TxtActiveProfile" Text="Профіль: ЛР №4" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
                         </Border>
                     </StackPanel>
@@ -136,9 +142,9 @@
 
                 <!-- Preset Toolbar -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnPresetLab34" Content="📁 Тестовий набір №1" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetLab34_Click"/>
-                    <Button x:Name="BtnPresetCoursework" Content="📘 Тестовий набір №2" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetCoursework_Click"/>
-                    <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
+                    <Button x:Name="BtnPresetLab34" Content="📁 Тестовий набір №1" ToolTip="Контрольний набір ЛР №3–4 (Відеокарти)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetLab34_Click"/>
+                    <Button x:Name="BtnPresetCourseworkFinal" Content="📗 Тестовий набір №2 - КР" ToolTip="Курсова робота: вибір відеокарти (Остаточні обґрунтовані судження)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetCourseworkFinal_Click"/>
+                    <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" ToolTip="Створити чистий шаблон задачі" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
                 </StackPanel>
             </Grid>
         </Border>

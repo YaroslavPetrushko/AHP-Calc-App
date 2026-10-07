@@ -83,4 +83,60 @@ public class PresetTests
         Assert.Equal(1.0, cMat.Values[2, 4]);
         Assert.InRange(cMat.Values[3, 4], 1.0 / 3.0 - Tolerance, 1.0 / 3.0 + Tolerance);
     }
+
+    [Fact]
+    public void CourseworkDraftPreset_EmbeddedJson_LoadsAndValidates()
+    {
+        var preset = PresetService.GetCourseworkPreset();
+
+        Assert.NotNull(preset);
+        Assert.Contains("ЧЕРНЕТКА", preset.Name);
+        Assert.Equal(4, preset.Criteria.Count);
+        Assert.Equal(5, preset.Alternatives.Count);
+        Assert.Equal(4, preset.CriteriaMatrix.Size);
+        Assert.Equal(6, preset.CriteriaMatrix.TotalPairs);
+        Assert.Equal(6, preset.CriteriaMatrix.JudgedCount);
+        Assert.True(preset.CriteriaMatrix.IsFullyJudged);
+
+        Assert.Equal(4, preset.AlternativeMatrices.Count);
+        foreach (var mat in preset.AlternativeMatrices.Values)
+        {
+            Assert.Equal(5, mat.Size);
+            Assert.Equal(10, mat.TotalPairs);
+            Assert.Equal(10, mat.JudgedCount);
+            Assert.True(mat.IsFullyJudged);
+        }
+    }
+
+    [Fact]
+    public void CourseworkFinalPreset_EmbeddedJson_LoadsAndValidates()
+    {
+        var preset = PresetService.GetCourseworkFinalPreset();
+
+        Assert.NotNull(preset);
+        Assert.Equal(4, preset.Criteria.Count);
+        Assert.Equal(5, preset.Alternatives.Count);
+        Assert.Equal(4, preset.CriteriaMatrix.Size);
+        Assert.Equal(6, preset.CriteriaMatrix.TotalPairs);
+        Assert.Equal(6, preset.CriteriaMatrix.JudgedCount);
+        Assert.True(preset.CriteriaMatrix.IsFullyJudged);
+
+        Assert.Equal(4, preset.AlternativeMatrices.Count);
+        foreach (var mat in preset.AlternativeMatrices.Values)
+        {
+            Assert.Equal(5, mat.Size);
+            Assert.Equal(10, mat.TotalPairs);
+            Assert.Equal(10, mat.JudgedCount);
+            Assert.True(mat.IsFullyJudged);
+        }
+    }
+
+    [Fact]
+    public void LoadPresetFromResource_MissingResource_ThrowsInvalidOperationException()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            PresetService.LoadPresetFromResource("non_existent_preset.ahp.json"));
+
+        Assert.Contains("не знайдено в збірці", ex.Message);
+    }
 }

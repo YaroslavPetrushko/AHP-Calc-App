@@ -1,5 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
 using MAI.Models;
 
 namespace MAI.Services;
@@ -126,102 +131,90 @@ public static class PresetService
     }
 
     /// <summary>
-    /// Пресет із Курсової роботи (Актуалізований набір відеокарт 2026).
+    /// Пресет із Курсової роботи (Чернетка — завантажується з вбудованого ресурсу coursework.ahp.json).
     /// </summary>
     public static AhpProblemPreset GetCourseworkPreset()
     {
-        var criteria = new List<Criterion>
+        return LoadPresetFromResource("coursework.ahp.json");
+    }
+
+    /// <summary>
+    /// Пресет із Курсової роботи (Остаточні обґрунтовані судження — завантажується з вбудованого ресурсу coursework_preset2.ahp.json).
+    /// </summary>
+    public static AhpProblemPreset GetCourseworkFinalPreset()
+    {
+        return LoadPresetFromResource("coursework_preset2.ahp.json");
+    }
+
+    /// <summary>
+    /// Завантаження пресету з вбудованого ресурсу збірки (.ahp.json).
+    /// </summary>
+    public static AhpProblemPreset LoadPresetFromResource(string resourceFileName)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        string[] allResourceNames = assembly.GetManifestResourceNames();
+
+        string? matchedName = allResourceNames.FirstOrDefault(n =>
+            n.Equals(resourceFileName, StringComparison.OrdinalIgnoreCase) ||
+            n.EndsWith("." + resourceFileName, StringComparison.OrdinalIgnoreCase));
+
+        if (matchedName == null)
         {
-            new("P", "Продуктивність (P)", "Швидкодія в растровому рендерингу (FPS у тестах та іграх)"),
-            new("F", "Функціональність (F)", "Обсяг VRAM, CUDA/ROCm, тензорні блоки для AI/ML"),
-            new("A", "Актуальність (A)", "Новизна архітектури (Blackwell / RDNA 4), DLSS/FSR, строк підтримки"),
-            new("C", "Вартість (C)", "Цінова доступність нової карти в роздробі України")
+            throw new InvalidOperationException($"Вбудований ресурс пресету «{resourceFileName}» не знайдено в збірці. Доступні ресурси: {string.Join(", ", allResourceNames)}");
+        }
+
+        using var stream = assembly.GetManifestResourceStream(matchedName);
+        if (stream == null)
+        {
+            throw new InvalidOperationException($"Не вдалося відкрити потік вбудованого ресурсу «{matchedName}».");
+        }
+
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        string json = reader.ReadToEnd();
+
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
         };
 
-        var alternatives = new List<Alternative>
+        var data = JsonSerializer.Deserialize<AhpProjectData>(json, jsonOptions);
+        if (data == null)
         {
-            new("A1", "NVIDIA RTX 5060 8GB", "Базовий рівень Blackwell, доступна ціна"),
-            new("A2", "NVIDIA RTX 5060 Ti 16GB", "Оптимум пам'яті 16GB для локального навчання нейромереж"),
-            new("A3", "NVIDIA RTX 5070 12GB", "Вища продуктивність за меншого обсягу пам'яті"),
-            new("A4", "AMD Radeon RX 9060 XT 16GB", "Конкурент A2 на новій платформі RDNA 4, 16GB"),
-            new("A5", "AMD Radeon RX 9070 XT 16GB", "Флагманська продуктивність сегмента, 16GB VRAM")
-        };
+            throw new InvalidOperationException($"Не вдалося десеріалізувати дані пресету з ресурсу «{matchedName}». Файл пошкоджений або порожній.");
+        }
 
-        var critLabels = criteria.Select(c => c.Name).ToList();
-        var altLabels = alternatives.Select(a => a.Name).ToList();
+        var errors = ProjectStorageService.ValidateProject(data);
+        if (errors.Count > 0)
+        {
+            throw new InvalidOperationException($"Помилка валідації пресету «{matchedName}»:\n" + string.Join("\n", errors.Select(e => $"• {e}")));
+        }
 
-        var critMatrix = new ComparisonMatrix(4, critLabels);
-        critMatrix.SetComparison(0, 1, 2.0);
-        critMatrix.SetComparison(0, 2, 3.0);
-        critMatrix.SetComparison(0, 3, 1.0);
-        critMatrix.SetComparison(1, 2, 2.0);
-        critMatrix.SetComparison(1, 3, 1.0);
-        critMatrix.SetComparison(2, 3, 0.5);
+        var critLabels = data.Criteria.Select(c => c.Name).ToList();
+        var altLabels = data.Alternatives.Select(a => a.Name).ToList();
+
+        var critMatrix = new ComparisonMatrix(data.Criteria.Count, critLabels);
+        if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
+        {
+            critMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
+        }
 
         var altMatrices = new Dictionary<string, ComparisonMatrix>();
-
-        // Ap
-        var pMatrix = new ComparisonMatrix(5, altLabels);
-        pMatrix.SetComparison(0, 1, 0.25);
-        pMatrix.SetComparison(0, 2, 0.2);
-        pMatrix.SetComparison(0, 3, 0.25);
-        pMatrix.SetComparison(0, 4, 1.0 / 6);
-        pMatrix.SetComparison(1, 2, 0.5);
-        pMatrix.SetComparison(1, 3, 1.0);
-        pMatrix.SetComparison(1, 4, 0.333);
-        pMatrix.SetComparison(2, 3, 2.0);
-        pMatrix.SetComparison(2, 4, 0.5);
-        pMatrix.SetComparison(3, 4, 0.333);
-        altMatrices["P"] = pMatrix;
-
-        // Af
-        var fMatrix = new ComparisonMatrix(5, altLabels);
-        fMatrix.SetComparison(0, 1, 0.25);
-        fMatrix.SetComparison(0, 2, 0.5);
-        fMatrix.SetComparison(0, 3, 0.333);
-        fMatrix.SetComparison(0, 4, 0.2);
-        fMatrix.SetComparison(1, 2, 2.0);
-        fMatrix.SetComparison(1, 3, 2.0);
-        fMatrix.SetComparison(1, 4, 1.0);
-        fMatrix.SetComparison(2, 3, 1.0);
-        fMatrix.SetComparison(2, 4, 0.5);
-        fMatrix.SetComparison(3, 4, 0.5);
-        altMatrices["F"] = fMatrix;
-
-        // Aa
-        var aMatrix = new ComparisonMatrix(5, altLabels);
-        aMatrix.SetComparison(0, 1, 0.5);
-        aMatrix.SetComparison(0, 2, 0.5);
-        aMatrix.SetComparison(0, 3, 0.5);
-        aMatrix.SetComparison(0, 4, 0.5);
-        aMatrix.SetComparison(1, 2, 1.0);
-        aMatrix.SetComparison(1, 3, 1.0);
-        aMatrix.SetComparison(1, 4, 1.0);
-        aMatrix.SetComparison(2, 3, 1.0);
-        aMatrix.SetComparison(2, 4, 1.0);
-        aMatrix.SetComparison(3, 4, 1.0);
-        altMatrices["A"] = aMatrix;
-
-        // Ac
-        var cMatrix = new ComparisonMatrix(5, altLabels);
-        cMatrix.SetComparison(0, 1, 3.0);
-        cMatrix.SetComparison(0, 2, 5.0);
-        cMatrix.SetComparison(0, 3, 3.0);
-        cMatrix.SetComparison(0, 4, 7.0);
-        cMatrix.SetComparison(1, 2, 2.0);
-        cMatrix.SetComparison(1, 3, 1.0);
-        cMatrix.SetComparison(1, 4, 3.0);
-        cMatrix.SetComparison(2, 3, 0.5);
-        cMatrix.SetComparison(2, 4, 2.0);
-        cMatrix.SetComparison(3, 4, 3.0);
-        altMatrices["C"] = cMatrix;
+        foreach (var c in data.Criteria)
+        {
+            var altMat = new ComparisonMatrix(data.Alternatives.Count, altLabels);
+            if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
+            {
+                altMat.LoadFromJaggedArray(jaggedMat);
+            }
+            altMatrices[c.Id] = altMat;
+        }
 
         return new AhpProblemPreset
         {
-            Name = "Курсова робота (Відеокарти 2026)",
-            Description = "Актуалізований модельний ряд (Blackwell / RDNA 4): 4 критерії, 5 альтернатив.",
-            Criteria = criteria,
-            Alternatives = alternatives,
+            Name = data.Title,
+            Description = data.Description,
+            Criteria = data.Criteria,
+            Alternatives = data.Alternatives,
             CriteriaMatrix = critMatrix,
             AlternativeMatrices = altMatrices
         };

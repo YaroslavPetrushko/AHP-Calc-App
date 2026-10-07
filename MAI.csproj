@@ -18,6 +18,7 @@
     <ItemGroup>
         <Resource Include="Resources\app_icon.ico" />
         <Resource Include="Resources\app_icon.png" />
+        <EmbeddedResource Include="Resources\Presets\*.json" />
     </ItemGroup>
 
     <ItemGroup>

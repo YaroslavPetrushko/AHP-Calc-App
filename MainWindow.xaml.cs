@@ -68,6 +68,12 @@ public partial class MainWindow : Window
         BuildAlternativesCriteriaSelector();
         BuildAlternativeMatrixGrid();
         UpdateAllDiagnostics();
+
+        if (preset.Name.Contains("ЧЕРНЕТКА", StringComparison.OrdinalIgnoreCase))
+        {
+            TxtBottomStatus.Text = $"⚠️ УВАГА: Завантажено «{preset.Name}». Судження є попередніми та не обґрунтованими!";
+            TxtBottomStatus.Foreground = (Brush)FindResource("WarningOrange");
+        }
     }
 
     private void UpdateCountsUI()
@@ -75,6 +81,7 @@ public partial class MainWindow : Window
         TxtCritCount.Text = $"({_criteria.Count})";
         TxtAltCount.Text = $"({_alternatives.Count})";
         TxtBottomStatus.Text = $"Готово до розрахунку: {_criteria.Count} критерії, {_alternatives.Count} альтернатив.";
+        TxtBottomStatus.Foreground = (Brush)FindResource("TextDark");
     }
 
     #region Criteria Matrix Grid
@@ -1067,8 +1074,30 @@ public partial class MainWindow : Window
 
     private void BtnPresetCoursework_Click(object sender, RoutedEventArgs e)
     {
-        LoadPreset(PresetService.GetCourseworkPreset());
-        MessageBox.Show("Завантажено тестовий набір даних Курсової роботи:\n• 4 критерії\n• 5 актуалізованих альтернатив (Blackwell / RDNA 4)", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        try
+        {
+            var preset = PresetService.GetCourseworkPreset();
+            LoadPreset(preset);
+            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\n⚠️ Зверніть увагу: матриці містять попередні судження (чернетка).", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка завантаження пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void BtnPresetCourseworkFinal_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var preset = PresetService.GetCourseworkFinalPreset();
+            LoadPreset(preset);
+            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\nУсі попарні судження обґрунтовано за розрахунковими даними.", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка завантаження остаточного пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void BtnResetEmpty_Click(object sender, RoutedEventArgs e)
@@ -1536,7 +1565,16 @@ public partial class MainWindow : Window
                 BuildAlternativeMatrixGrid();
                 UpdateAllDiagnostics();
 
-                TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                if (data.Title.Contains("ЧЕРНЕТКА", StringComparison.OrdinalIgnoreCase))
+                {
+                    TxtBottomStatus.Text = $"⚠️ УВАГА: Завантажено «{data.Title}». Судження є попередніми та не обґрунтованими!";
+                    TxtBottomStatus.Foreground = (Brush)FindResource("WarningOrange");
+                }
+                else
+                {
+                    TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                    TxtBottomStatus.Foreground = (Brush)FindResource("TextDark");
+                }
             }
         }
         catch (Exception ex)
