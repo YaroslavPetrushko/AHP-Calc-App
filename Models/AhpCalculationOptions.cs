@@ -28,17 +28,17 @@ public enum WeightCalculationMethod
 public enum LambdaCalculationMethod
 {
     /// <summary>
-    /// Добуток сум стовпців вихідної матриці на вектор ваг: lambda_max = sum_j (ColumnSum_j * w_j) (метод з ЛР №4).
+    /// λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4).
     /// </summary>
     ColumnSumProduct,
 
     /// <summary>
-    /// Середнє арифметичне відношень елементів вектора Aw до w: lambda_max = 1/n sum_i ((Aw)_i / w_i).
+    /// λmax = середнє (A·w)ᵢ / wᵢ.
     /// </summary>
     RowRatioMean,
 
     /// <summary>
-    /// Точне власне число, отримане зі степеневого методу (Power Iteration).
+    /// λmax — головне власне число (степеневий метод).
     /// </summary>
     ExactEigenvalue
 }
@@ -111,6 +111,16 @@ public class AhpCalculationOptions
         ConsistencyThresholdMode.SaatyAdaptive);
 
     /// <summary>
+    /// Профіль геометричного середнього (LLSM / Logarithmic Least Squares):
+    /// середнє геометричне рядків, степеневе точне lambda_max, табличний RI Сааті, адаптивний поріг.
+    /// </summary>
+    public static AhpCalculationOptions GeometricMeanProfile => new(
+        WeightCalculationMethod.GeometricMean,
+        LambdaCalculationMethod.ExactEigenvalue,
+        RiCalculationMode.SaatyTable,
+        ConsistencyThresholdMode.SaatyAdaptive);
+
+    /// <summary>
     /// Перевірка чи відповідає поточна конфігурація профілю ЛР №4.
     /// </summary>
     public bool IsLab4Profile =>
@@ -128,12 +138,35 @@ public class AhpCalculationOptions
         RiMode == RiCalculationMode.SaatyTable &&
         ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
+    /// <summary>
+    /// Перевірка чи відповідає поточна конфігурація профілю геометричного середнього.
+    /// </summary>
+    public bool IsGeometricMeanProfile =>
+        WeightMethod == WeightCalculationMethod.GeometricMean &&
+        LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
+        RiMode == RiCalculationMode.SaatyTable &&
+        ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
+
+    public bool ValueEquals(AhpCalculationOptions? other)
+    {
+        if (other is null) return false;
+        return WeightMethod == other.WeightMethod &&
+               LambdaMethod == other.LambdaMethod &&
+               RiMode == other.RiMode &&
+               ThresholdMode == other.ThresholdMode;
+    }
+
+    public override bool Equals(object? obj) => obj is AhpCalculationOptions other && ValueEquals(other);
+
+    public override int GetHashCode() => System.HashCode.Combine(WeightMethod, LambdaMethod, RiMode, ThresholdMode);
+
     public string ProfileName
     {
         get
         {
             if (IsLab4Profile) return "Еталон ЛР №4";
             if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
+            if (IsGeometricMeanProfile) return "Класичний, геометричне середнє";
             return "Користувацький профіль";
         }
     }
@@ -161,4 +194,12 @@ public class AhpCalculationOptions
             _ => "CR <= 10%"
         };
     }
+
+    public static string GetLambdaMethodDescription(LambdaCalculationMethod method) => method switch
+    {
+        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)",
+        LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
+        LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
+        _ => method.ToString()
+    };
 }

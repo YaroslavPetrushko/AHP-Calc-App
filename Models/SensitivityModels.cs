@@ -38,6 +38,10 @@ public class CriticalIntersectionPoint
     public double PriorityP { get; set; } // Пріоритет у точці перетину P(t*)
     public bool IsInDomain => WeightT >= 0.0 && WeightT <= 1.0;
     public bool IsLeadershipChange { get; set; } // Чи відбувається зміна переможця (#1)
+    public string? OldLeaderId { get; set; }
+    public string? OldLeaderName { get; set; }
+    public string? NewLeaderId { get; set; }
+    public string? NewLeaderName { get; set; }
     public string EventDescription { get; set; } = string.Empty;
 }
 
@@ -70,6 +74,10 @@ public class CriterionSensitivityResult
     public string OptimalAlternativeName { get; set; } = string.Empty;
     public double StabilityIntervalMin { get; set; }
     public double StabilityIntervalMax { get; set; }
+    public double? LowerMarginPp { get; set; }
+    public double? UpperMarginPp { get; set; }
+    public string? LowerSuccessorName { get; set; }
+    public string? UpperSuccessorName { get; set; }
 
     public bool IsStable => OriginalWeight >= StabilityIntervalMin && OriginalWeight <= StabilityIntervalMax;
     public double RobustnessMarginLower => Math.Max(0.0, OriginalWeight - StabilityIntervalMin);
@@ -93,9 +101,9 @@ public class SensitivityDynamicRankingItem
     public string PriorityPercentText => $"{CurrentPriority:P1} ({CurrentPriority:F4})";
     public string DeltaText => DeltaPriority switch
     {
-        > 0.0005 => $"▲ +{DeltaPriority:P2}",
-        < -0.0005 => $"▼ {DeltaPriority:P2}",
-        _ => "— 0.0%"
+        > 0.0005 => $"▲ +{DeltaPriority * 100:F1} п.п.",
+        < -0.0005 => $"▼ {DeltaPriority * 100:F1} п.п.",
+        _ => "— 0.0 п.п."
     };
 
     public bool IsWinner => Rank == 1;

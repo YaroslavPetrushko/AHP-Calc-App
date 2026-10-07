@@ -7,17 +7,25 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>Resources\app_icon.ico</ApplicationIcon>
-        <Version>1.1.0</Version>
-        <AssemblyVersion>1.1.0.0</AssemblyVersion>
-        <FileVersion>1.1.0.0</FileVersion>
+        <Version>1.2.0</Version>
+        <AssemblyVersion>1.2.0.0</AssemblyVersion>
+        <FileVersion>1.2.0.0</FileVersion>
         <Product>AHP Decision Support System (МАІ)</Product>
-        <Company>SUMDU</Company>
+        <Company>СумДУ</Company>
         <Description>Засіб для вирішення багатокритеріальних задач вибору за методом аналізу ієрархій Томаса Сааті</Description>
     </PropertyGroup>
 
     <ItemGroup>
         <Resource Include="Resources\app_icon.ico" />
         <Resource Include="Resources\app_icon.png" />
+        <EmbeddedResource Include="Resources\Presets\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="tests\**" />
+        <EmbeddedResource Remove="tests\**" />
+        <None Remove="tests\**" />
+        <Page Remove="tests\**" />
     </ItemGroup>
 
 </Project>

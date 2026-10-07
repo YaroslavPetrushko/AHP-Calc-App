@@ -11,6 +11,7 @@ public class MatrixResult
     public string Name { get; set; } = string.Empty;
     public int Size { get; set; }
     public List<string> Labels { get; set; } = new();
+    public double[,] PairwiseMatrix { get; set; } = new double[0, 0];
     public double[] Weights { get; set; } = [];
     public double[,] NormalizedMatrix { get; set; } = new double[0, 0];
     public double[] ColumnSums { get; set; } = [];
@@ -66,13 +67,40 @@ public class AhpResult
     public double ActiveHierarchicalRI => ActiveRiMode == RiCalculationMode.Empirical ? HierarchicalRIEmpirical : HierarchicalRITable;
     public double ActiveHierarchicalCR => ActiveRiMode == RiCalculationMode.Empirical ? HierarchicalCREmpirical : HierarchicalCRTable;
 
-    public double HierarchicalThreshold => Options.GetAcceptableCR(RankedAlternatives.Count > 0 ? RankedAlternatives.Count : 5);
+    public double HierarchicalThreshold => 0.10;
     public double HierarchyThreshold => HierarchicalThreshold;
-    public string HierarchicalThresholdText => Options.GetThresholdDescription(RankedAlternatives.Count > 0 ? RankedAlternatives.Count : 5);
+    public string HierarchicalThresholdText => "10.0%";
 
-    public bool IsHierarchyConsistent => ActiveHierarchicalCR <= HierarchicalThreshold;
+    public bool IsHierarchyConsistent => ActiveHierarchicalCR <= 0.1001;
 
     public Alternative? BestAlternative => RankedAlternatives.FirstOrDefault();
+
+    /// <summary>
+    /// Список назв матриць, у яких коефіцієнт CR перевищує власний допустимий поріг.
+    /// </summary>
+    public List<string> InconsistentMatrices
+    {
+        get
+        {
+            var list = new List<string>();
+            if (CriteriaMatrixResult != null && !CriteriaMatrixResult.IsConsistent && !string.IsNullOrEmpty(CriteriaMatrixResult.Name))
+            {
+                list.Add(CriteriaMatrixResult.Name);
+            }
+            if (AlternativeMatrixResults != null)
+            {
+                foreach (var kvp in AlternativeMatrixResults)
+                {
+                    if (!kvp.Value.IsConsistent)
+                    {
+                        string name = !string.IsNullOrEmpty(kvp.Value.Name) ? kvp.Value.Name : kvp.Key;
+                        list.Add(name);
+                    }
+                }
+            }
+            return list;
+        }
+    }
 
     public string HierarchyConsistencyMessage =>
         IsHierarchyConsistent

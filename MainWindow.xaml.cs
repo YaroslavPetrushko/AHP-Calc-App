@@ -29,6 +29,7 @@ public partial class MainWindow : Window
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
     private TextBox[,] _altTextBoxes = new TextBox[0, 0];
+    private static readonly System.Globalization.CultureInfo UkCulture = new("uk-UA");
 
     public MainWindow()
     {
@@ -67,6 +68,12 @@ public partial class MainWindow : Window
         BuildAlternativesCriteriaSelector();
         BuildAlternativeMatrixGrid();
         UpdateAllDiagnostics();
+
+        if (preset.Name.Contains("ЧЕРНЕТКА", StringComparison.OrdinalIgnoreCase))
+        {
+            TxtBottomStatus.Text = $"⚠️ УВАГА: Завантажено «{preset.Name}». Судження є попередніми та не обґрунтованими!";
+            TxtBottomStatus.Foreground = (Brush)FindResource("WarningOrange");
+        }
     }
 
     private void UpdateCountsUI()
@@ -74,6 +81,7 @@ public partial class MainWindow : Window
         TxtCritCount.Text = $"({_criteria.Count})";
         TxtAltCount.Text = $"({_alternatives.Count})";
         TxtBottomStatus.Text = $"Готово до розрахунку: {_criteria.Count} критерії, {_alternatives.Count} альтернатив.";
+        TxtBottomStatus.Foreground = (Brush)FindResource("TextDark");
     }
 
     #region Criteria Matrix Grid
@@ -268,7 +276,7 @@ public partial class MainWindow : Window
             // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
             tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
             tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
-            TxtBottomStatus.Text = $"Некоректне значення «{text}». Значення за шкалою Сааті має бути числом або дробом у діапазоні [1/9; 9].";
+            TxtBottomStatus.Text = "Значення має бути в межах від 1/9 до 9";
         }
     }
 
@@ -283,6 +291,7 @@ public partial class MainWindow : Window
         string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
         double threshold = result.Threshold;
         TxtCritRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
+        TxtCritJudgedProgress.Text = $"Заповнено {_criteriaMatrix.JudgedCount} з {_criteriaMatrix.TotalPairs} порівнянь";
 
         if (result.IsConsistent)
         {
@@ -290,6 +299,9 @@ public partial class MainWindow : Window
             PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
             TxtCritStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= {threshold:P0})";
             TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
+
+            ClearCriteriaCellHighlights();
+            BorderCritInconsistentHint.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -297,6 +309,27 @@ public partial class MainWindow : Window
             PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
             TxtCritStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > {threshold:P0})";
             TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
+
+            var hint = AhpCalculator.FindMostInconsistentCell(_criteriaMatrix, result.Weights);
+            if (hint != null)
+            {
+                int r = hint.Value.Row;
+                int c = hint.Value.Col;
+                string nameA = r < _criteria.Count ? _criteria[r].Name : $"C{r + 1}";
+                string nameB = c < _criteria.Count ? _criteria[c].Name : $"C{c + 1}";
+                string x = ComparisonMatrix.FormatSaatyValue(hint.Value.Current);
+                string y = hint.Value.Implied.ToString("0.00", UkCulture);
+                string z = ComparisonMatrix.FormatSaatyValue(hint.Value.Recommended);
+
+                TxtCritInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                BorderCritInconsistentHint.Visibility = Visibility.Visible;
+                HighlightCriteriaCells(r, c);
+            }
+            else
+            {
+                ClearCriteriaCellHighlights();
+                BorderCritInconsistentHint.Visibility = Visibility.Collapsed;
+            }
         }
     }
 
@@ -537,7 +570,7 @@ public partial class MainWindow : Window
             // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
             tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
             tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
-            TxtBottomStatus.Text = $"Некоректне значення «{text}». Значення за шкалою Сааті має бути числом або дробом у діапазоні [1/9; 9].";
+            TxtBottomStatus.Text = "Значення має бути в межах від 1/9 до 9";
         }
     }
 
@@ -560,6 +593,7 @@ public partial class MainWindow : Window
         string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
         double threshold = result.Threshold;
         TxtAltRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
+        TxtAltJudgedProgress.Text = $"Заповнено {altMatrix.JudgedCount} з {altMatrix.TotalPairs} порівнянь";
 
         if (result.IsConsistent)
         {
@@ -567,6 +601,9 @@ public partial class MainWindow : Window
             PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
             TxtAltStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= {threshold:P0})";
             TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
+
+            ClearAlternativeCellHighlights();
+            BorderAltInconsistentHint.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -574,6 +611,111 @@ public partial class MainWindow : Window
             PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
             TxtAltStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > {threshold:P0})";
             TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
+
+            var hint = AhpCalculator.FindMostInconsistentCell(altMatrix, result.Weights);
+            if (hint != null)
+            {
+                int r = hint.Value.Row;
+                int c = hint.Value.Col;
+                string nameA = r < _alternatives.Count ? _alternatives[r].Name : $"A{r + 1}";
+                string nameB = c < _alternatives.Count ? _alternatives[c].Name : $"A{c + 1}";
+                string x = ComparisonMatrix.FormatSaatyValue(hint.Value.Current);
+                string y = hint.Value.Implied.ToString("0.00", UkCulture);
+                string z = ComparisonMatrix.FormatSaatyValue(hint.Value.Recommended);
+
+                TxtAltInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                BorderAltInconsistentHint.Visibility = Visibility.Visible;
+                HighlightAlternativeCells(r, c);
+            }
+            else
+            {
+                ClearAlternativeCellHighlights();
+                BorderAltInconsistentHint.Visibility = Visibility.Collapsed;
+            }
+        }
+    }
+
+    private void ClearCriteriaCellHighlights()
+    {
+        if (_critTextBoxes == null) return;
+        int rows = _critTextBoxes.GetLength(0);
+        int cols = _critTextBoxes.GetLength(1);
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                var tb = _critTextBoxes[i, j];
+                if (tb != null)
+                {
+                    tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
+                    tb.BorderThickness = new Thickness(1);
+                }
+            }
+        }
+    }
+
+    private void HighlightCriteriaCells(int r, int c)
+    {
+        ClearCriteriaCellHighlights();
+        var orange = (Brush)FindResource("WarningOrange");
+        var thick = new Thickness(2);
+
+        if (_critTextBoxes != null && r < _critTextBoxes.GetLength(0) && c < _critTextBoxes.GetLength(1))
+        {
+            var tb1 = _critTextBoxes[r, c];
+            if (tb1 != null)
+            {
+                tb1.BorderBrush = orange;
+                tb1.BorderThickness = thick;
+            }
+            var tb2 = _critTextBoxes[c, r];
+            if (tb2 != null)
+            {
+                tb2.BorderBrush = orange;
+                tb2.BorderThickness = thick;
+            }
+        }
+    }
+
+    private void ClearAlternativeCellHighlights()
+    {
+        if (_altTextBoxes == null) return;
+        int rows = _altTextBoxes.GetLength(0);
+        int cols = _altTextBoxes.GetLength(1);
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                var tb = _altTextBoxes[i, j];
+                if (tb != null)
+                {
+                    tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
+                    tb.BorderThickness = new Thickness(1);
+                }
+            }
+        }
+    }
+
+    private void HighlightAlternativeCells(int r, int c)
+    {
+        ClearAlternativeCellHighlights();
+        var orange = (Brush)FindResource("WarningOrange");
+        var thick = new Thickness(2);
+
+        if (_altTextBoxes != null && r < _altTextBoxes.GetLength(0) && c < _altTextBoxes.GetLength(1))
+        {
+            var tb1 = _altTextBoxes[r, c];
+            if (tb1 != null)
+            {
+                tb1.BorderBrush = orange;
+                tb1.BorderThickness = thick;
+            }
+            var tb2 = _altTextBoxes[c, r];
+            if (tb2 != null)
+            {
+                tb2.BorderBrush = orange;
+                tb2.BorderThickness = thick;
+            }
         }
     }
 
@@ -932,8 +1074,30 @@ public partial class MainWindow : Window
 
     private void BtnPresetCoursework_Click(object sender, RoutedEventArgs e)
     {
-        LoadPreset(PresetService.GetCourseworkPreset());
-        MessageBox.Show("Завантажено тестовий набір даних Курсової роботи:\n• 4 критерії\n• 5 актуалізованих альтернатив (Blackwell / RDNA 4)", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        try
+        {
+            var preset = PresetService.GetCourseworkPreset();
+            LoadPreset(preset);
+            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\n⚠️ Зверніть увагу: матриці містять попередні судження (чернетка).", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка завантаження пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void BtnPresetCourseworkFinal_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var preset = PresetService.GetCourseworkFinalPreset();
+            LoadPreset(preset);
+            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\nУсі попарні судження обґрунтовано за розрахунковими даними.", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка завантаження остаточного пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void BtnResetEmpty_Click(object sender, RoutedEventArgs e)
@@ -1001,6 +1165,31 @@ public partial class MainWindow : Window
             return;
         }
 
+        // 4. Перевірка заповненості матриць парних порівнянь
+        var incompleteMatrices = new List<string>();
+        if (!_criteriaMatrix.IsFullyJudged)
+        {
+            incompleteMatrices.Add($"Матриця критеріїв (заповнено {_criteriaMatrix.JudgedCount} з {_criteriaMatrix.TotalPairs})");
+        }
+        foreach (var c in _criteria)
+        {
+            if (_alternativeMatrices.TryGetValue(c.Id, out var mat) && !mat.IsFullyJudged)
+            {
+                incompleteMatrices.Add($"Матриця альтернатив за «{c.Name}» (заповнено {mat.JudgedCount} з {mat.TotalPairs})");
+            }
+        }
+
+        if (incompleteMatrices.Count > 0)
+        {
+            string listText = string.Join("\n• ", incompleteMatrices);
+            string confirmMsg = $"Виявлено не повністю заповнені матриці порівнянь:\n• {listText}\n\nНе оцінені пари вважаються рівними (1). Продовжити?";
+            var dr = MessageBox.Show(confirmMsg, "Неповні оцінки матриць", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (dr != MessageBoxResult.Yes)
+            {
+                return;
+            }
+        }
+
         try
         {
             // Оновлюємо актуальні мітки перед ієрархічним синтезом
@@ -1020,7 +1209,12 @@ public partial class MainWindow : Window
                 _alternativeMatrices,
                 _calculationOptions);
 
-            var resultsWin = new ResultsWindow(result)
+            var resultsWin = new ResultsWindow(
+                result,
+                _criteria.ToList(),
+                _alternatives.ToList(),
+                _criteriaMatrix,
+                _alternativeMatrices)
             {
                 Owner = this
             };
@@ -1052,10 +1246,36 @@ public partial class MainWindow : Window
             ExportReportToFile();
             e.Handled = true;
         }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.P)
+        {
+            MenuCompareProfiles_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
         else if (e.Key == Key.F1)
         {
             MenuHelpAbout_Click(this, new RoutedEventArgs());
             e.Handled = true;
+        }
+    }
+
+    private void MenuCompareProfiles_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var win = new ProfileComparisonWindow(
+                _criteria.ToList(),
+                _alternatives.ToList(),
+                _criteriaMatrix,
+                _alternativeMatrices,
+                _calculationOptions)
+            {
+                Owner = this
+            };
+            win.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка відкриття порівняння профілів:\n{ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1102,6 +1322,7 @@ public partial class MainWindow : Window
         MenuWeightPowerIteration.IsChecked = _calculationOptions.WeightMethod == WeightCalculationMethod.PrincipalEigenvector;
 
         MenuLambdaColSum.IsChecked = _calculationOptions.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct;
+        MenuLambdaRowRatio.IsChecked = _calculationOptions.LambdaMethod == LambdaCalculationMethod.RowRatioMean;
         MenuLambdaExact.IsChecked = _calculationOptions.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue;
 
         MenuRiEmpirical.IsChecked = _calculationOptions.RiMode == RiCalculationMode.Empirical;
@@ -1121,12 +1342,7 @@ public partial class MainWindow : Window
             _ => _calculationOptions.WeightMethod.ToString()
         };
 
-        string lambdaDesc = _calculationOptions.LambdaMethod switch
-        {
-            LambdaCalculationMethod.ColumnSumProduct => "Σ(ColSum_j · w_j)",
-            LambdaCalculationMethod.ExactEigenvalue => "(A·w)_i / w_i",
-            _ => _calculationOptions.LambdaMethod.ToString()
-        };
+        string lambdaDesc = AhpCalculationOptions.GetLambdaMethodDescription(_calculationOptions.LambdaMethod);
 
         string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "Емпіричний RI" : "Табличний RI";
         string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent ? "CR ≤ 10%" : "Адаптивний CR";
@@ -1173,6 +1389,13 @@ public partial class MainWindow : Window
     private void MenuLambdaColSum_Click(object sender, RoutedEventArgs e)
     {
         _calculationOptions.LambdaMethod = LambdaCalculationMethod.ColumnSumProduct;
+        SyncCalculationOptionsUI();
+        UpdateAllDiagnostics();
+    }
+
+    private void MenuLambdaRowRatio_Click(object sender, RoutedEventArgs e)
+    {
+        _calculationOptions.LambdaMethod = LambdaCalculationMethod.RowRatioMean;
         SyncCalculationOptionsUI();
         UpdateAllDiagnostics();
     }
@@ -1291,6 +1514,25 @@ public partial class MainWindow : Window
             {
                 var data = ProjectStorageService.LoadProject(ofd.FileName);
 
+                // Транзакційне застосування: спочатку готуємо всі матриці локально
+                var newCriteriaMatrix = new ComparisonMatrix(data.Criteria.Count, data.Criteria.Select(c => c.Name).ToList());
+                if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
+                {
+                    newCriteriaMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
+                }
+
+                var newAlternativeMatrices = new Dictionary<string, ComparisonMatrix>();
+                foreach (var c in data.Criteria)
+                {
+                    var altMat = new ComparisonMatrix(data.Alternatives.Count, data.Alternatives.Select(a => a.Name).ToList());
+                    if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
+                    {
+                        altMat.LoadFromJaggedArray(jaggedMat);
+                    }
+                    newAlternativeMatrices[c.Id] = altMat;
+                }
+
+                // Усі структури успішно підготовлено без винятків — фіксуємо стан застосунку
                 _criteria.Clear();
                 foreach (var c in data.Criteria)
                 {
@@ -1303,23 +1545,8 @@ public partial class MainWindow : Window
                     _alternatives.Add(a);
                 }
 
-                _criteriaMatrix = new ComparisonMatrix(_criteria.Count, _criteria.Select(c => c.Name).ToList());
-                if (data.CriteriaMatrix != null && data.CriteriaMatrix.Length > 0)
-                {
-                    _criteriaMatrix.LoadFromJaggedArray(data.CriteriaMatrix);
-                }
-
-                _alternativeMatrices.Clear();
-                foreach (var c in _criteria)
-                {
-                    var altMat = new ComparisonMatrix(_alternatives.Count, _alternatives.Select(a => a.Name).ToList());
-                    if (data.AlternativeMatrices != null && data.AlternativeMatrices.TryGetValue(c.Id, out var jaggedMat))
-                    {
-                        altMat.LoadFromJaggedArray(jaggedMat);
-                    }
-                    _alternativeMatrices[c.Id] = altMat;
-                }
-
+                _criteriaMatrix = newCriteriaMatrix;
+                _alternativeMatrices = newAlternativeMatrices;
                 _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
 
                 if (data.Options != null)
@@ -1338,7 +1565,16 @@ public partial class MainWindow : Window
                 BuildAlternativeMatrixGrid();
                 UpdateAllDiagnostics();
 
-                TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                if (data.Title.Contains("ЧЕРНЕТКА", StringComparison.OrdinalIgnoreCase))
+                {
+                    TxtBottomStatus.Text = $"⚠️ УВАГА: Завантажено «{data.Title}». Судження є попередніми та не обґрунтованими!";
+                    TxtBottomStatus.Foreground = (Brush)FindResource("WarningOrange");
+                }
+                else
+                {
+                    TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                    TxtBottomStatus.Foreground = (Brush)FindResource("TextDark");
+                }
             }
         }
         catch (Exception ex)

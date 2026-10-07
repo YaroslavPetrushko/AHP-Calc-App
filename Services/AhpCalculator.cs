@@ -136,11 +136,17 @@ public static class AhpCalculator
         var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
         int n = matrix.Size;
 
+        if (n > 10 && opts.RiMode == RiCalculationMode.SaatyTable)
+        {
+            throw new InvalidOperationException("Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
+        }
+
         var result = new MatrixResult
         {
             Name = matrixName,
             Size = n,
             Labels = new List<string>(matrix.Labels),
+            PairwiseMatrix = (double[,])matrix.Values.Clone(),
             Weights = new double[n],
             NormalizedMatrix = new double[n, n],
             ColumnSums = new double[n],
@@ -252,16 +258,8 @@ public static class AhpCalculator
                 }
                 else
                 {
-                    // Для sum(w)=1 сума (Aw)_i є точною оцінкою
-                    double vSum = 0.0;
-                    for (int i = 0; i < n; i++)
-                    {
-                        for (int j = 0; j < n; j++)
-                        {
-                            vSum += matrix.Values[i, j] * result.Weights[j];
-                        }
-                    }
-                    result.LambdaMax = vSum;
+                    var (_, lam) = CalculatePrincipalEigenvector(matrix.Values, n);
+                    result.LambdaMax = lam;
                 }
                 break;
         }
@@ -330,6 +328,11 @@ public static class AhpCalculator
         if (critCount == 0 || altCount == 0)
             return ahpResult;
 
+        if ((critCount > 10 || altCount > 10) && opts.RiMode == RiCalculationMode.SaatyTable)
+        {
+            throw new InvalidOperationException("Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
+        }
+
         // 1. Розрахунок матриці критеріїв
         var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв", opts);
         ahpResult.CriteriaMatrixResult = critResult;
@@ -385,14 +388,21 @@ public static class AhpCalculator
             alt.GlobalPriority = globalScore;
         }
 
-        // 4. Ранжування альтернатив
+        // 4. Ранжування альтернатив з допуском 1e-9 («змагальна» нумерація: 1, 2, 2, 4)
         ahpResult.RankedAlternatives = ahpResult.Alternatives
             .OrderByDescending(a => a.GlobalPriority)
             .ToList();
 
         for (int rank = 0; rank < ahpResult.RankedAlternatives.Count; rank++)
         {
-            ahpResult.RankedAlternatives[rank].Rank = rank + 1;
+            var alt = ahpResult.RankedAlternatives[rank];
+            double p = alt.GlobalPriority;
+
+            int higherCount = ahpResult.RankedAlternatives.Count(other => other.GlobalPriority > p + 1e-9);
+            alt.Rank = 1 + higherCount;
+
+            bool isTied = ahpResult.RankedAlternatives.Any(other => !ReferenceEquals(other, alt) && Math.Abs(other.GlobalPriority - p) <= 1e-9);
+            alt.RankText = isTied ? $"{alt.Rank}=" : alt.Rank.ToString();
         }
 
         // 5. Композиційна узгодженість ієрархії
@@ -527,14 +537,59 @@ public static class AhpCalculator
                 if (Math.Abs(dAlpha) > 1e-6)
                 {
                     double t = dBeta / dAlpha;
-                    if (t >= -0.0005 && t <= 1.0005)
+                    // Відкидаємо перетини з t <= 1e-6 або t >= 1 - 1e-6 (збіг на межі інтервалу)
+                    if (t > 1e-6 && t < 1.0 - 1e-6)
                     {
-                        double clampedT = Math.Clamp(t, 0.0, 1.0);
-                        double p = line1.PriorityAt(clampedT);
+                        double p = line1.PriorityAt(t);
 
-                        // Перевіряємо, чи в цій точці це максимальний пріоритет (зміна лідера #1)
-                        double maxP = res.Lines.Max(l => l.PriorityAt(clampedT));
-                        bool isLeaderChange = Math.Abs(p - maxP) < 0.003;
+                        // Точна умова вершини: p >= maxP - 1e-9
+                        double maxP = res.Lines.Max(l => l.PriorityAt(t));
+                        bool isOnTop = p >= maxP - 1e-9;
+
+                        bool isLeaderChange = false;
+                        string? oldLeaderId = null, oldLeaderName = null;
+                        string? newLeaderId = null, newLeaderName = null;
+
+                        if (isOnTop)
+                        {
+                            // Визначаємо лідера зліва та справа від t
+                            double eps = 1e-6;
+                            double leftT = Math.Max(0.0, t - eps);
+                            double rightT = Math.Min(1.0, t + eps);
+
+                            int bestLeftIdx = 0;
+                            double bestLeftP = res.Lines[0].PriorityAt(leftT);
+                            for (int k = 1; k < res.Lines.Count; k++)
+                            {
+                                double pk = res.Lines[k].PriorityAt(leftT);
+                                if (pk > bestLeftP + 1e-9)
+                                {
+                                    bestLeftP = pk;
+                                    bestLeftIdx = k;
+                                }
+                            }
+
+                            int bestRightIdx = 0;
+                            double bestRightP = res.Lines[0].PriorityAt(rightT);
+                            for (int k = 1; k < res.Lines.Count; k++)
+                            {
+                                double pk = res.Lines[k].PriorityAt(rightT);
+                                if (pk > bestRightP + 1e-9)
+                                {
+                                    bestRightP = pk;
+                                    bestRightIdx = k;
+                                }
+                            }
+
+                            if (bestLeftIdx != bestRightIdx)
+                            {
+                                isLeaderChange = true;
+                                oldLeaderId = res.Lines[bestLeftIdx].AlternativeId;
+                                oldLeaderName = res.Lines[bestLeftIdx].AlternativeName;
+                                newLeaderId = res.Lines[bestRightIdx].AlternativeId;
+                                newLeaderName = res.Lines[bestRightIdx].AlternativeName;
+                            }
+                        }
 
                         rawIntersections.Add(new CriticalIntersectionPoint
                         {
@@ -542,11 +597,15 @@ public static class AhpCalculator
                             Alt1Name = line1.AlternativeName,
                             Alt2Id = line2.AlternativeId,
                             Alt2Name = line2.AlternativeName,
-                            WeightT = clampedT,
+                            WeightT = t,
                             PriorityP = p,
                             IsLeadershipChange = isLeaderChange,
+                            OldLeaderId = oldLeaderId,
+                            OldLeaderName = oldLeaderName,
+                            NewLeaderId = newLeaderId,
+                            NewLeaderName = newLeaderName,
                             EventDescription = isLeaderChange
-                                ? $"Зміна лідера (#1) між «{line1.AlternativeName}» та «{line2.AlternativeName}»"
+                                ? $"Зміна лідера (#1): «{oldLeaderName}» ➔ «{newLeaderName}»"
                                 : $"Перетин рейтингів між «{line1.AlternativeName}» та «{line2.AlternativeName}»"
                         });
                     }
@@ -560,69 +619,228 @@ public static class AhpCalculator
             .ToList();
 
         // 3. Інтервали лідерства на відрізку [0, 1]
-        var leaderPoints = res.Intersections
-            .Where(p => p.IsLeadershipChange && p.WeightT > 0.001 && p.WeightT < 0.999)
-            .Select(p => p.WeightT)
-            .Distinct()
-            .OrderBy(t => t)
-            .ToList();
-
-        var partition = new List<double> { 0.0 };
-        partition.AddRange(leaderPoints);
-        partition.Add(1.0);
-
-        for (int k = 0; k < partition.Count - 1; k++)
+        // контрольні точки = {0, 1} U {t усіх перетинів, що є зміною лідера}
+        var controlPoints = new List<double> { 0.0, 1.0 };
+        foreach (var p in res.Intersections)
         {
-            double fromT = partition[k];
-            double toT = partition[k + 1];
-            if (toT - fromT < 1e-5) continue;
+            if (p.IsLeadershipChange)
+            {
+                controlPoints.Add(p.WeightT);
+            }
+        }
+        controlPoints.Sort();
+
+        var distinctPoints = new List<double>();
+        foreach (var pt in controlPoints)
+        {
+            if (distinctPoints.Count == 0 || Math.Abs(pt - distinctPoints[^1]) > 1e-6)
+            {
+                distinctPoints.Add(pt);
+            }
+        }
+
+        for (int k = 0; k < distinctPoints.Count - 1; k++)
+        {
+            double fromT = distinctPoints[k];
+            double toT = distinctPoints[k + 1];
+            if (toT - fromT < 1e-6) continue;
 
             double midT = (fromT + toT) / 2.0;
-            var bestLine = res.Lines.OrderByDescending(l => l.PriorityAt(midT)).FirstOrDefault();
-            if (bestLine != null)
+
+            int bestIdx = 0;
+            double bestP = res.Lines[0].PriorityAt(midT);
+            for (int i = 1; i < res.Lines.Count; i++)
             {
-                if (res.LeadershipIntervals.Count > 0 &&
-                    res.LeadershipIntervals[^1].AlternativeId == bestLine.AlternativeId)
+                double p = res.Lines[i].PriorityAt(midT);
+                if (p > bestP + 1e-9)
                 {
-                    res.LeadershipIntervals[^1].ToT = toT;
+                    bestP = p;
+                    bestIdx = i;
                 }
-                else
+            }
+            var leader = res.Lines[bestIdx];
+
+            if (res.LeadershipIntervals.Count > 0 &&
+                res.LeadershipIntervals[^1].AlternativeId == leader.AlternativeId)
+            {
+                res.LeadershipIntervals[^1].ToT = toT;
+            }
+            else
+            {
+                res.LeadershipIntervals.Add(new LeadershipInterval
                 {
-                    res.LeadershipIntervals.Add(new LeadershipInterval
-                    {
-                        AlternativeId = bestLine.AlternativeId,
-                        AlternativeName = bestLine.AlternativeName,
-                        FromT = fromT,
-                        ToT = toT
-                    });
-                }
+                    AlternativeId = leader.AlternativeId,
+                    AlternativeName = leader.AlternativeName,
+                    FromT = fromT,
+                    ToT = toT
+                });
             }
         }
 
         // 4. Визначення діапазону стійкості для поточного оптимального вибору
         var currentOptInterval = res.LeadershipIntervals.FirstOrDefault(intvl =>
-            wk0 >= intvl.FromT - 1e-5 && wk0 <= intvl.ToT + 1e-5);
+            wk0 >= intvl.FromT - 1e-6 && wk0 <= intvl.ToT + 1e-6);
 
         if (currentOptInterval != null)
         {
-            res.StabilityIntervalMin = currentOptInterval.FromT;
-            res.StabilityIntervalMax = currentOptInterval.ToT;
+            double lo = currentOptInterval.FromT;
+            double hi = currentOptInterval.ToT;
 
-            string boundLower = currentOptInterval.FromT <= 0.001 ? "0.0%" : $"{currentOptInterval.FromT:P1}";
-            string boundUpper = currentOptInterval.ToT >= 0.999 ? "100.0%" : $"{currentOptInterval.ToT:P1}";
+            res.StabilityIntervalMin = lo;
+            res.StabilityIntervalMax = hi;
 
-            res.StabilitySummary = $"Поточний оптимальний вибір «{currentOptInterval.AlternativeName}» є стійким при варіюванні ваги критерію «{crit.Name}» в інтервалі [{boundLower}; {boundUpper}] (вихідна вага: {wk0:P1}). " +
-                (currentOptInterval.ToT < 0.999
-                    ? $"Зміна лідера відбувається при зростанні ваги понад {boundUpper}."
-                    : "Альтернатива зберігає абсолютне лідерство навіть при зростанні ваги до 100%.");
+            bool isLoZero = lo <= 1e-6;
+            bool isHiOne = hi >= 1.0 - 1e-6;
+
+            if (!isLoZero)
+            {
+                res.LowerMarginPp = (wk0 - lo) * 100.0;
+                var prevInterval = res.LeadershipIntervals.FirstOrDefault(i => Math.Abs(i.ToT - lo) < 1e-6);
+                res.LowerSuccessorName = prevInterval?.AlternativeName;
+            }
+            else
+            {
+                res.LowerMarginPp = null;
+                res.LowerSuccessorName = null;
+            }
+
+            if (!isHiOne)
+            {
+                res.UpperMarginPp = (hi - wk0) * 100.0;
+                var nextInterval = res.LeadershipIntervals.FirstOrDefault(i => Math.Abs(i.FromT - hi) < 1e-6);
+                res.UpperSuccessorName = nextInterval?.AlternativeName;
+            }
+            else
+            {
+                res.UpperMarginPp = null;
+                res.UpperSuccessorName = null;
+            }
+
+            double loPct = lo * 100.0;
+            double hiPct = hi * 100.0;
+            double w0Pct = wk0 * 100.0;
+
+            string marginPart;
+            if (res.LowerMarginPp.HasValue && res.UpperMarginPp.HasValue)
+            {
+                marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз, +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+            }
+            else if (res.LowerMarginPp.HasValue)
+            {
+                marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз.";
+            }
+            else if (res.UpperMarginPp.HasValue)
+            {
+                marginPart = $"Запас стійкості: +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+            }
+            else
+            {
+                marginPart = "Запас стійкості: абсолютний на всьому інтервалі.";
+            }
+
+            string successorPart = "";
+            if (!string.IsNullOrEmpty(res.LowerSuccessorName) && !string.IsNullOrEmpty(res.UpperSuccessorName))
+            {
+                successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}», вище {hiPct:0.0} % — «{res.UpperSuccessorName}».";
+            }
+            else if (!string.IsNullOrEmpty(res.LowerSuccessorName))
+            {
+                successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}».";
+            }
+            else if (!string.IsNullOrEmpty(res.UpperSuccessorName))
+            {
+                successorPart = $" Вище {hiPct:0.0} % лідером стає «{res.UpperSuccessorName}».";
+            }
+
+            res.StabilitySummary = $"Лідер «{currentOptInterval.AlternativeName}» зберігається, поки вага критерію «{crit.Name}» лежить у межах {loPct:0.0} %–{hiPct:0.0} % (поточна {w0Pct:0.0} %). {marginPart}{successorPart}";
         }
         else
         {
             res.StabilityIntervalMin = 0.0;
             res.StabilityIntervalMax = 1.0;
+            res.LowerMarginPp = null;
+            res.UpperMarginPp = null;
+            res.LowerSuccessorName = null;
+            res.UpperSuccessorName = null;
             res.StabilitySummary = $"Поточний вибір залишається лідером на всьому діапазоні ваг критерію «{crit.Name}».";
         }
 
         return res;
+    }
+
+    /// <summary>
+    /// Знаходить пару порівнянь (i < j), яка вносить найбільше логарифмічне відхилення
+    /// від узгодженого співвідношення ваг w_i / w_j.
+    /// Метрика: |ln(a_ij * w_j / w_i)| лише для i < j.
+    /// Implied = w_i / w_j.
+    /// Recommended — значення шкали Сааті, найближче до Implied у логарифмічному масштабі.
+    /// </summary>
+    public static (int Row, int Col, double Current, double Implied, double Recommended)? FindMostInconsistentCell(
+        ComparisonMatrix matrix,
+        double[] weights)
+    {
+        if (matrix == null || weights == null || matrix.Size < 3 || weights.Length != matrix.Size)
+            return null;
+
+        int n = matrix.Size;
+        double maxError = -1.0;
+        int bestI = -1;
+        int bestJ = -1;
+
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = i + 1; j < n; j++)
+            {
+                double aij = matrix.Values[i, j];
+                double wi = weights[i];
+                double wj = weights[j];
+
+                if (aij <= 0.0 || wi <= 0.0 || wj <= 0.0)
+                    continue;
+
+                // Метрика: |ln(a_ij * w_j / w_i)|
+                double error = Math.Abs(Math.Log(aij * wj / wi));
+                if (error > maxError)
+                {
+                    maxError = error;
+                    bestI = i;
+                    bestJ = j;
+                }
+            }
+        }
+
+        if (bestI < 0 || bestJ < 0 || maxError < 1e-6)
+            return null;
+
+        double current = matrix.Values[bestI, bestJ];
+        double implied = weights[bestI] / weights[bestJ];
+        double recommended = GetClosestSaatyScaleValueLog(implied);
+
+        return (bestI, bestJ, current, implied, recommended);
+    }
+
+    /// <summary>
+    /// Знаходить значення шкали Сааті, найближче до x у логарифмічному масштабі: min |ln(x) - ln(s)|.
+    /// </summary>
+    public static double GetClosestSaatyScaleValueLog(double implied)
+    {
+        if (implied <= 0.0) return 1.0;
+
+        double logVal = Math.Log(implied);
+        double closest = ComparisonMatrix.SaatyScale[0];
+        double minDiff = Math.Abs(logVal - Math.Log(closest));
+
+        for (int i = 1; i < ComparisonMatrix.SaatyScale.Length; i++)
+        {
+            double s = ComparisonMatrix.SaatyScale[i];
+            double diff = Math.Abs(logVal - Math.Log(s));
+            if (diff < minDiff)
+            {
+                minDiff = diff;
+                closest = s;
+            }
+        }
+
+        return closest;
     }
 }

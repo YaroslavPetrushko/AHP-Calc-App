@@ -40,6 +40,15 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
+                <MenuItem Header="_Тестові набори (Пресети)">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </MenuItem.Icon>
+                    <MenuItem Header="📁 Тестовий набір №1 (ЛР №3–4)" Click="BtnPresetLab34_Click"/>
+                    <MenuItem Header="📘 Курсова робота (ЧЕРНЕТКА)" Click="BtnPresetCoursework_Click"/>
+                    <MenuItem Header="📗 Курсова робота (Остаточні обґрунтовані судження)" Click="BtnPresetCourseworkFinal_Click"/>
+                </MenuItem>
+                <Separator/>
                 <MenuItem Header="_Експорт звіту в TXT..." InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="📋" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -55,6 +64,8 @@
 
             <!-- Menu "Налаштування" -->
             <MenuItem Header="_Налаштування">
+                <MenuItem Header="⚖️ _Порівняти профілі..." InputGestureText="Ctrl+P" Click="MenuCompareProfiles_Click"/>
+                <Separator/>
                 <MenuItem Header="_Профіль розрахунку">
                     <MenuItem.Icon>
                         <TextBlock Text="🎯" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -69,8 +80,9 @@
                         <MenuItem x:Name="MenuWeightPowerIteration" Header="Степеневий метод (Power Iteration / Сааті)" IsCheckable="True" Click="MenuWeightPowerIteration_Click"/>
                     </MenuItem>
                     <MenuItem Header="Метод власного значення (λmax)">
-                        <MenuItem x:Name="MenuLambdaColSum" Header="Добуток сум стовпців: Σ(ColSum_j · w_j) [ЛР №4]" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
-                        <MenuItem x:Name="MenuLambdaExact" Header="Точне власне значення: (A·w)_i / w_i [Сааті]" IsCheckable="True" Click="MenuLambdaExact_Click"/>
+                        <MenuItem x:Name="MenuLambdaColSum" Header="λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
+                        <MenuItem x:Name="MenuLambdaRowRatio" Header="λmax = середнє (A·w)ᵢ / wᵢ" IsCheckable="True" Click="MenuLambdaRowRatio_Click"/>
+                        <MenuItem x:Name="MenuLambdaExact" Header="λmax — головне власне число (степеневий метод)" IsCheckable="True" Click="MenuLambdaExact_Click"/>
                     </MenuItem>
                     <MenuItem Header="Індекс випадкової узгодженості (RI)">
                         <MenuItem x:Name="MenuRiEmpirical" Header="Емпірична формула: 1.98 · (n-2) / n" IsCheckable="True" Click="MenuRiEmpirical_Click"/>
@@ -120,11 +132,8 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="{DynamicResource BadgeBg}" CornerRadius="6" Padding="6,4" Margin="0,2,8,0">
-                            <TextBlock Text="AHP • МАІ" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource BadgeFg}"/>
-                        </Border>
                         <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                        <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="6,4,0,0" VerticalAlignment="Center">
+                        <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="12,4,0,0" VerticalAlignment="Center">
                             <TextBlock x:Name="TxtActiveProfile" Text="Профіль: ЛР №4" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
                         </Border>
                     </StackPanel>
@@ -133,9 +142,9 @@
 
                 <!-- Preset Toolbar -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnPresetLab34" Content="📁 Тестовий набір №1" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetLab34_Click"/>
-                    <Button x:Name="BtnPresetCoursework" Content="📘 Тестовий набір №2" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetCoursework_Click"/>
-                    <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
+                    <Button x:Name="BtnPresetLab34" Content="📁 Тестовий набір №1" ToolTip="Контрольний набір ЛР №3–4 (Відеокарти)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetLab34_Click"/>
+                    <Button x:Name="BtnPresetCourseworkFinal" Content="📗 Тестовий набір №2 - КР" ToolTip="Курсова робота: вибір відеокарти (Остаточні обґрунтовані судження)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetCourseworkFinal_Click"/>
+                    <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" ToolTip="Створити чистий шаблон задачі" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -293,10 +302,13 @@
                                         <TextBlock Text="Вкажіть перевагу критерію в лівому рядку над критерієм у верхньому стовпці." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
-                                    <!-- Quick Status Pill -->
-                                    <Border Grid.Column="1" x:Name="PillCritStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
-                                    </Border>
+                                    <!-- Quick Status Pill & Progress -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtCritJudgedProgress" Text="Заповнено 6 з 6 порівнянь" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Border x:Name="PillCritStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TxtCritStatus" Text="Узгоджено (CR = 1.7% ≤ 10%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                                        </Border>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- Dynamic Matrix Container -->
@@ -304,6 +316,14 @@
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                         <Grid x:Name="GridCritMatrixContainer"/>
                                     </ScrollViewer>
+                                </Border>
+
+                                <!-- Inconsistency Hint for Criteria -->
+                                <Border x:Name="BorderCritInconsistentHint" Visibility="Collapsed" Background="#1AF59E0B" BorderBrush="{DynamicResource WarningOrange}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💡 " FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCritInconsistentHint" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource WarningOrange}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Border>
 
                                 <!-- Live Weights & Diagnostics -->
@@ -348,10 +368,13 @@
                                         <TextBlock Text="Оберіть критерій та заповніть попарні оцінки альтернатив за ним." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
-                                    <!-- Quick Status Pill for Alternative Matrix -->
-                                    <Border Grid.Column="1" x:Name="PillAltStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
-                                    </Border>
+                                    <!-- Quick Status Pill & Progress for Alternative Matrix -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtAltJudgedProgress" Text="Заповнено 10 з 10 порівнянь" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Border x:Name="PillAltStatus" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TxtAltStatus" Text="Узгоджено (CR = 2.6%)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                                        </Border>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- Criteria Tab Strip for Alternatives -->
@@ -362,6 +385,14 @@
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                         <Grid x:Name="GridAltMatrixContainer"/>
                                     </ScrollViewer>
+                                </Border>
+
+                                <!-- Inconsistency Hint for Alternatives -->
+                                <Border x:Name="BorderAltInconsistentHint" Visibility="Collapsed" Background="#1AF59E0B" BorderBrush="{DynamicResource WarningOrange}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💡 " FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtAltInconsistentHint" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource WarningOrange}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Border>
 
                                 <!-- Live Local Priorities for selected criterion -->

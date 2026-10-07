@@ -1,0 +1,110 @@
+<Window x:Class="MAI.ProfileComparisonWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Порівняння профілів розрахунку МАІ"
+        Width="960" Height="720" MinWidth="780" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        Icon="Resources/app_icon.ico"
+        Background="{DynamicResource AppBackground}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Banner -->
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16,12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10" Background="{DynamicResource BadgeBg}" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <TextBlock Text="⚖️" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Порівняльний аналіз профілів розрахунку МАІ" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                    <TextBlock Text="Зіставлення результатів класичного методу Т. Сааті, нормалізації стовпців (ЛР №4) та геометричного середнього" 
+                               FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2. Main Content ScrollViewer -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,4,0">
+                <!-- Card 1: Ваги критеріїв -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="1. Розподіл вагових коефіцієнтів критеріїв за профілями" 
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="GridCriteriaWeights" AutoGenerateColumns="False" CanUserSortColumns="False" 
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" MaxHeight="220"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 2: Пріоритети та ранги альтернатив -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="2. Глобальні пріоритети та ранги альтернатив за профілями" 
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="GridAlternativePriorities" AutoGenerateColumns="False" CanUserSortColumns="False" 
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" MaxHeight="260"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 3: Показники узгодженості -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="3. Показники узгодженості матриць суджень за профілями" 
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="GridConsistencyIndices" AutoGenerateColumns="False" CanUserSortColumns="False" 
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" MaxHeight="260"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 4: Підсумок -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="4. Підсумок стійкості та співставлення з еталонним профілем" 
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,8"/>
+                        <Border Background="{DynamicResource BannerBg}" BorderBrush="{DynamicResource BannerBorder}" BorderThickness="1" CornerRadius="8" Padding="14,12">
+                            <TextBlock x:Name="TxtSummary" Text="Підсумок порівняння розраховується..." 
+                                       FontSize="12.5" Foreground="{DynamicResource BannerTitle}" TextWrapping="Wrap" LineHeight="20"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Bottom Action Bar -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="16,10" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="Готово до експорту" 
+                           FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="BtnExport" Content="📥 Експорт таблиць ▾" Style="{StaticResource SecondaryBtnStyle}" 
+                            Margin="0,0,8,0" Padding="14,0" Height="32" Click="BtnExport_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="📄 Експорт у CSV (*.csv)" Click="MenuExportCsv_Click"/>
+                                <MenuItem Header="📝 Експорт у Markdown (*.md)" Click="MenuExportMarkdown_Click"/>
+                                <MenuItem Header="🌐 Експорт у HTML для Word (*.html)" Click="MenuExportHtml_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Button Content="Закрити" Style="{StaticResource PrimaryBtnStyle}" Height="32" Padding="20,0" IsCancel="True" Click="BtnClose_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

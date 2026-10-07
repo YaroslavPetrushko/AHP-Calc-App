@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Win32;
+using System.Windows.Media.Imaging;
 using MAI.Models;
 using MAI.Services;
 
@@ -43,9 +44,9 @@ public class SensitivityDynamicRankingDisplayItem
     public string PriorityPercentText => $"{CurrentPriority * 100:F1}% ({CurrentPriority:F4})";
     public string DeltaText => DeltaPriority switch
     {
-        > 0.0005 => $"▲ +{DeltaPriority * 100:F1}%",
-        < -0.0005 => $"▼ {DeltaPriority * 100:F1}%",
-        _ => "— 0.0%"
+        > 0.0005 => $"▲ +{DeltaPriority * 100:F1} п.п.",
+        < -0.0005 => $"▼ {DeltaPriority * 100:F1} п.п.",
+        _ => "— 0.0 п.п."
     };
     public Brush RankBackground { get; set; } = Brushes.Gray;
     public Brush DeltaBrush { get; set; } = Brushes.Gray;
@@ -113,10 +114,29 @@ public partial class ResultsWindow : Window
         Color.FromRgb(249, 115, 22)  // Orange (#F97316)
     };
 
+    private readonly List<Criterion>? _rawCriteria;
+    private readonly List<Alternative>? _rawAlternatives;
+    private readonly ComparisonMatrix? _rawCriteriaMatrix;
+    private readonly Dictionary<string, ComparisonMatrix>? _rawAltMatrices;
+
     public ResultsWindow(AhpResult result)
+        : this(result, null, null, null, null)
+    {
+    }
+
+    public ResultsWindow(
+        AhpResult result,
+        List<Criterion>? criteria,
+        List<Alternative>? alternatives,
+        ComparisonMatrix? criteriaMatrix,
+        Dictionary<string, ComparisonMatrix>? altMatrices)
     {
         InitializeComponent();
         _result = result;
+        _rawCriteria = criteria;
+        _rawAlternatives = alternatives;
+        _rawCriteriaMatrix = criteriaMatrix;
+        _rawAltMatrices = altMatrices;
 
         InitHeaderAndBadges();
         InitRankingsList();
@@ -172,7 +192,9 @@ public partial class ResultsWindow : Window
 
         TxtHierarchicalCR.Text = $"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})";
         string weightDesc = _result.Options?.WeightMethod.ToString() ?? "Default";
-        string lambdaDesc = _result.Options?.LambdaMethod.ToString() ?? "Default";
+        string lambdaDesc = _result.Options != null
+            ? AhpCalculationOptions.GetLambdaMethodDescription(_result.Options.LambdaMethod)
+            : "Default";
         string riLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпірична формула (1.98·(n-2)/n)" : "таблиця Сааті";
         TxtHierarchicalCR.ToolTip = $"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}";
 
@@ -199,7 +221,7 @@ public partial class ResultsWindow : Window
             return new AlternativeDisplayItem
             {
                 Rank = a.Rank,
-                RankText = $"#{a.Rank}",
+                RankText = $"#{a.RankText}",
                 Name = a.Name,
                 Description = a.Description,
                 GlobalPriority = a.GlobalPriority,
@@ -231,13 +253,7 @@ public partial class ResultsWindow : Window
                     2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#93C5FD" : "#1D4ED8")),
                     _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#CBD5E1" : "#475569"))
                 },
-                BadgeText = a.Rank switch
-                {
-                    1 => "🏆 Оптимум (1)",
-                    2 => "2 місце",
-                    3 => "3 місце",
-                    _ => $"{a.Rank} місце"
-                }
+                BadgeText = a.RankText == "1" ? "🏆 Оптимум (1)" : $"{a.RankText} місце"
             };
         }).ToList();
 
@@ -295,6 +311,11 @@ public partial class ResultsWindow : Window
 
         sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
 
+        if (_result.InconsistentMatrices.Count > 0)
+        {
+            sb.AppendLine($"   Увага: виявлено матриці з порушенням власного порогу узгодженості: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"«{m}»"))}. Рекомендується скоригувати судження в цих матрицях.");
+        }
+
         TxtRecommendation.Text = sb.ToString();
     }
 
@@ -335,7 +356,7 @@ public partial class ResultsWindow : Window
         foreach (var alt in _result.RankedAlternatives)
         {
             var row = dt.NewRow();
-            row["Ранг"] = $"#{alt.Rank}";
+            row["Ранг"] = $"#{alt.RankText}";
             row["Альтернатива"] = alt.Name;
 
             foreach (var item in critColMap)
@@ -933,6 +954,176 @@ public partial class ResultsWindow : Window
     }
 
     #endregion
+
+    private void BtnExport_Click(object sender, RoutedEventArgs e)
+    {
+        if (BtnExport.ContextMenu != null)
+        {
+            BtnExport.ContextMenu.PlacementTarget = BtnExport;
+            BtnExport.ContextMenu.IsOpen = true;
+        }
+    }
+
+    private void MenuExportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти звіт у форматі CSV...",
+            Filter = "Файли CSV (*.csv)|*.csv|Усі файли (*.*)|*.*",
+            FileName = "ahp_report.csv"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                var tables = ReportTableBuilder.Build(_result);
+                ReportExporter.SaveCsv(sfd.FileName, tables);
+                TxtResultsStatus.Text = $"Звіт успішно збережено у файл CSV: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту CSV: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportMarkdown_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти звіт у форматі Markdown...",
+            Filter = "Файли Markdown (*.md)|*.md|Усі файли (*.*)|*.*",
+            FileName = "ahp_report.md"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                var tables = ReportTableBuilder.Build(_result);
+                ReportExporter.SaveMarkdown(sfd.FileName, tables);
+                TxtResultsStatus.Text = $"Звіт успішно збережено у файл Markdown: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту Markdown: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportHtml_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти звіт у форматі HTML (Word)...",
+            Filter = "Файли HTML (*.html)|*.html|Документ Word (*.htm)|*.htm|Усі файли (*.*)|*.*",
+            FileName = "ahp_report.html"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                var tables = ReportTableBuilder.Build(_result);
+                ReportExporter.SaveHtml(sfd.FileName, tables);
+                TxtResultsStatus.Text = $"Звіт успішно збережено у файл HTML: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту HTML: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportRankingPng_Click(object sender, RoutedEventArgs e)
+    {
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти діаграму рейтингу в PNG...",
+            Filter = "Зображення PNG (*.png)|*.png",
+            FileName = "ranking.png"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                ExportElementToPng(CardRankingContainer, sfd.FileName, 192.0);
+                TxtResultsStatus.Text = $"Діаграму рейтингу збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту діаграми в PNG: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void MenuExportSensitivityPng_Click(object sender, RoutedEventArgs e)
+    {
+        string critName = _currentSensitivityResult?.Criterion?.Name ?? _currentSensitivityResult?.Criterion?.Id ?? "criterion";
+        var sfd = new SaveFileDialog
+        {
+            Title = "Зберегти графік чутливості в PNG...",
+            Filter = "Зображення PNG (*.png)|*.png",
+            FileName = $"sensitivity_{critName}.png"
+        };
+        if (sfd.ShowDialog(this) == true)
+        {
+            try
+            {
+                ExportElementToPng(SensitivityPlotContainer, sfd.FileName, 192.0);
+                TxtResultsStatus.Text = $"Графік чутливості збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка експорту графіка чутливості в PNG: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private static void ExportElementToPng(FrameworkElement element, string filePath, double dpi = 192.0)
+    {
+        double scale = dpi / 96.0;
+        int width = (int)Math.Max(1, Math.Ceiling(element.ActualWidth * scale));
+        int height = (int)Math.Max(1, Math.Ceiling(element.ActualHeight * scale));
+
+        var rtb = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
+
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+            var brush = new VisualBrush(element);
+            dc.DrawRectangle(brush, null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+        }
+
+        rtb.Render(dv);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(rtb));
+        using var stream = File.Create(filePath);
+        encoder.Save(stream);
+    }
+
+    private void BtnCompareProfiles_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            ProfileComparisonWindow win;
+            if (_rawCriteria != null && _rawAlternatives != null && _rawCriteriaMatrix != null && _rawAltMatrices != null)
+            {
+                win = new ProfileComparisonWindow(_rawCriteria, _rawAlternatives, _rawCriteriaMatrix, _rawAltMatrices, _result.Options);
+            }
+            else
+            {
+                var preset = PresetService.GetLab34Preset();
+                win = new ProfileComparisonWindow(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, _result.Options);
+            }
+            win.Owner = this;
+            win.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка відкриття порівняння профілів: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e)
     {
