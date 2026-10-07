@@ -10,7 +10,9 @@ public class AhpProjectData
 {
     public string Title { get; set; } = "Задача багатокритеріального аналізу";
     public string Description { get; set; } = string.Empty;
-    public string Version { get; set; } = "1.2.0";
+    public string Version { get; set; } = typeof(AhpProjectData).Assembly.GetName().Version is { } v
+        ? $"{v.Major}.{v.Minor}.{(v.Build >= 0 ? v.Build : 0)}"
+        : "1.2.0";
     public DateTime SavedAt { get; set; } = DateTime.Now;
 
     public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.Default;
