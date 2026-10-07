@@ -246,4 +246,33 @@ public class ProjectStorageTests
             }
         }
     }
+
+    [Fact]
+    public void GenerateFullReportText_UsesUkCultureComma_RegardlessOfCurrentThreadCulture()
+    {
+        var currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+        try
+        {
+            System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+
+            var preset = PresetService.GetReferencePreset();
+            var options = AhpCalculationOptions.ClassicSaatyProfile;
+            var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, options);
+
+            string report = ProjectStorageService.GenerateFullReportText(result);
+
+            // Report header does NOT contain (.NET 10)
+            Assert.DoesNotContain("(.NET 10)", report);
+            Assert.Contains("ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ", report);
+
+            // Check that decimal values use comma
+            Assert.Contains("0,", report);
+            // Check that percentages use comma
+            Assert.Contains(",0%)", report);
+        }
+        finally
+        {
+            System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
+        }
+    }
 }
