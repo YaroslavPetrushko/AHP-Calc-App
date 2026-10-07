@@ -6,7 +6,7 @@ namespace MAI.Models;
 public enum WeightCalculationMethod
 {
     /// <summary>
-    /// Нормалізація стовпців: a'_ij = a_ij / sum_k(a_kj), w_i = 1/n sum_j(a'_ij) (метод з ЛР №4).
+    /// Нормалізація стовпців: a'_ij = a_ij / sum_k(a_kj), w_i = 1/n sum_j(a'_ij) (методичний підхід).
     /// </summary>
     ColumnNormalization,
 
@@ -28,7 +28,7 @@ public enum WeightCalculationMethod
 public enum LambdaCalculationMethod
 {
     /// <summary>
-    /// λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4).
+    /// λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями).
     /// </summary>
     ColumnSumProduct,
 
@@ -54,7 +54,7 @@ public enum ConsistencyThresholdMode
     SaatyAdaptive,
 
     /// <summary>
-    /// Фіксований поріг 10% для всіх розмірностей (CR <= 0.10) (спрощений підхід з ЛР №4).
+    /// Фіксований поріг 10% для всіх розмірностей (CR <= 0.10) (методичний підхід).
     /// </summary>
     Uniform10Percent
 }
