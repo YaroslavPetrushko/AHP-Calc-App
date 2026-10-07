@@ -138,7 +138,7 @@ public class ProfileComparisonTests
     public void ProfileNames_AndShortNames_MatchExpectedSpecifications()
     {
         var methodical = AhpCalculationOptions.MethodicalProfile;
-        Assert.Equal("За методичними рекомендаціями", methodical.ProfileName);
+        Assert.Equal("Метод. рекомендації", methodical.ProfileName);
         Assert.Equal("Методичний", methodical.ProfileShortName);
 
         var classic = AhpCalculationOptions.ClassicSaatyProfile;
