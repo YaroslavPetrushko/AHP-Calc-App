@@ -94,4 +94,87 @@ public class PresetGpu2026Tests
         var rankedIds = result.RankedAlternatives.Select(a => a.Id).ToList();
         Assert.Equal(new[] { "A3", "A1", "A2", "A5", "A4" }, rankedIds);
     }
+
+    [Fact]
+    public void MethodicalProfile_CriteriaWeights_MatchBenchmarkValues()
+    {
+        var preset = PresetService.GetGpu2026Preset();
+        var options = AhpCalculationOptions.MethodicalProfile;
+        var result = AhpCalculator.SolveHierarchy(
+            preset.Criteria,
+            preset.Alternatives,
+            preset.CriteriaMatrix,
+            preset.AlternativeMatrices,
+            options);
+
+        // Ваги P / F / A / C: 0,3645 / 0,2336 / 0,1242 / 0,2777
+        var pWeight = result.Criteria.First(c => c.Id == "P").Weight;
+        var fWeight = result.Criteria.First(c => c.Id == "F").Weight;
+        var aWeight = result.Criteria.First(c => c.Id == "A").Weight;
+        var cWeight = result.Criteria.First(c => c.Id == "C").Weight;
+
+        Assert.InRange(pWeight, 0.3645 - Tolerance, 0.3645 + Tolerance);
+        Assert.InRange(fWeight, 0.2336 - Tolerance, 0.2336 + Tolerance);
+        Assert.InRange(aWeight, 0.1242 - Tolerance, 0.1242 + Tolerance);
+        Assert.InRange(cWeight, 0.2777 - Tolerance, 0.2777 + Tolerance);
+    }
+
+    [Fact]
+    public void MethodicalProfile_ConsistencyRatios_MatchBenchmarkValues()
+    {
+        var preset = PresetService.GetGpu2026Preset();
+        var options = AhpCalculationOptions.MethodicalProfile;
+        var result = AhpCalculator.SolveHierarchy(
+            preset.Criteria,
+            preset.Alternatives,
+            preset.CriteriaMatrix,
+            preset.AlternativeMatrices,
+            options);
+
+        // CR (емпіричний RI): критерії, P, F, A, C: 0,0166; 0,0254; 0,0363; 0,0000; 0,0627
+        Assert.InRange(result.CriteriaMatrixResult.CREmpirical, 0.0166 - Tolerance, 0.0166 + Tolerance);
+        Assert.InRange(result.AlternativeMatrixResults["P"].CREmpirical, 0.0254 - Tolerance, 0.0254 + Tolerance);
+        Assert.InRange(result.AlternativeMatrixResults["F"].CREmpirical, 0.0363 - Tolerance, 0.0363 + Tolerance);
+        Assert.InRange(result.AlternativeMatrixResults["A"].CREmpirical, 0.0000 - Tolerance, 0.0000 + Tolerance);
+        Assert.InRange(result.AlternativeMatrixResults["C"].CREmpirical, 0.0627 - Tolerance, 0.0627 + Tolerance);
+
+        // CRh: 0,0267
+        Assert.InRange(result.HierarchicalCREmpirical, 0.0267 - Tolerance, 0.0267 + Tolerance);
+    }
+
+    [Fact]
+    public void MethodicalProfile_GlobalPrioritiesAndRanks_MatchBenchmarkValues()
+    {
+        var preset = PresetService.GetGpu2026Preset();
+        var options = AhpCalculationOptions.MethodicalProfile;
+        var result = AhpCalculator.SolveHierarchy(
+            preset.Criteria,
+            preset.Alternatives,
+            preset.CriteriaMatrix,
+            preset.AlternativeMatrices,
+            options);
+
+        // Глобальні пріоритети A1…A5: 0,2092 / 0,2081 / 0,2209 / 0,1683 / 0,1935
+        var a1 = result.RankedAlternatives.First(a => a.Id == "A1");
+        var a2 = result.RankedAlternatives.First(a => a.Id == "A2");
+        var a3 = result.RankedAlternatives.First(a => a.Id == "A3");
+        var a4 = result.RankedAlternatives.First(a => a.Id == "A4");
+        var a5 = result.RankedAlternatives.First(a => a.Id == "A5");
+
+        Assert.InRange(a1.GlobalPriority, 0.2092 - Tolerance, 0.2092 + Tolerance);
+        Assert.InRange(a2.GlobalPriority, 0.2081 - Tolerance, 0.2081 + Tolerance);
+        Assert.InRange(a3.GlobalPriority, 0.2209 - Tolerance, 0.2209 + Tolerance);
+        Assert.InRange(a4.GlobalPriority, 0.1683 - Tolerance, 0.1683 + Tolerance);
+        Assert.InRange(a5.GlobalPriority, 0.1935 - Tolerance, 0.1935 + Tolerance);
+
+        // Ранжування: A3 > A1 > A2 > A5 > A4
+        Assert.Equal(1, a3.Rank);
+        Assert.Equal(2, a1.Rank);
+        Assert.Equal(3, a2.Rank);
+        Assert.Equal(4, a5.Rank);
+        Assert.Equal(5, a4.Rank);
+
+        var rankedIds = result.RankedAlternatives.Select(a => a.Id).ToList();
+        Assert.Equal(new[] { "A3", "A1", "A2", "A5", "A4" }, rankedIds);
+    }
 }
