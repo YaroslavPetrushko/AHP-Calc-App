@@ -124,4 +124,60 @@ public class ProjectStorageTests
         Assert.Contains("--- 4. МАТРИЦЯ СИНТЕЗУ (Lij · wj) ---", report);
         Assert.Contains("--- 5. АНАЛІЗ ЧУТЛИВОСТІ РЕЙТИНГУ", report);
     }
+
+    [Fact]
+    public void LoadProject_PreviousVersionJson_LoadsSuccessfully()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"ahp_v11_{Guid.NewGuid():N}.ahp.json");
+        try
+        {
+            string v11Json = """
+            {
+              "title": "Проєкт версії 1.1",
+              "description": "Сумісність зі старою версією",
+              "version": "1.1",
+              "riMode": "SaatyTable",
+              "criteria": [
+                { "id": "C1", "name": "Критерій 1", "description": "" },
+                { "id": "C2", "name": "Критерій 2", "description": "" }
+              ],
+              "alternatives": [
+                { "id": "A1", "name": "Альтернатива 1", "description": "" },
+                { "id": "A2", "name": "Альтернатива 2", "description": "" }
+              ],
+              "criteriaMatrix": [
+                [ 1.0, 2.0 ],
+                [ 0.5, 1.0 ]
+              ],
+              "alternativeMatrices": {
+                "C1": [
+                  [ 1.0, 3.0 ],
+                  [ 0.3333333333333333, 1.0 ]
+                ],
+                "C2": [
+                  [ 1.0, 0.5 ],
+                  [ 2.0, 1.0 ]
+                ]
+              }
+            }
+            """;
+            File.WriteAllText(tempFile, v11Json);
+
+            var loaded = ProjectStorageService.LoadProject(tempFile);
+
+            Assert.NotNull(loaded);
+            Assert.Equal("1.1", loaded.Version);
+            Assert.Equal("Проєкт версії 1.1", loaded.Title);
+            Assert.Equal(RiCalculationMode.SaatyTable, loaded.RiMode);
+            Assert.Equal(2, loaded.Criteria.Count);
+            Assert.Equal(2, loaded.Alternatives.Count);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
 }
