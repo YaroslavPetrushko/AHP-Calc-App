@@ -330,4 +330,137 @@ public class PresetGpu2026Tests
         var sensA = AhpCalculator.CalculateSensitivity(result, "A");
         Assert.True(sensA.Intersections.All(p => !p.IsLeadershipChange));
     }
+
+    [Fact]
+    public void AllBuiltInPresets_PassValidation_AndAreFullyJudged()
+    {
+        var presets = new[]
+        {
+            ("Reference", PresetService.GetReferencePreset()),
+            ("Gpu2026", PresetService.GetGpu2026Preset())
+        };
+
+        foreach (var (name, preset) in presets)
+        {
+            var projectData = new AhpProjectData
+            {
+                Title = preset.Name,
+                Description = preset.Description,
+                Criteria = preset.Criteria,
+                Alternatives = preset.Alternatives,
+                CriteriaMatrix = preset.CriteriaMatrix.ToJaggedArray(),
+                AlternativeMatrices = preset.AlternativeMatrices.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToJaggedArray())
+            };
+
+            var errors = ProjectStorageService.ValidateProject(projectData);
+            Assert.Empty(errors);
+
+            Assert.Equal(4, preset.Criteria.Count);
+            Assert.Equal(5, preset.Alternatives.Count);
+
+            Assert.True(preset.CriteriaMatrix.IsFullyJudged, $"{name}: criteria matrix must be fully judged");
+            Assert.Equal(4, preset.AlternativeMatrices.Count);
+            foreach (var (critId, altMatrix) in preset.AlternativeMatrices)
+            {
+                Assert.True(altMatrix.IsFullyJudged, $"{name}: alternative matrix for {critId} must be fully judged");
+            }
+        }
+    }
+
+    [Fact]
+    public void Gpu2026Preset_Matrices_HaveExactSaatyScaleValues_AndReciprocals()
+    {
+        var preset = PresetService.GetGpu2026Preset();
+
+        void VerifyMatrix(ComparisonMatrix matrix, string matrixName)
+        {
+            int n = matrix.Size;
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    double val = matrix.Values[i, j];
+                    double reciprocal = matrix.Values[j, i];
+
+                    // 1. Точний добуток взаємно обернених значень = 1 (1e-12)
+                    Assert.True(Math.Abs(val * reciprocal - 1.0) < 1e-12,
+                        $"{matrixName}[{i},{j}] * [{j},{i}] = {val * reciprocal} != 1.0");
+
+                    // 2. Значення точно збігається зі шкалою Сааті
+                    double snapped = ComparisonMatrix.SnapToSaatyScale(val);
+                    Assert.True(Math.Abs(val - snapped) < 1e-12,
+                        $"{matrixName}[{i},{j}] = {val} does not match Saaty scale exact value");
+                }
+            }
+        }
+
+        VerifyMatrix(preset.CriteriaMatrix, "CriteriaMatrix");
+        foreach (var (critId, altMatrix) in preset.AlternativeMatrices)
+        {
+            VerifyMatrix(altMatrix, $"AltMatrix_{critId}");
+        }
+    }
+
+    [Fact]
+    public void LoadLegacyV120Json_WithoutOptions_DefaultsToMethodicalProfile_AndPreservesMatrices()
+    {
+        string legacyJson = """
+        {
+          "title": "Legacy Project without explicit options",
+          "description": "Тест завантаження проєкту без блоку options",
+          "version": "1.2.0",
+          "criteria": [
+            { "id": "C1", "name": "Критерій 1", "description": "" },
+            { "id": "C2", "name": "Критерій 2", "description": "" }
+          ],
+          "alternatives": [
+            { "id": "A1", "name": "Альтернатива 1", "description": "" },
+            { "id": "A2", "name": "Альтернатива 2", "description": "" }
+          ],
+          "criteriaMatrix": [
+            [ 1.0, 3.0 ],
+            [ 0.3333333333333333, 1.0 ]
+          ],
+          "alternativeMatrices": {
+            "C1": [
+              [ 1.0, 2.0 ],
+              [ 0.5, 1.0 ]
+            ],
+            "C2": [
+              [ 1.0, 4.0 ],
+              [ 0.25, 1.0 ]
+            ]
+          }
+        }
+        """;
+
+        string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"ahp_legacy_{Guid.NewGuid():N}.ahp.json");
+        try
+        {
+            System.IO.File.WriteAllText(tempFile, legacyJson);
+            var loaded = ProjectStorageService.LoadProject(tempFile);
+
+            Assert.NotNull(loaded);
+            Assert.True(loaded.Options.IsMethodicalProfile, "Missing options must default to MethodicalProfile");
+            Assert.Equal(WeightCalculationMethod.ColumnNormalization, loaded.Options.WeightMethod);
+            Assert.Equal(LambdaCalculationMethod.ColumnSumProduct, loaded.Options.LambdaMethod);
+            Assert.Equal(RiCalculationMode.Empirical, loaded.Options.RiMode);
+            Assert.Equal(ConsistencyThresholdMode.Uniform10Percent, loaded.Options.ThresholdMode);
+
+            Assert.Equal(2, loaded.Criteria.Count);
+            Assert.Equal(2, loaded.Alternatives.Count);
+            Assert.Equal(3.0, loaded.CriteriaMatrix[0][1]);
+            Assert.Equal(2.0, loaded.AlternativeMatrices["C1"][0][1]);
+            Assert.Equal(4.0, loaded.AlternativeMatrices["C2"][0][1]);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tempFile))
+            {
+                System.IO.File.Delete(tempFile);
+            }
+        }
+    }
 }
