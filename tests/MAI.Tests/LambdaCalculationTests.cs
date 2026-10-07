@@ -40,7 +40,7 @@ public class LambdaCalculationTests
     [Fact]
     public void LambdaMethodDescriptions_MatchStandardSpecification()
     {
-        Assert.Equal("λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями)",
+        Assert.Equal("λmax = Σ(сума j-го стовпця · wⱼ) (за метод. реком.)",
             AhpCalculationOptions.GetLambdaMethodDescription(LambdaCalculationMethod.ColumnSumProduct));
 
         Assert.Equal("λmax = середнє (A·w)ᵢ / wᵢ",

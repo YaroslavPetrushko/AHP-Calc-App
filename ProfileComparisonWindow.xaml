@@ -96,9 +96,24 @@
                             Margin="0,0,8,0" Padding="14,0" Height="32" Click="BtnExport_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="📄 Експорт у CSV (*.csv)" Click="MenuExportCsv_Click"/>
-                                <MenuItem Header="📝 Експорт у Markdown (*.md)" Click="MenuExportMarkdown_Click"/>
-                                <MenuItem Header="🌐 Експорт у HTML для Word (*.html)" Click="MenuExportHtml_Click"/>
+                                <MenuItem Header="_Експорт у CSV (*.csv)" Click="MenuExportCsv_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="📄" FontSize="13" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="_Експорт у Markdown (*.md)" Click="MenuExportMarkdown_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="📝" FontSize="13" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="_Експорт у HTML для Word (*.html)" Click="MenuExportHtml_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="🌐" FontSize="13" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>

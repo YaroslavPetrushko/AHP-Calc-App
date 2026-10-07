@@ -169,7 +169,7 @@ public class AhpCalculationOptions
     {
         get
         {
-            if (IsMethodicalProfile) return "За методичними рекомендаціями";
+            if (IsMethodicalProfile) return "Метод. рекомендації";
             if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
             if (IsGeometricMeanProfile) return "Класичний, геометричне середнє";
             return "Користувацький профіль";
@@ -216,7 +216,7 @@ public class AhpCalculationOptions
 
     public static string GetLambdaMethodDescription(LambdaCalculationMethod method) => method switch
     {
-        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями)",
+        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (за метод. реком.)",
         LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
         LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
         _ => method.ToString()

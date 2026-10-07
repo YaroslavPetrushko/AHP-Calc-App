@@ -44,7 +44,7 @@
                     <MenuItem.Icon>
                         <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem Header="📁 Контрольний набір №1: відеокарти (попереднє покоління)" Click="BtnPresetReference_Click"/>
+                    <MenuItem Header="📁 Набір №1: відеокарти (попереднє покоління)" Click="BtnPresetReference_Click"/>
                     <MenuItem Header="📗 Набір №2: відеокарти 2026 (RTX 50 / RX 9000)" Click="BtnPresetGpu2026_Click"/>
                 </MenuItem>
                 <Separator/>
@@ -63,8 +63,12 @@
 
             <!-- Menu "Налаштування" -->
             <MenuItem Header="_Налаштування">
-                <MenuItem Header="⚖️ _Порівняти профілі..." InputGestureText="Ctrl+P" Click="MenuCompareProfiles_Click"/>
-                <Separator/>
+                <MenuItem Header="_Порівняти профілі..." InputGestureText="Ctrl+P" Click="MenuCompareProfiles_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="⚖️" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                    <Separator/>
                 <MenuItem Header="_Профіль розрахунку">
                     <MenuItem.Icon>
                         <TextBlock Text="🎯" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -133,7 +137,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                         <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="12,4,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtActiveProfile" Text="Профіль: За методичними рекомендаціями" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
+                            <TextBlock x:Name="TxtActiveProfile" Text="Профіль: Метод. рекомендації" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
                         </Border>
                     </StackPanel>
                     <TextBlock Text="Системний аналіз та теорія прийняття рішень • .NET 10 WPF Application" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
@@ -141,7 +145,7 @@
 
                 <!-- Preset Toolbar -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnPresetReference" Content="📁 Контрольний набір №1" ToolTip="Контрольний набір №1: відеокарти (попереднє покоління)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetReference_Click"/>
+                    <Button x:Name="BtnPresetReference" Content="📁 Набір №1" ToolTip="Набір №1: відеокарти (попереднє покоління)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetReference_Click"/>
                     <Button x:Name="BtnPresetGpu2026" Content="📗 Набір №2: GPU 2026" ToolTip="Набір №2: відеокарти 2026 (RTX 50 / RX 9000)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetGpu2026_Click"/>
                     <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" ToolTip="Створити чистий шаблон задачі" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
                 </StackPanel>
@@ -274,7 +278,7 @@
                                         <TextBlock Text="• 9 — Абсолютна (найвища можлива) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
                                         <TextBlock Text="• 2, 4, 6, 8 — Проміжні компромісні градації" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
                                         <TextBlock Text="• 1/2, 1/3, ..., 1/9 — Обернені оцінки (перевага стовпця над рядком)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="💡 Порада: вводьте числа або дроби (наприклад 3 або 1/3). Симетричні клітинки заповнюються автоматично." FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="💡 Порада: вводьте числа або дроби (напр. 1/3). Симетричні клітинки заповнюються автоматично." FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -433,7 +437,7 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
-                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: За методичними рекомендаціями • Нормалізація стовпців • Σ(ColSum_j · w_j) • Емпіричний RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: За метод. реком. • Нормалізація стовпців • Σ(ColSum_j · w_j) • Емпіричний RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="🚀 Розрахувати та показати результати" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>
