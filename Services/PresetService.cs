@@ -131,19 +131,11 @@ public static class PresetService
     }
 
     /// <summary>
-    /// Пресет із Курсової роботи (Чернетка — завантажується з вбудованого ресурсу coursework.ahp.json).
+    /// Набір №2: відеокарти 2026 (RTX 50 / RX 9000) — завантажується з вбудованого ресурсу gpu_2026.ahp.json.
     /// </summary>
-    public static AhpProblemPreset GetCourseworkPreset()
+    public static AhpProblemPreset GetGpu2026Preset()
     {
-        return LoadPresetFromResource("coursework.ahp.json");
-    }
-
-    /// <summary>
-    /// Пресет із Курсової роботи (Остаточні обґрунтовані судження — завантажується з вбудованого ресурсу coursework_preset2.ahp.json).
-    /// </summary>
-    public static AhpProblemPreset GetCourseworkFinalPreset()
-    {
-        return LoadPresetFromResource("coursework_preset2.ahp.json");
+        return LoadPresetFromResource("gpu_2026.ahp.json");
     }
 
     /// <summary>

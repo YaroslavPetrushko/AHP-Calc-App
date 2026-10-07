@@ -45,8 +45,7 @@
                         <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
                     <MenuItem Header="📁 Контрольний набір №1: відеокарти (попереднє покоління)" Click="BtnPresetReference_Click"/>
-                    <MenuItem Header="📘 Курсова робота (ЧЕРНЕТКА)" Click="BtnPresetCoursework_Click"/>
-                    <MenuItem Header="📗 Курсова робота (Остаточні обґрунтовані судження)" Click="BtnPresetCourseworkFinal_Click"/>
+                    <MenuItem Header="📗 Набір №2: відеокарти 2026 (RTX 50 / RX 9000)" Click="BtnPresetGpu2026_Click"/>
                 </MenuItem>
                 <Separator/>
                 <MenuItem Header="_Експорт звіту в TXT..." InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click">
@@ -143,7 +142,7 @@
                 <!-- Preset Toolbar -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnPresetReference" Content="📁 Контрольний набір №1" ToolTip="Контрольний набір №1: відеокарти (попереднє покоління)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetReference_Click"/>
-                    <Button x:Name="BtnPresetCourseworkFinal" Content="📗 Тестовий набір №2 - КР" ToolTip="Курсова робота: вибір відеокарти (Остаточні обґрунтовані судження)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetCourseworkFinal_Click"/>
+                    <Button x:Name="BtnPresetGpu2026" Content="📗 Набір №2: GPU 2026" ToolTip="Набір №2: відеокарти 2026 (RTX 50 / RX 9000)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetGpu2026_Click"/>
                     <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" ToolTip="Створити чистий шаблон задачі" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
                 </StackPanel>
             </Grid>

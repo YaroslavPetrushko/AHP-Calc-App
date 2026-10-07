@@ -40,8 +40,8 @@ public partial class MainWindow : Window
 
         SyncCalculationOptionsUI();
 
-        // Завантажуємо контрольний набір даних за замовчуванням
-        LoadPreset(PresetService.GetReferencePreset());
+        // Завантажуємо Набір №2 (відеокарти 2026) за замовчуванням
+        LoadPreset(PresetService.GetGpu2026Preset());
     }
 
     private void LoadPreset(AhpProblemPreset preset)
@@ -68,12 +68,6 @@ public partial class MainWindow : Window
         BuildAlternativesCriteriaSelector();
         BuildAlternativeMatrixGrid();
         UpdateAllDiagnostics();
-
-        if (preset.Name.Contains("ЧЕРНЕТКА", StringComparison.OrdinalIgnoreCase))
-        {
-            TxtBottomStatus.Text = $"⚠️ УВАГА: Завантажено «{preset.Name}». Судження є попередніми та не обґрунтованими!";
-            TxtBottomStatus.Foreground = (Brush)FindResource("WarningOrange");
-        }
     }
 
     private void UpdateCountsUI()
@@ -1072,31 +1066,17 @@ public partial class MainWindow : Window
         TxtBottomStatus.Text = "Завантажено: Контрольний набір №1: відеокарти (попереднє покоління).";
     }
 
-    private void BtnPresetCoursework_Click(object sender, RoutedEventArgs e)
+    private void BtnPresetGpu2026_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            var preset = PresetService.GetCourseworkPreset();
+            var preset = PresetService.GetGpu2026Preset();
             LoadPreset(preset);
-            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\n⚠️ Зверніть увагу: матриці містять попередні судження (чернетка).", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+            TxtBottomStatus.Text = "Завантажено: Набір №2: відеокарти 2026 (RTX 50 / RX 9000).";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка завантаження пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    private void BtnPresetCourseworkFinal_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var preset = PresetService.GetCourseworkFinalPreset();
-            LoadPreset(preset);
-            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\nУсі попарні судження обґрунтовано за розрахунковими даними.", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Помилка завантаження остаточного пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Помилка завантаження набору №2:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
