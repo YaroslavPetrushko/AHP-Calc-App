@@ -12,7 +12,7 @@ public class LambdaCalculationTests
     [Fact]
     public void CriteriaMatrix_ColumnNormalization_LambdaDiffersByMethod()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
 
         // 1. ColumnSumProduct з нормалізацією стовпців: lambda ≈ 4.0493
         var optsColSum = new AhpCalculationOptions
@@ -40,7 +40,7 @@ public class LambdaCalculationTests
     [Fact]
     public void LambdaMethodDescriptions_MatchStandardSpecification()
     {
-        Assert.Equal("λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)",
+        Assert.Equal("λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями)",
             AhpCalculationOptions.GetLambdaMethodDescription(LambdaCalculationMethod.ColumnSumProduct));
 
         Assert.Equal("λmax = середнє (A·w)ᵢ / wᵢ",

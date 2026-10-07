@@ -11,9 +11,9 @@ public class SensitivityTests
     private const double Tolerance = 2e-3;
 
     [Fact]
-    public void Sensitivity_ClassicSaaty_LeaderChangesMatchAppendixA4()
+    public void Sensitivity_ClassicSaaty_LeaderChangesMatchReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,
@@ -61,15 +61,15 @@ public class SensitivityTests
     }
 
     [Fact]
-    public void Sensitivity_Lab4_LeaderChangesMatchAppendixA4()
+    public void Sensitivity_MethodicalProfile_LeaderChangesMatchReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,
             preset.CriteriaMatrix,
             preset.AlternativeMatrices,
-            AhpCalculationOptions.Lab4Profile);
+            AhpCalculationOptions.MethodicalProfile);
 
         // Критерій P: 0,065 та 0,419
         var sensP = AhpCalculator.CalculateSensitivity(result, "P");
@@ -101,7 +101,7 @@ public class SensitivityTests
     [Fact]
     public void Sensitivity_ClassicSaaty_FalseLeaderChangesExcluded()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,
@@ -127,9 +127,9 @@ public class SensitivityTests
     }
 
     [Fact]
-    public void Sensitivity_ClassicSaaty_StabilitySummaryMatchesAppendixA5()
+    public void Sensitivity_ClassicSaaty_StabilitySummaryMatchesReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,

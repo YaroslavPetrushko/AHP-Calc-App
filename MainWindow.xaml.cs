@@ -24,7 +24,7 @@ public partial class MainWindow : Window
 
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
-    private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.Lab4Profile.Clone();
+    private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.MethodicalProfile.Clone();
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
@@ -40,8 +40,8 @@ public partial class MainWindow : Window
 
         SyncCalculationOptionsUI();
 
-        // Завантажуємо контрольний набір Лабораторних робіт №3–4 за замовчуванням
-        LoadPreset(PresetService.GetLab34Preset());
+        // Завантажуємо контрольний набір даних за замовчуванням
+        LoadPreset(PresetService.GetReferencePreset());
     }
 
     private void LoadPreset(AhpProblemPreset preset)
@@ -1066,10 +1066,10 @@ public partial class MainWindow : Window
 
     #region Preset Buttons
 
-    private void BtnPresetLab34_Click(object sender, RoutedEventArgs e)
+    private void BtnPresetReference_Click(object sender, RoutedEventArgs e)
     {
-        LoadPreset(PresetService.GetLab34Preset());
-        MessageBox.Show("Завантажено контрольний тестовий набір даних Лабораторних робіт №3–4:\n• 4 критерії (Productivity, Functionality, Actuality, Cost)\n• 5 альтернатив (RTX 3050, 3070, 4060 Ti, 5060 Ti, RX 7700 XT)", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        LoadPreset(PresetService.GetReferencePreset());
+        TxtBottomStatus.Text = "Завантажено: Контрольний набір №1: відеокарти (попереднє покоління).";
     }
 
     private void BtnPresetCoursework_Click(object sender, RoutedEventArgs e)
@@ -1303,19 +1303,12 @@ public partial class MainWindow : Window
 
     private void SyncCalculationOptionsUI()
     {
-        bool isLab4 = _calculationOptions.WeightMethod == WeightCalculationMethod.ColumnNormalization &&
-                      _calculationOptions.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
-                      _calculationOptions.RiMode == RiCalculationMode.Empirical &&
-                      _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
+        bool isMethodical = _calculationOptions.IsMethodicalProfile;
+        bool isClassic = _calculationOptions.IsClassicSaatyProfile;
 
-        bool isClassic = _calculationOptions.WeightMethod == WeightCalculationMethod.PrincipalEigenvector &&
-                         _calculationOptions.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
-                         _calculationOptions.RiMode == RiCalculationMode.SaatyTable &&
-                         _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
-
-        MenuProfileLab4.IsChecked = isLab4;
+        MenuProfileMethodical.IsChecked = isMethodical;
         MenuProfileClassic.IsChecked = isClassic;
-        MenuProfileCustom.IsChecked = !isLab4 && !isClassic;
+        MenuProfileCustom.IsChecked = !isMethodical && !isClassic;
 
         MenuWeightColumnNorm.IsChecked = _calculationOptions.WeightMethod == WeightCalculationMethod.ColumnNormalization;
         MenuWeightGeometric.IsChecked = _calculationOptions.WeightMethod == WeightCalculationMethod.GeometricMean;
@@ -1331,7 +1324,7 @@ public partial class MainWindow : Window
         MenuThresholdUniform.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
         MenuThresholdAdaptive.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
-        string profileTitle = isLab4 ? "Профіль: ЛР №4" : isClassic ? " Профіль: Класичний" : "Профіль: Власний";
+        string profileTitle = isMethodical ? "Профіль: За методичними рекомендаціями" : isClassic ? "Профіль: Класичний" : "Профіль: Власний";
         TxtActiveProfile.Text = profileTitle;
 
         string weightDesc = _calculationOptions.WeightMethod switch
@@ -1347,13 +1340,13 @@ public partial class MainWindow : Window
         string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "Емпіричний RI" : "Табличний RI";
         string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent ? "CR ≤ 10%" : "Адаптивний CR";
 
-        string profileName = isLab4 ? "Еталон ЛР №4" : isClassic ? "Класичний Сааті" : "Власний профіль";
+        string profileName = isMethodical ? "За методичними рекомендаціями" : isClassic ? "Класичний метод Т. Сааті" : "Користувацький профіль";
         TxtActiveProfileDesc.Text = $"Профіль: {profileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
     }
 
-    private void MenuProfileLab4_Click(object sender, RoutedEventArgs e)
+    private void MenuProfileMethodical_Click(object sender, RoutedEventArgs e)
     {
-        _calculationOptions = AhpCalculationOptions.Lab4Profile.Clone();
+        _calculationOptions = AhpCalculationOptions.MethodicalProfile.Clone();
         SyncCalculationOptionsUI();
         UpdateAllDiagnostics();
     }

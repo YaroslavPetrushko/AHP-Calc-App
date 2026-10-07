@@ -91,10 +91,10 @@ public class AhpCalculationOptions
     }
 
     /// <summary>
-    /// Еталонний профіль Лабораторної роботи №4:
+    /// Профіль розрахунку за методичними рекомендаціями:
     /// нормалізація стовпців, колонковий добуток lambda_max, емпіричний RI, фіксований поріг 10%.
     /// </summary>
-    public static AhpCalculationOptions Lab4Profile => new(
+    public static AhpCalculationOptions MethodicalProfile => new(
         WeightCalculationMethod.ColumnNormalization,
         LambdaCalculationMethod.ColumnSumProduct,
         RiCalculationMode.Empirical,
@@ -121,9 +121,9 @@ public class AhpCalculationOptions
         ConsistencyThresholdMode.SaatyAdaptive);
 
     /// <summary>
-    /// Перевірка чи відповідає поточна конфігурація профілю ЛР №4.
+    /// Перевірка чи відповідає поточна конфігурація методичному профілю.
     /// </summary>
-    public bool IsLab4Profile =>
+    public bool IsMethodicalProfile =>
         WeightMethod == WeightCalculationMethod.ColumnNormalization &&
         LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
         RiMode == RiCalculationMode.Empirical &&
@@ -164,7 +164,7 @@ public class AhpCalculationOptions
     {
         get
         {
-            if (IsLab4Profile) return "Еталон ЛР №4";
+            if (IsMethodicalProfile) return "За методичними рекомендаціями";
             if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
             if (IsGeometricMeanProfile) return "Класичний, геометричне середнє";
             return "Користувацький профіль";
@@ -197,7 +197,7 @@ public class AhpCalculationOptions
 
     public static string GetLambdaMethodDescription(LambdaCalculationMethod method) => method switch
     {
-        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)",
+        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями)",
         LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
         LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
         _ => method.ToString()

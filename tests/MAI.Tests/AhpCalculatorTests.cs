@@ -11,15 +11,15 @@ public class AhpCalculatorTests
     private const double Tolerance = 5e-4;
 
     [Fact]
-    public void SolveHierarchy_Lab4Profile_MatchesAppendixA1()
+    public void SolveHierarchy_MethodicalProfile_MatchesReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,
             preset.CriteriaMatrix,
             preset.AlternativeMatrices,
-            AhpCalculationOptions.Lab4Profile);
+            AhpCalculationOptions.MethodicalProfile);
 
         // 1. Ваги критеріїв P / F / A / C
         var w = result.Criteria.ToDictionary(c => c.Id, c => c.Weight);
@@ -58,9 +58,9 @@ public class AhpCalculatorTests
     }
 
     [Fact]
-    public void SolveHierarchy_ClassicSaatyProfile_MatchesAppendixA2()
+    public void SolveHierarchy_ClassicSaatyProfile_MatchesReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,

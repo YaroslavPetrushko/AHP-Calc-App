@@ -8,9 +8,9 @@ namespace MAI.Tests;
 public class HierarchyConsistencyTests
 {
     [Fact]
-    public void Lab34Preset_HasNoInconsistentMatrices()
+    public void ReferencePreset_HasNoInconsistentMatrices()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,

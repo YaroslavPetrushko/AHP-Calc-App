@@ -231,7 +231,7 @@
 
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
                                     <TextBlock Text="Експорт результатів дослідження" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextDark}"/>
-                                    <TextBlock Text="Формування повного текстового звіту з усіма коефіцієнтами для курсової чи лабораторної роботи." FontSize="12" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Формування повного текстового звіту з усіма коефіцієнтами для звіту або документації." FontSize="12" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

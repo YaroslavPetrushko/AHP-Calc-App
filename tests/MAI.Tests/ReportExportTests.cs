@@ -107,9 +107,9 @@ public class ReportExportTests
     }
 
     [Fact]
-    public void ReportTableBuilder_BuildsAllRequiredTables_ForLab34Preset()
+    public void ReportTableBuilder_BuildsAllRequiredTables_ForReferencePreset()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var options = AhpCalculationOptions.ClassicSaatyProfile;
         var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, options);
 

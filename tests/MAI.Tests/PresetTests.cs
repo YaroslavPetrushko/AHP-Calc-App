@@ -9,9 +9,9 @@ public class PresetTests
     private const double Tolerance = 1e-4;
 
     [Fact]
-    public void Lab34Preset_MatricesMatchAppendixA3()
+    public void ReferencePreset_MatricesMatchReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
 
         // 1. Матриця критеріїв (порядок: P=0, F=1, A=2, C=3)
         // P/F = 2, P/A = 3, P/C = 1, F/A = 2, F/C = 1, A/C = 1/2

@@ -21,7 +21,7 @@ public class ProjectStorageTests
                 Title = "Тестовий проєкт",
                 Description = "Опис тестового проєкту",
                 Version = "1.2",
-                Options = AhpCalculationOptions.Lab4Profile,
+                Options = AhpCalculationOptions.MethodicalProfile,
                 Criteria = new List<Criterion>
                 {
                     new("C1", "Ціна", "Вартість у гривнях"),
@@ -107,13 +107,13 @@ public class ProjectStorageTests
     [Fact]
     public void GenerateFullReportText_GeneratesExpectedSections()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(
             preset.Criteria,
             preset.Alternatives,
             preset.CriteriaMatrix,
             preset.AlternativeMatrices,
-            AhpCalculationOptions.Lab4Profile);
+            AhpCalculationOptions.MethodicalProfile);
 
         string report = ProjectStorageService.GenerateFullReportText(result);
 

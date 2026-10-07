@@ -36,10 +36,10 @@ public static class ProfileComparisonService
         }
         else
         {
-            // Стандартна трійка профілів
-            profileList.Add(("Класичний Сааті", AhpCalculationOptions.ClassicSaatyProfile));
-            profileList.Add(("ЛР №4", AhpCalculationOptions.Lab4Profile));
-            profileList.Add(("Класичний, геометричне середнє", AhpCalculationOptions.GeometricMeanProfile));
+            // Стандартна трійка профілів: За методичними рекомендаціями, Класичний метод Т. Сааті, Класичний, геометричне середнє
+            profileList.Add((AhpCalculationOptions.MethodicalProfile.ProfileName, AhpCalculationOptions.MethodicalProfile));
+            profileList.Add((AhpCalculationOptions.ClassicSaatyProfile.ProfileName, AhpCalculationOptions.ClassicSaatyProfile));
+            profileList.Add((AhpCalculationOptions.GeometricMeanProfile.ProfileName, AhpCalculationOptions.GeometricMeanProfile));
 
             // Якщо поточний активний профіль відрізняється від усіх трьох, додаємо його
             if (activeOptions != null && !profileList.Any(p => p.Options.ValueEquals(activeOptions)))
@@ -71,7 +71,7 @@ public static class ProfileComparisonService
             });
         }
 
-        // 2. Порівняння з еталонним профілем (Класичний Сааті)
+        // 2. Порівняння з опорним профілем (Класичний метод Т. Сааті)
         var benchmark = result.BenchmarkProfile;
         var benchmarkOrder = benchmark.Result.RankedAlternatives.Select(a => a.Id).ToList();
 
@@ -100,10 +100,10 @@ public static class ProfileComparisonService
         }
 
         bool allMatch = result.AllRankingsMatchBenchmark;
-        sb.AppendLine($"• Ранжування збігається з еталонним (Класичний Сааті): {(allMatch ? "так" : "ні")}");
+        sb.AppendLine($"• Ранжування збігається з опорним (Класичний метод Т. Сааті): {(allMatch ? "так" : "ні")}");
 
         double maxDeltaAcross = result.MaxDeltaPriorityAcrossProfiles;
-        sb.Append($"• Максимальне відхилення пріоритету max |ΔP| відносно еталонного: {maxDeltaAcross.ToString("0.0000", UkCulture)}");
+        sb.Append($"• Максимальне відхилення пріоритету max |ΔP| відносно опорного: {maxDeltaAcross.ToString("0.0000", UkCulture)}");
 
         result.SummaryText = sb.ToString();
 

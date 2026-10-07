@@ -98,9 +98,9 @@ public class JudgedPairsTests
     }
 
     [Fact]
-    public void PresetLab34_AllMatricesAreFullyJudged()
+    public void ReferencePreset_AllMatricesAreFullyJudged()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         Assert.True(preset.CriteriaMatrix.IsFullyJudged);
         Assert.Equal(preset.CriteriaMatrix.TotalPairs, preset.CriteriaMatrix.JudgedCount);
 

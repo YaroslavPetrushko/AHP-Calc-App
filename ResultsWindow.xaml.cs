@@ -174,19 +174,7 @@ public partial class ResultsWindow : Window
             TxtWinnerName.Text = "Не визначено";
         }
 
-        string profileName = _result.Options != null &&
-                             _result.Options.WeightMethod == WeightCalculationMethod.ColumnNormalization &&
-                             _result.Options.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
-                             _result.Options.RiMode == RiCalculationMode.Empirical &&
-                             _result.Options.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent
-                             ? "Еталон ЛР №4"
-                             : _result.Options != null &&
-                               _result.Options.WeightMethod == WeightCalculationMethod.PrincipalEigenvector &&
-                               _result.Options.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
-                               _result.Options.RiMode == RiCalculationMode.SaatyTable &&
-                               _result.Options.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive
-                               ? "Класичний метод Т. Сааті"
-                               : "Власний профіль (Custom)";
+        string profileName = _result.Options?.ProfileName ?? "Користувацький профіль";
 
         TxtBannerSubtitle.Text = $"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}";
 
@@ -1113,7 +1101,7 @@ public partial class ResultsWindow : Window
             }
             else
             {
-                var preset = PresetService.GetLab34Preset();
+                var preset = PresetService.GetReferencePreset();
                 win = new ProfileComparisonWindow(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, _result.Options);
             }
             win.Owner = this;

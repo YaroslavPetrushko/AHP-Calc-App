@@ -8,8 +8,8 @@ public class SmokeTests
     [Fact]
     public void SmokeTest_PresetAndCalculatorExist()
     {
-        // Перевірка існування пресету ЛР 3-4 та коректної кількості елементів
-        var preset = PresetService.GetLab34Preset();
+        // Перевірка існування контрольного пресету та коректної кількості елементів
+        var preset = PresetService.GetReferencePreset();
         Assert.NotNull(preset);
         Assert.Equal(4, preset.Criteria.Count);
         Assert.Equal(5, preset.Alternatives.Count);

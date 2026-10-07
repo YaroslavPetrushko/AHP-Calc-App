@@ -45,7 +45,7 @@
                         <TextBlock Text="• Оцінка логічної несуперечливості експертних оцінок (λmax, CI, RI, CR ≤ 0.10)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
                         <TextBlock Text="• Інтелектуальні підказки для покращення узгодженості матриць (log-шкала Сааті)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
                         <TextBlock Text="• Багаторівневий ієрархічний синтез з ранжуванням альтернатив та допуском рівності" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
-                        <TextBlock Text="• Модуль порівняння розрахункових профілів (ЛР №4 vs Класичний Сааті)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
+                        <TextBlock Text="• Модуль порівняння розрахункових профілів (за методичними рекомендаціями та класичний метод Сааті)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
                         <TextBlock Text="• Інтерактивний аналіз чутливості з динамічними функціями пріоритетів" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
                         <TextBlock Text="• Експорт таблиць у CSV, Markdown, HTML та графіків у PNG (192 DPI)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
                         <TextBlock Text="• Збереження та транзакційне завантаження задач у форматі JSON (.ahp.json)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2.5"/>
