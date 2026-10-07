@@ -176,6 +176,20 @@ public class AhpCalculationOptions
         }
     }
 
+    /// <summary>
+    /// Скорочена назва розрахункового профілю для компактних таблиць.
+    /// </summary>
+    public string ProfileShortName
+    {
+        get
+        {
+            if (IsMethodicalProfile) return "Методичний";
+            if (IsClassicSaatyProfile) return "Класичний";
+            if (IsGeometricMeanProfile) return "Геом. середнє";
+            return "Користувацький";
+        }
+    }
+
     public double GetAcceptableCR(int n)
     {
         if (ThresholdMode == ConsistencyThresholdMode.Uniform10Percent) return 0.1001;

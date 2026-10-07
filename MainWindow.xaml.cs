@@ -1304,8 +1304,7 @@ public partial class MainWindow : Window
         MenuThresholdUniform.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
         MenuThresholdAdaptive.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
-        string profileTitle = isMethodical ? "Профіль: За методичними рекомендаціями" : isClassic ? "Профіль: Класичний" : "Профіль: Власний";
-        TxtActiveProfile.Text = profileTitle;
+        TxtActiveProfile.Text = $"Профіль: {_calculationOptions.ProfileName}";
 
         string weightDesc = _calculationOptions.WeightMethod switch
         {
@@ -1320,8 +1319,7 @@ public partial class MainWindow : Window
         string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "Емпіричний RI" : "Табличний RI";
         string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent ? "CR ≤ 10%" : "Адаптивний CR";
 
-        string profileName = isMethodical ? "За методичними рекомендаціями" : isClassic ? "Класичний метод Т. Сааті" : "Користувацький профіль";
-        TxtActiveProfileDesc.Text = $"Профіль: {profileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
+        TxtActiveProfileDesc.Text = $"Профіль: {_calculationOptions.ProfileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
     }
 
     private void MenuProfileMethodical_Click(object sender, RoutedEventArgs e)

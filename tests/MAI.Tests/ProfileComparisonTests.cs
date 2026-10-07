@@ -133,4 +133,28 @@ public class ProfileComparisonTests
         Assert.True(result.Profiles.Count >= 3);
         Assert.Equal("A4", result.Profiles[0].WinnerId);
     }
+
+    [Fact]
+    public void ProfileNames_AndShortNames_MatchExpectedSpecifications()
+    {
+        var methodical = AhpCalculationOptions.MethodicalProfile;
+        Assert.Equal("За методичними рекомендаціями", methodical.ProfileName);
+        Assert.Equal("Методичний", methodical.ProfileShortName);
+
+        var classic = AhpCalculationOptions.ClassicSaatyProfile;
+        Assert.Equal("Класичний метод Т. Сааті", classic.ProfileName);
+        Assert.Equal("Класичний", classic.ProfileShortName);
+
+        var geometric = AhpCalculationOptions.GeometricMeanProfile;
+        Assert.Equal("Класичний, геометричне середнє", geometric.ProfileName);
+        Assert.Equal("Геом. середнє", geometric.ProfileShortName);
+
+        var custom = new AhpCalculationOptions(
+            WeightCalculationMethod.GeometricMean,
+            LambdaCalculationMethod.RowRatioMean,
+            RiCalculationMode.Empirical,
+            ConsistencyThresholdMode.Uniform10Percent);
+        Assert.Equal("Користувацький профіль", custom.ProfileName);
+        Assert.Equal("Користувацький", custom.ProfileShortName);
+    }
 }
