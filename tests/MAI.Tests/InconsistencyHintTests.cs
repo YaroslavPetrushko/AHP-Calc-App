@@ -10,9 +10,9 @@ public class InconsistencyHintTests
     private const double Tolerance = 5e-4;
 
     [Fact]
-    public void AppendixA6_TestVector_FindMostInconsistentCell_MatchesBenchmark()
+    public void TestVector_FindMostInconsistentCell_MatchesBenchmark()
     {
-        // Матриця 4×4 з Додатка А.6
+        // Матриця 4×4 для перевірки найбільш неузгодженої пари
         // [ 1    2    4    2 ]
         // [ 1/2  1    2    4 ]
         // [ 1/4  1/2  1    2 ]

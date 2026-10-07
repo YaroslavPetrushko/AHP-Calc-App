@@ -180,4 +180,70 @@ public class ProjectStorageTests
             }
         }
     }
+
+    [Fact]
+    public void LoadProject_V120Json_LoadsSuccessfully()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"ahp_v120_{Guid.NewGuid():N}.ahp.json");
+        try
+        {
+            string v120Json = """
+            {
+              "title": "Проєкт версії 1.2.0",
+              "description": "Сумісність із форматом v1.2.0",
+              "version": "1.2.0",
+              "savedAt": "2026-10-06T15:00:00",
+              "options": {
+                "weightMethod": "ColumnNormalization",
+                "lambdaMethod": "ColumnSumProduct",
+                "riMode": "Empirical",
+                "thresholdMode": "Uniform10Percent"
+              },
+              "criteria": [
+                { "id": "C1", "name": "К1", "description": "" },
+                { "id": "C2", "name": "К2", "description": "" }
+              ],
+              "alternatives": [
+                { "id": "A1", "name": "А1", "description": "" },
+                { "id": "A2", "name": "А2", "description": "" }
+              ],
+              "criteriaMatrix": [
+                [ 1.0, 2.0 ],
+                [ 0.5, 1.0 ]
+              ],
+              "alternativeMatrices": {
+                "C1": [
+                  [ 1.0, 3.0 ],
+                  [ 0.3333333333333333, 1.0 ]
+                ],
+                "C2": [
+                  [ 1.0, 0.5 ],
+                  [ 2.0, 1.0 ]
+                ]
+              }
+            }
+            """;
+            File.WriteAllText(tempFile, v120Json);
+
+            var loaded = ProjectStorageService.LoadProject(tempFile);
+
+            Assert.NotNull(loaded);
+            Assert.Equal("1.2.0", loaded.Version);
+            Assert.Equal("Проєкт версії 1.2.0", loaded.Title);
+            Assert.Equal(WeightCalculationMethod.ColumnNormalization, loaded.Options.WeightMethod);
+            Assert.Equal(LambdaCalculationMethod.ColumnSumProduct, loaded.Options.LambdaMethod);
+            Assert.Equal(RiCalculationMode.Empirical, loaded.Options.RiMode);
+            Assert.Equal(ConsistencyThresholdMode.Uniform10Percent, loaded.Options.ThresholdMode);
+            Assert.True(loaded.Options.IsMethodicalProfile);
+            Assert.Equal(2, loaded.Criteria.Count);
+            Assert.Equal(2, loaded.Alternatives.Count);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
 }
