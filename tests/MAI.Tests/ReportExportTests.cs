@@ -107,9 +107,9 @@ public class ReportExportTests
     }
 
     [Fact]
-    public void ReportTableBuilder_BuildsAllRequiredTables_ForLab34Preset()
+    public void ReportTableBuilder_BuildsAllRequiredTables_ForReferencePreset()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var options = AhpCalculationOptions.ClassicSaatyProfile;
         var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, options);
 
@@ -149,5 +149,27 @@ public class ReportExportTests
         string html = ReportExporter.ToHtml(tables);
         int htmlTableCount = Regex.Matches(html, "<table\\b", RegexOptions.IgnoreCase).Count;
         Assert.Equal(tables.Count, htmlTableCount);
+    }
+
+    [Fact]
+    public void ReportTableBuilder_PairwiseMatrix_FormatsSaatyFractions_InCsvMarkdownAndHtml()
+    {
+        var preset = PresetService.GetReferencePreset();
+        var options = AhpCalculationOptions.ClassicSaatyProfile;
+        var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, options);
+        var tables = ReportTableBuilder.Build(result, options);
+
+        var critPwTable = tables.First(t => t.Title.Contains("Матриця парних порівнянь критеріїв"));
+        bool hasFractionInCrit = critPwTable.Rows.Any(r => r.Contains("1/3"));
+        Assert.True(hasFractionInCrit, "Pairwise table should contain '1/3' formatted Saaty fraction");
+
+        string csv = ReportExporter.ToCsv(tables);
+        Assert.Contains(";1/3;", csv);
+
+        string md = ReportExporter.ToMarkdown(tables);
+        Assert.Contains("| 1/3 |", md);
+
+        string html = ReportExporter.ToHtml(tables);
+        Assert.Contains(">1/3<", html);
     }
 }

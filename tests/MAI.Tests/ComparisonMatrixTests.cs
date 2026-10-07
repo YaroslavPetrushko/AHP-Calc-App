@@ -7,7 +7,7 @@ namespace MAI.Tests;
 public class ComparisonMatrixTests
 {
     [Fact]
-    public void RemoveAt_FromMiddle_PreservesCorrectElementMapping_AppendixA7()
+    public void RemoveAt_FromMiddle_PreservesCorrectElementMapping_ReferenceCheck()
     {
         // Матриця 5x5 з унікальними значеннями у верхньому трикутнику
         var mat = new ComparisonMatrix(5, new[] { "E0", "E1", "E2", "E3", "E4" });

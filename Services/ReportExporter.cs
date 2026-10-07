@@ -12,8 +12,6 @@ namespace MAI.Services;
 /// </summary>
 public static class ReportExporter
 {
-    private static readonly UTF8Encoding Utf8WithBom = new(true);
-
     /// <summary>
     /// Рендеринг таблиць у формат CSV (роздільник ';', поля екрануються лапками, починається з BOM).
     /// </summary>

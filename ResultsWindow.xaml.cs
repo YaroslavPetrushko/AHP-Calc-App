@@ -119,11 +119,6 @@ public partial class ResultsWindow : Window
     private readonly ComparisonMatrix? _rawCriteriaMatrix;
     private readonly Dictionary<string, ComparisonMatrix>? _rawAltMatrices;
 
-    public ResultsWindow(AhpResult result)
-        : this(result, null, null, null, null)
-    {
-    }
-
     public ResultsWindow(
         AhpResult result,
         List<Criterion>? criteria,
@@ -137,6 +132,12 @@ public partial class ResultsWindow : Window
         _rawAlternatives = alternatives;
         _rawCriteriaMatrix = criteriaMatrix;
         _rawAltMatrices = altMatrices;
+
+        if (_rawCriteria == null || _rawAlternatives == null || _rawCriteriaMatrix == null || _rawAltMatrices == null)
+        {
+            BtnCompareProfiles.IsEnabled = false;
+            BtnCompareProfiles.ToolTip = "Порівняння доступне лише з головного вікна";
+        }
 
         InitHeaderAndBadges();
         InitRankingsList();
@@ -174,19 +175,7 @@ public partial class ResultsWindow : Window
             TxtWinnerName.Text = "Не визначено";
         }
 
-        string profileName = _result.Options != null &&
-                             _result.Options.WeightMethod == WeightCalculationMethod.ColumnNormalization &&
-                             _result.Options.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
-                             _result.Options.RiMode == RiCalculationMode.Empirical &&
-                             _result.Options.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent
-                             ? "Еталон ЛР №4"
-                             : _result.Options != null &&
-                               _result.Options.WeightMethod == WeightCalculationMethod.PrincipalEigenvector &&
-                               _result.Options.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
-                               _result.Options.RiMode == RiCalculationMode.SaatyTable &&
-                               _result.Options.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive
-                               ? "Класичний метод Т. Сааті"
-                               : "Власний профіль (Custom)";
+        string profileName = _result.Options?.ProfileName ?? "Користувацький профіль";
 
         TxtBannerSubtitle.Text = $"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}";
 
@@ -1104,19 +1093,18 @@ public partial class ResultsWindow : Window
 
     private void BtnCompareProfiles_Click(object sender, RoutedEventArgs e)
     {
+        if (_rawCriteria == null || _rawAlternatives == null || _rawCriteriaMatrix == null || _rawAltMatrices == null)
+        {
+            MessageBox.Show("Дані для порівняння профілів недоступні.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         try
         {
-            ProfileComparisonWindow win;
-            if (_rawCriteria != null && _rawAlternatives != null && _rawCriteriaMatrix != null && _rawAltMatrices != null)
+            var win = new ProfileComparisonWindow(_rawCriteria, _rawAlternatives, _rawCriteriaMatrix, _rawAltMatrices, _result.Options)
             {
-                win = new ProfileComparisonWindow(_rawCriteria, _rawAlternatives, _rawCriteriaMatrix, _rawAltMatrices, _result.Options);
-            }
-            else
-            {
-                var preset = PresetService.GetLab34Preset();
-                win = new ProfileComparisonWindow(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, _result.Options);
-            }
-            win.Owner = this;
+                Owner = this
+            };
             win.ShowDialog();
         }
         catch (Exception ex)

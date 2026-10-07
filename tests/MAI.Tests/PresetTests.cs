@@ -9,9 +9,9 @@ public class PresetTests
     private const double Tolerance = 1e-4;
 
     [Fact]
-    public void Lab34Preset_MatricesMatchAppendixA3()
+    public void ReferencePreset_MatricesMatchReferenceValues()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
 
         // 1. Матриця критеріїв (порядок: P=0, F=1, A=2, C=3)
         // P/F = 2, P/A = 3, P/C = 1, F/A = 2, F/C = 1, A/C = 1/2
@@ -85,33 +85,9 @@ public class PresetTests
     }
 
     [Fact]
-    public void CourseworkDraftPreset_EmbeddedJson_LoadsAndValidates()
+    public void Gpu2026Preset_EmbeddedJson_LoadsAndValidates()
     {
-        var preset = PresetService.GetCourseworkPreset();
-
-        Assert.NotNull(preset);
-        Assert.Contains("ЧЕРНЕТКА", preset.Name);
-        Assert.Equal(4, preset.Criteria.Count);
-        Assert.Equal(5, preset.Alternatives.Count);
-        Assert.Equal(4, preset.CriteriaMatrix.Size);
-        Assert.Equal(6, preset.CriteriaMatrix.TotalPairs);
-        Assert.Equal(6, preset.CriteriaMatrix.JudgedCount);
-        Assert.True(preset.CriteriaMatrix.IsFullyJudged);
-
-        Assert.Equal(4, preset.AlternativeMatrices.Count);
-        foreach (var mat in preset.AlternativeMatrices.Values)
-        {
-            Assert.Equal(5, mat.Size);
-            Assert.Equal(10, mat.TotalPairs);
-            Assert.Equal(10, mat.JudgedCount);
-            Assert.True(mat.IsFullyJudged);
-        }
-    }
-
-    [Fact]
-    public void CourseworkFinalPreset_EmbeddedJson_LoadsAndValidates()
-    {
-        var preset = PresetService.GetCourseworkFinalPreset();
+        var preset = PresetService.GetGpu2026Preset();
 
         Assert.NotNull(preset);
         Assert.Equal(4, preset.Criteria.Count);

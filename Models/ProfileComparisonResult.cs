@@ -47,7 +47,7 @@ public class ProfileComparisonResult
     private static string FormatPercent(double val) => (val * 100.0).ToString("0.00", UkCulture) + " %";
 
     /// <summary>
-    /// Генерація 3-х структурованих звітних таблиць для підрозділу 4.2 курсової роботи.
+    /// Генерація 3-х структурованих звітних таблиць порівняння профілів.
     /// </summary>
     public List<ReportTable> ToReportTables()
     {

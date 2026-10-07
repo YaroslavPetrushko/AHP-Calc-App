@@ -304,28 +304,44 @@ public class ComparisonMatrix
         return true;
     }
 
+    private static readonly CultureInfo UkCulture = new("uk-UA");
+
+    private static readonly (double Value, string Text)[] SaatyScaleDisplay = new[]
+    {
+        (1.0 / 9.0, "1/9"),
+        (1.0 / 8.0, "1/8"),
+        (1.0 / 7.0, "1/7"),
+        (1.0 / 6.0, "1/6"),
+        (1.0 / 5.0, "1/5"),
+        (1.0 / 4.0, "1/4"),
+        (1.0 / 3.0, "1/3"),
+        (1.0 / 2.0, "1/2"),
+        (1.0, "1"),
+        (2.0, "2"),
+        (3.0, "3"),
+        (4.0, "4"),
+        (5.0, "5"),
+        (6.0, "6"),
+        (7.0, "7"),
+        (8.0, "8"),
+        (9.0, "9"),
+    };
+
     /// <summary>
     /// Форматування значення для відображення (як дріб 1/k для стандартних часток Сааті).
     /// </summary>
     public static string FormatSaatyValue(double value)
     {
-        if (Math.Abs(value - 1.0) < 1e-4) return "1";
-
-        // Перевірка на цілі числа від 2 до 9
-        for (int k = 2; k <= 9; k++)
+        foreach (var (v, text) in SaatyScaleDisplay)
         {
-            if (Math.Abs(value - k) < 1e-3)
-                return k.ToString();
-            if (Math.Abs(value - (1.0 / k)) < 1e-3)
-                return $"1/{k}";
+            if (Math.Abs(value - v) < 1e-3)
+                return text;
         }
 
         // Перевірка на інші прості дроби
-        if (Math.Abs(value - 0.5) < 1e-3) return "1/2";
-        if (Math.Abs(value - 0.25) < 1e-3) return "1/4";
         if (Math.Abs(value - 0.75) < 1e-3) return "3/4";
 
-        return value.ToString("0.###", CultureInfo.InvariantCulture);
+        return value.ToString("0.###", UkCulture);
     }
 
     /// <summary>

@@ -28,16 +28,16 @@ public class AhpProblemPreset
 public static class PresetService
 {
     /// <summary>
-    /// Контрольний набір даних із Лабораторних робіт №3–4 (Вибір відеокарти для студента CS).
+    /// Контрольний набір даних: відеокарти попереднього покоління.
     /// </summary>
-    public static AhpProblemPreset GetLab34Preset()
+    public static AhpProblemPreset GetReferencePreset()
     {
         var criteria = new List<Criterion>
         {
-            new("P", "Productivity (P)", "Чиста обчислювальна потужність, FPS у 3D та растровому рендерингу"),
-            new("F", "Functionality (F)", "Обсяг VRAM, тензорні блоки, екосистема CUDA під AI/ML"),
-            new("A", "Actuality & Features (A)", "Актуальність архітектури, апаратна підтримка DLSS/FSR, енкодери AV1"),
-            new("C", "Cost / Value (C)", "Цінова доступність за даними роздробу України")
+            new("P", "Продуктивність", "Чиста обчислювальна потужність, FPS у 3D та растровому рендерингу"),
+            new("F", "Функціональність", "Обсяг VRAM, тензорні блоки, екосистема CUDA під AI/ML"),
+            new("A", "Актуальність", "Актуальність архітектури, апаратна підтримка DLSS/FSR, енкодери AV1"),
+            new("C", "Вартість", "Цінова доступність за даними роздробу України")
         };
 
         var alternatives = new List<Alternative>
@@ -121,8 +121,8 @@ public static class PresetService
 
         return new AhpProblemPreset
         {
-            Name = "Лабораторні роботи №3–4 (Відеокарти)",
-            Description = "Вибір відеокарти для студента спеціальності Комп'ютерні науки: 4 критерії, 5 альтернатив.",
+            Name = "Контрольний набір №1: відеокарти (попереднє покоління)",
+            Description = "Вибір дискретної відеокарти для студента-програміста: 4 критерії, 5 альтернатив.",
             Criteria = criteria,
             Alternatives = alternatives,
             CriteriaMatrix = critMatrix,
@@ -131,19 +131,11 @@ public static class PresetService
     }
 
     /// <summary>
-    /// Пресет із Курсової роботи (Чернетка — завантажується з вбудованого ресурсу coursework.ahp.json).
+    /// Набір №2: відеокарти 2026 (RTX 50 / RX 9000) — завантажується з вбудованого ресурсу gpu_2026.ahp.json.
     /// </summary>
-    public static AhpProblemPreset GetCourseworkPreset()
+    public static AhpProblemPreset GetGpu2026Preset()
     {
-        return LoadPresetFromResource("coursework.ahp.json");
-    }
-
-    /// <summary>
-    /// Пресет із Курсової роботи (Остаточні обґрунтовані судження — завантажується з вбудованого ресурсу coursework_preset2.ahp.json).
-    /// </summary>
-    public static AhpProblemPreset GetCourseworkFinalPreset()
-    {
-        return LoadPresetFromResource("coursework_preset2.ahp.json");
+        return LoadPresetFromResource("gpu_2026.ahp.json");
     }
 
     /// <summary>

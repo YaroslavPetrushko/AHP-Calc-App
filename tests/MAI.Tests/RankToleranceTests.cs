@@ -85,9 +85,9 @@ public class RankToleranceTests
     }
 
     [Fact]
-    public void Lab34Preset_DistinctPriorities_RanksDoNotContainEquals()
+    public void ReferencePreset_DistinctPriorities_RanksDoNotContainEquals()
     {
-        var preset = PresetService.GetLab34Preset();
+        var preset = PresetService.GetReferencePreset();
         var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices);
 
         var expectedRanks = new[] { 1, 2, 3, 4, 5 };

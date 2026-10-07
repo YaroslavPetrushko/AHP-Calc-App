@@ -5,3 +5,9 @@
 [Bb]in/
 [Oo]bj/
 /storage/
+.vs/
+*.user
+*.suo
+publish/
+TestResults/
+*.nupkg

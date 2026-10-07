@@ -27,7 +27,7 @@
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Порівняльний аналіз профілів розрахунку МАІ" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                    <TextBlock Text="Зіставлення результатів класичного методу Т. Сааті, нормалізації стовпців (ЛР №4) та геометричного середнього" 
+                    <TextBlock Text="Зіставлення результатів за методичними рекомендаціями, класичного методу Т. Сааті та геометричного середнього" 
                                FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
                 </StackPanel>
             </Grid>
@@ -69,7 +69,7 @@
                 <!-- Card 4: Підсумок -->
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="4. Підсумок стійкості та співставлення з еталонним профілем" 
+                        <TextBlock Text="4. Підсумок стійкості та співставлення з опорним профілем" 
                                    FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,8"/>
                         <Border Background="{DynamicResource BannerBg}" BorderBrush="{DynamicResource BannerBorder}" BorderThickness="1" CornerRadius="8" Padding="14,12">
                             <TextBlock x:Name="TxtSummary" Text="Підсумок порівняння розраховується..." 
@@ -96,9 +96,24 @@
                             Margin="0,0,8,0" Padding="14,0" Height="32" Click="BtnExport_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="📄 Експорт у CSV (*.csv)" Click="MenuExportCsv_Click"/>
-                                <MenuItem Header="📝 Експорт у Markdown (*.md)" Click="MenuExportMarkdown_Click"/>
-                                <MenuItem Header="🌐 Експорт у HTML для Word (*.html)" Click="MenuExportHtml_Click"/>
+                                <MenuItem Header="_Експорт у CSV (*.csv)" Click="MenuExportCsv_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="📄" FontSize="13" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="_Експорт у Markdown (*.md)" Click="MenuExportMarkdown_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="📝" FontSize="13" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="_Експорт у HTML для Word (*.html)" Click="MenuExportHtml_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="🌐" FontSize="13" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>

@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag (e.g. v1.2.0)'
+        description: 'Version tag (e.g. v1.2.1)'
         required: false
-        default: 'v1.2.0'
+        default: ''
 
 permissions:
   contents: write
@@ -39,12 +39,11 @@ jobs:
             $ver = "${{ github.event.inputs.version }}"
           } else {
             [xml]$proj = Get-Content MAI.csproj
-            $nodeVer = $proj.Project.PropertyGroup.Version
-            if ($nodeVer) {
-              $ver = "v$nodeVer"
-            } else {
-              $ver = "v1.2.0"
+            $nodeVer = ($proj.Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
+            if (-not $nodeVer) {
+              throw "Could not determine Version from MAI.csproj"
             }
+            $ver = "v$nodeVer"
           }
           Write-Host "Resolved release version: $ver"
           "VERSION=$ver" >> $env:GITHUB_OUTPUT

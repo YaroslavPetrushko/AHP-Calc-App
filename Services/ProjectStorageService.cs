@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,9 @@ namespace MAI.Services;
 /// </summary>
 public static class ProjectStorageService
 {
+    private static readonly CultureInfo UkCulture = new("uk-UA");
+
+    private static string Fmt(FormattableString fs) => fs.ToString(UkCulture);
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -242,9 +246,9 @@ public static class ProjectStorageService
     {
         var sb = new StringBuilder();
         sb.AppendLine("================================================================================");
-        sb.AppendLine("        ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ (.NET 10)");
+        sb.AppendLine("        ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ");
         sb.AppendLine("================================================================================");
-        sb.AppendLine($"Дата та час розрахунку: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
+        sb.AppendLine(Fmt($"Дата та час розрахунку: {DateTime.Now:dd.MM.yyyy HH:mm:ss}"));
         string weightDesc = result.Options.WeightMethod switch
         {
             WeightCalculationMethod.ColumnNormalization => "Нормалізація стовпців (Column Normalization)",
@@ -267,35 +271,35 @@ public static class ProjectStorageService
         sb.AppendLine($"  • Метод обчислення векторів ваг: {weightDesc}");
         sb.AppendLine($"  • Метод власного значення (λmax): {lambdaDesc}");
         sb.AppendLine($"  • Індекс випадкової узгодженості (RI): {riDesc}");
-        sb.AppendLine($"  • Поріг узгодженості: {threshDesc} (Поріг для критеріїв n={result.Criteria.Count}: {result.CriteriaMatrixResult.Threshold:P0})");
+        sb.AppendLine(Fmt($"  • Поріг узгодженості: {threshDesc} (Поріг для критеріїв n={result.Criteria.Count}: {result.CriteriaMatrixResult.Threshold:P0})"));
         sb.AppendLine();
 
         sb.AppendLine("--- 1. ПІДСУМКОВИЙ РЕЙТИНГ АЛЬТЕРНАТИВ ---");
         foreach (var alt in result.RankedAlternatives)
         {
-            sb.AppendLine($"#{alt.Rank,-2} {alt.Name,-35} | Глобальний пріоритет: {alt.GlobalPriority:F4} ({alt.GlobalPriority * 100,5:F1}%)");
+            sb.AppendLine(Fmt($"#{alt.Rank,-2} {alt.Name,-35} | Глобальний пріоритет: {alt.GlobalPriority:F4} ({alt.GlobalPriority * 100,5:F1}%)"));
         }
         sb.AppendLine();
 
         sb.AppendLine("--- 2. ВАГОВІ КОЕФІЦІЄНТИ КРИТЕРІЇВ ---");
         foreach (var c in result.Criteria)
         {
-            sb.AppendLine($"{c.Name,-35} | Вага: {c.Weight:F4} ({c.Weight * 100,5:F1}%)");
+            sb.AppendLine(Fmt($"{c.Name,-35} | Вага: {c.Weight:F4} ({c.Weight * 100,5:F1}%)"));
         }
         sb.AppendLine();
 
         sb.AppendLine("--- 3. ПЕРЕВІРКА УЗГОДЖЕНОСТІ СУДЖЕНЬ (CI, RI, CR) ---");
-        sb.AppendLine($"Матриця критеріїв:           λmax={result.CriteriaMatrixResult.LambdaMax:F4}, CI={result.CriteriaMatrixResult.CI:F4}, CR(табл)={result.CriteriaMatrixResult.CRTable:P1}, CR(емп)={result.CriteriaMatrixResult.CREmpirical:P1} [{result.CriteriaMatrixResult.ConsistencyMessage}]");
+        sb.AppendLine(Fmt($"Матриця критеріїв:           λmax={result.CriteriaMatrixResult.LambdaMax:F4}, CI={result.CriteriaMatrixResult.CI:F4}, CR(табл)={result.CriteriaMatrixResult.CRTable:P1}, CR(емп)={result.CriteriaMatrixResult.CREmpirical:P1} [{result.CriteriaMatrixResult.ConsistencyMessage}]"));
 
         foreach (var kvp in result.AlternativeMatrixResults)
         {
             var res = kvp.Value;
             var critObj = result.Criteria.FirstOrDefault(c => c.Id == kvp.Key);
             string title = critObj != null ? critObj.Name : res.Name;
-            sb.AppendLine($"Альтернативи ({title,-20}): λmax={res.LambdaMax:F4}, CI={res.CI:F4}, CR(табл)={res.CRTable:P1}, CR(емп)={res.CREmpirical:P1} [{res.ConsistencyMessage}]");
+            sb.AppendLine(Fmt($"Альтернативи ({title,-20}): λmax={res.LambdaMax:F4}, CI={res.CI:F4}, CR(табл)={res.CRTable:P1}, CR(емп)={res.CREmpirical:P1} [{res.ConsistencyMessage}]"));
         }
 
-        sb.AppendLine($"Композиція всієї ієрархії:   CIh={result.HierarchicalCI:F4}, CRh(табл)={result.HierarchicalCRTable:P1}, CRh(емп)={result.HierarchicalCREmpirical:P1} [{result.HierarchyConsistencyMessage}]");
+        sb.AppendLine(Fmt($"Композиція всієї ієрархії:   CIh={result.HierarchicalCI:F4}, CRh(табл)={result.HierarchicalCRTable:P1}, CRh(емп)={result.HierarchicalCREmpirical:P1} [{result.HierarchyConsistencyMessage}]"));
         if (result.InconsistentMatrices.Count > 0)
         {
             sb.AppendLine($"УВАГА: Матриці з порушенням порогу: {string.Join(", ", result.InconsistentMatrices)}");
@@ -316,9 +320,9 @@ public static class ProjectStorageService
             foreach (var c in result.Criteria)
             {
                 double score = alt.WeightedScores.TryGetValue(c.Id, out var ws) ? ws : 0.0;
-                sb.Append($"{score,16:F3} | ");
+                sb.Append(Fmt($"{score,16:F3} | "));
             }
-            sb.AppendLine($"{alt.GlobalPriority:F3}");
+            sb.AppendLine(Fmt($"{alt.GlobalPriority:F3}"));
         }
 
         sb.AppendLine();
@@ -328,7 +332,7 @@ public static class ProjectStorageService
             try
             {
                 var sens = AhpCalculator.CalculateSensitivity(result, c.Id);
-                sb.AppendLine($"Критерій: {c.Name} (вихідна вага: {c.Weight:P1})");
+                sb.AppendLine(Fmt($"Критерій: {c.Name} (вихідна вага: {c.Weight:P1})"));
                 sb.AppendLine($"  {sens.StabilitySummary}");
                 if (sens.LeadershipIntervals.Count > 0)
                 {
@@ -337,13 +341,13 @@ public static class ProjectStorageService
                 var leaderIntersections = sens.Intersections.Where(p => p.IsLeadershipChange).ToList();
                 if (leaderIntersections.Count > 0)
                 {
-                    sb.AppendLine($"  Критичні точки зміни лідера: " + string.Join("; ", leaderIntersections.Select(p => $"{p.Alt1Name} = {p.Alt2Name} при t*={p.WeightT:P1} (P*={p.PriorityP:F3})")));
+                    sb.AppendLine("  Критичні точки зміни лідера: " + string.Join("; ", leaderIntersections.Select(p => Fmt($"{p.Alt1Name} = {p.Alt2Name} при t*={p.WeightT:P1} (P*={p.PriorityP:F3})"))));
                 }
                 sb.AppendLine();
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore
+                sb.AppendLine($"  Чутливість для критерію «{c.Name}» недоступна: {ex.Message}");
             }
         }
 

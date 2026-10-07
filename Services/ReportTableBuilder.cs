@@ -26,7 +26,7 @@ public static class ReportTableBuilder
         Dictionary<string, CriterionSensitivityResult>? sensitivityResults = null)
     {
         var tables = new List<ReportTable>();
-        var opts = calculationOptions ?? result.Options ?? AhpCalculationOptions.ClassicSaatyProfile;
+        var opts = calculationOptions ?? result.Options ?? AhpCalculationOptions.Default;
 
         // 1. Параметри розрахунку
         string weightDesc = opts.WeightMethod switch
@@ -74,7 +74,7 @@ public static class ReportTableBuilder
                 double v = (critRes.PairwiseMatrix != null && critRes.PairwiseMatrix.GetLength(0) > i && critRes.PairwiseMatrix.GetLength(1) > j)
                     ? critRes.PairwiseMatrix[i, j]
                     : (i == j ? 1.0 : 1.0);
-                row[j + 1] = FormatNumber(v);
+                row[j + 1] = ComparisonMatrix.FormatSaatyValue(v);
             }
             critPwRows.Add(row);
         }
@@ -143,7 +143,7 @@ public static class ReportTableBuilder
                     double v = (altRes.PairwiseMatrix != null && altRes.PairwiseMatrix.GetLength(0) > i && altRes.PairwiseMatrix.GetLength(1) > j)
                         ? altRes.PairwiseMatrix[i, j]
                         : (i == j ? 1.0 : 1.0);
-                    row[j + 1] = FormatNumber(v);
+                    row[j + 1] = ComparisonMatrix.FormatSaatyValue(v);
                 }
                 altPwRows.Add(row);
             }
@@ -238,6 +238,7 @@ public static class ReportTableBuilder
         foreach (var c in result.Criteria)
         {
             CriterionSensitivityResult? sens = null;
+            string? sensError = null;
             if (sensitivityResults != null && sensitivityResults.TryGetValue(c.Id, out var cachedSens))
             {
                 sens = cachedSens;
@@ -248,9 +249,9 @@ public static class ReportTableBuilder
                 {
                     sens = AhpCalculator.CalculateSensitivity(result, c.Id);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ігноруємо, якщо розрахунок чутливості недоступний
+                    sensError = ex.Message;
                 }
             }
 
@@ -283,6 +284,20 @@ public static class ReportTableBuilder
                     sensHeaders,
                     sensRows,
                     sens.StabilitySummary
+                ));
+            }
+            else if (sensError != null)
+            {
+                var sensHeaders = new[] { "Пара альтернатив", "Вага критерію (t*)", "Пріоритет (P*)", "Тип події", "Опис" };
+                var sensRows = new List<string[]>
+                {
+                    new[] { "—", "—", "—", "—", $"Розрахунок чутливості недоступний: {sensError}" }
+                };
+                tables.Add(new ReportTable(
+                    $"Чутливість: точки перетину і зміни лідера за критерієм «{c.Name}»",
+                    sensHeaders,
+                    sensRows,
+                    $"Чутливість для критерію «{c.Name}» недоступна: {sensError}"
                 ));
             }
         }

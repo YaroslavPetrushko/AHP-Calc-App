@@ -6,7 +6,7 @@ namespace MAI.Models;
 public enum WeightCalculationMethod
 {
     /// <summary>
-    /// Нормалізація стовпців: a'_ij = a_ij / sum_k(a_kj), w_i = 1/n sum_j(a'_ij) (метод з ЛР №4).
+    /// Нормалізація стовпців: a'_ij = a_ij / sum_k(a_kj), w_i = 1/n sum_j(a'_ij) (методичний підхід).
     /// </summary>
     ColumnNormalization,
 
@@ -28,7 +28,7 @@ public enum WeightCalculationMethod
 public enum LambdaCalculationMethod
 {
     /// <summary>
-    /// λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4).
+    /// λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями).
     /// </summary>
     ColumnSumProduct,
 
@@ -54,7 +54,7 @@ public enum ConsistencyThresholdMode
     SaatyAdaptive,
 
     /// <summary>
-    /// Фіксований поріг 10% для всіх розмірностей (CR <= 0.10) (спрощений підхід з ЛР №4).
+    /// Фіксований поріг 10% для всіх розмірностей (CR <= 0.10) (методичний підхід).
     /// </summary>
     Uniform10Percent
 }
@@ -91,10 +91,15 @@ public class AhpCalculationOptions
     }
 
     /// <summary>
-    /// Еталонний профіль Лабораторної роботи №4:
+    /// Профіль за замовчуванням: за методичними рекомендаціями.
+    /// </summary>
+    public static AhpCalculationOptions Default => MethodicalProfile;
+
+    /// <summary>
+    /// Профіль розрахунку за методичними рекомендаціями:
     /// нормалізація стовпців, колонковий добуток lambda_max, емпіричний RI, фіксований поріг 10%.
     /// </summary>
-    public static AhpCalculationOptions Lab4Profile => new(
+    public static AhpCalculationOptions MethodicalProfile => new(
         WeightCalculationMethod.ColumnNormalization,
         LambdaCalculationMethod.ColumnSumProduct,
         RiCalculationMode.Empirical,
@@ -121,9 +126,9 @@ public class AhpCalculationOptions
         ConsistencyThresholdMode.SaatyAdaptive);
 
     /// <summary>
-    /// Перевірка чи відповідає поточна конфігурація профілю ЛР №4.
+    /// Перевірка чи відповідає поточна конфігурація методичному профілю.
     /// </summary>
-    public bool IsLab4Profile =>
+    public bool IsMethodicalProfile =>
         WeightMethod == WeightCalculationMethod.ColumnNormalization &&
         LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
         RiMode == RiCalculationMode.Empirical &&
@@ -164,10 +169,24 @@ public class AhpCalculationOptions
     {
         get
         {
-            if (IsLab4Profile) return "Еталон ЛР №4";
+            if (IsMethodicalProfile) return "Метод. рекомендації";
             if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
             if (IsGeometricMeanProfile) return "Класичний, геометричне середнє";
             return "Користувацький профіль";
+        }
+    }
+
+    /// <summary>
+    /// Скорочена назва розрахункового профілю для компактних таблиць.
+    /// </summary>
+    public string ProfileShortName
+    {
+        get
+        {
+            if (IsMethodicalProfile) return "Методичний";
+            if (IsClassicSaatyProfile) return "Класичний";
+            if (IsGeometricMeanProfile) return "Геом. середнє";
+            return "Користувацький";
         }
     }
 
@@ -197,7 +216,7 @@ public class AhpCalculationOptions
 
     public static string GetLambdaMethodDescription(LambdaCalculationMethod method) => method switch
     {
-        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (метод ЛР №4)",
+        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (за метод. реком.)",
         LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
         LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
         _ => method.ToString()

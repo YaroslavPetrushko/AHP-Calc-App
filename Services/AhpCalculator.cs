@@ -7,7 +7,7 @@ namespace MAI.Services;
 
 /// <summary>
 /// Математичне ядро методу аналізу ієрархій (МАІ) Томаса Сааті.
-/// Підтримує різні профілі та методи розрахунку ваг і показників узгодженості (ЛР №4, Класичний Сааті).
+/// Підтримує різні профілі та методи розрахунку ваг і показників узгодженості (методичний підхід, Класичний Сааті).
 /// </summary>
 public static class AhpCalculator
 {
@@ -133,7 +133,7 @@ public static class AhpCalculator
         string matrixName = "",
         AhpCalculationOptions? options = null)
     {
-        var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
+        var opts = options ?? AhpCalculationOptions.Default;
         int n = matrix.Size;
 
         if (n > 10 && opts.RiMode == RiCalculationMode.SaatyTable)
@@ -220,7 +220,7 @@ public static class AhpCalculator
         switch (opts.LambdaMethod)
         {
             case LambdaCalculationMethod.ColumnSumProduct:
-                // Метод Лабораторної роботи №4: lambda_max = sum(сума_стовпця_j * w_j)
+                // Методичний підхід: lambda_max = sum(сума_стовпця_j * w_j)
                 double colProductSum = 0.0;
                 for (int j = 0; j < n; j++)
                 {
@@ -294,7 +294,7 @@ public static class AhpCalculator
         RiCalculationMode riMode)
     {
         var opts = riMode == RiCalculationMode.Empirical
-            ? AhpCalculationOptions.Lab4Profile
+            ? AhpCalculationOptions.MethodicalProfile
             : AhpCalculationOptions.ClassicSaatyProfile;
         return CalculateMatrix(matrix, matrixName, opts);
     }
@@ -313,7 +313,7 @@ public static class AhpCalculator
         Dictionary<string, ComparisonMatrix> alternativeMatrices,
         AhpCalculationOptions? options = null)
     {
-        var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
+        var opts = options ?? AhpCalculationOptions.Default;
 
         var ahpResult = new AhpResult
         {
@@ -452,7 +452,7 @@ public static class AhpCalculator
         RiCalculationMode riMode)
     {
         var opts = riMode == RiCalculationMode.Empirical
-            ? AhpCalculationOptions.Lab4Profile
+            ? AhpCalculationOptions.MethodicalProfile
             : AhpCalculationOptions.ClassicSaatyProfile;
         return SolveHierarchy(criteria, alternatives, criteriaMatrix, alternativeMatrices, opts);
     }

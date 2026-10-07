@@ -24,7 +24,7 @@ public partial class MainWindow : Window
 
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
-    private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.Lab4Profile.Clone();
+    private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.Default.Clone();
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
@@ -40,8 +40,8 @@ public partial class MainWindow : Window
 
         SyncCalculationOptionsUI();
 
-        // Завантажуємо контрольний набір Лабораторних робіт №3–4 за замовчуванням
-        LoadPreset(PresetService.GetLab34Preset());
+        // Завантажуємо Набір №2 (відеокарти 2026) за замовчуванням
+        LoadPreset(PresetService.GetGpu2026Preset());
     }
 
     private void LoadPreset(AhpProblemPreset preset)
@@ -68,12 +68,6 @@ public partial class MainWindow : Window
         BuildAlternativesCriteriaSelector();
         BuildAlternativeMatrixGrid();
         UpdateAllDiagnostics();
-
-        if (preset.Name.Contains("ЧЕРНЕТКА", StringComparison.OrdinalIgnoreCase))
-        {
-            TxtBottomStatus.Text = $"⚠️ УВАГА: Завантажено «{preset.Name}». Судження є попередніми та не обґрунтованими!";
-            TxtBottomStatus.Foreground = (Brush)FindResource("WarningOrange");
-        }
     }
 
     private void UpdateCountsUI()
@@ -1066,37 +1060,23 @@ public partial class MainWindow : Window
 
     #region Preset Buttons
 
-    private void BtnPresetLab34_Click(object sender, RoutedEventArgs e)
+    private void BtnPresetReference_Click(object sender, RoutedEventArgs e)
     {
-        LoadPreset(PresetService.GetLab34Preset());
-        MessageBox.Show("Завантажено контрольний тестовий набір даних Лабораторних робіт №3–4:\n• 4 критерії (Productivity, Functionality, Actuality, Cost)\n• 5 альтернатив (RTX 3050, 3070, 4060 Ti, 5060 Ti, RX 7700 XT)", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+        LoadPreset(PresetService.GetReferencePreset());
+        TxtBottomStatus.Text = "Завантажено: Контрольний набір №1: відеокарти (попереднє покоління).";
     }
 
-    private void BtnPresetCoursework_Click(object sender, RoutedEventArgs e)
+    private void BtnPresetGpu2026_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            var preset = PresetService.GetCourseworkPreset();
+            var preset = PresetService.GetGpu2026Preset();
             LoadPreset(preset);
-            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\n⚠️ Зверніть увагу: матриці містять попередні судження (чернетка).", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
+            TxtBottomStatus.Text = "Завантажено: Набір №2: відеокарти 2026 (RTX 50 / RX 9000).";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка завантаження пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    private void BtnPresetCourseworkFinal_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var preset = PresetService.GetCourseworkFinalPreset();
-            LoadPreset(preset);
-            MessageBox.Show($"Завантажено тестовий набір даних:\n• {preset.Name}\n• {preset.Criteria.Count} критерії\n• {preset.Alternatives.Count} альтернатив (Blackwell / RDNA 4)\n\nУсі попарні судження обґрунтовано за розрахунковими даними.", "Пресет завантажено", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Помилка завантаження остаточного пресету курсової роботи:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Помилка завантаження набору №2:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1303,19 +1283,12 @@ public partial class MainWindow : Window
 
     private void SyncCalculationOptionsUI()
     {
-        bool isLab4 = _calculationOptions.WeightMethod == WeightCalculationMethod.ColumnNormalization &&
-                      _calculationOptions.LambdaMethod == LambdaCalculationMethod.ColumnSumProduct &&
-                      _calculationOptions.RiMode == RiCalculationMode.Empirical &&
-                      _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
+        bool isMethodical = _calculationOptions.IsMethodicalProfile;
+        bool isClassic = _calculationOptions.IsClassicSaatyProfile;
 
-        bool isClassic = _calculationOptions.WeightMethod == WeightCalculationMethod.PrincipalEigenvector &&
-                         _calculationOptions.LambdaMethod == LambdaCalculationMethod.ExactEigenvalue &&
-                         _calculationOptions.RiMode == RiCalculationMode.SaatyTable &&
-                         _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
-
-        MenuProfileLab4.IsChecked = isLab4;
+        MenuProfileMethodical.IsChecked = isMethodical;
         MenuProfileClassic.IsChecked = isClassic;
-        MenuProfileCustom.IsChecked = !isLab4 && !isClassic;
+        MenuProfileCustom.IsChecked = !isMethodical && !isClassic;
 
         MenuWeightColumnNorm.IsChecked = _calculationOptions.WeightMethod == WeightCalculationMethod.ColumnNormalization;
         MenuWeightGeometric.IsChecked = _calculationOptions.WeightMethod == WeightCalculationMethod.GeometricMean;
@@ -1331,8 +1304,7 @@ public partial class MainWindow : Window
         MenuThresholdUniform.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
         MenuThresholdAdaptive.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
-        string profileTitle = isLab4 ? "Профіль: ЛР №4" : isClassic ? " Профіль: Класичний" : "Профіль: Власний";
-        TxtActiveProfile.Text = profileTitle;
+        TxtActiveProfile.Text = $"Профіль: {_calculationOptions.ProfileName}";
 
         string weightDesc = _calculationOptions.WeightMethod switch
         {
@@ -1347,13 +1319,12 @@ public partial class MainWindow : Window
         string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "Емпіричний RI" : "Табличний RI";
         string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent ? "CR ≤ 10%" : "Адаптивний CR";
 
-        string profileName = isLab4 ? "Еталон ЛР №4" : isClassic ? "Класичний Сааті" : "Власний профіль";
-        TxtActiveProfileDesc.Text = $"Профіль: {profileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
+        TxtActiveProfileDesc.Text = $"Профіль: {_calculationOptions.ProfileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
     }
 
-    private void MenuProfileLab4_Click(object sender, RoutedEventArgs e)
+    private void MenuProfileMethodical_Click(object sender, RoutedEventArgs e)
     {
-        _calculationOptions = AhpCalculationOptions.Lab4Profile.Clone();
+        _calculationOptions = AhpCalculationOptions.MethodicalProfile.Clone();
         SyncCalculationOptionsUI();
         UpdateAllDiagnostics();
     }
