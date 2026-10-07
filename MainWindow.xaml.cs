@@ -24,7 +24,7 @@ public partial class MainWindow : Window
 
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
-    private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.MethodicalProfile.Clone();
+    private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.Default.Clone();
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];

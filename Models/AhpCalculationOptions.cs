@@ -91,6 +91,11 @@ public class AhpCalculationOptions
     }
 
     /// <summary>
+    /// Профіль за замовчуванням: за методичними рекомендаціями.
+    /// </summary>
+    public static AhpCalculationOptions Default => MethodicalProfile;
+
+    /// <summary>
     /// Профіль розрахунку за методичними рекомендаціями:
     /// нормалізація стовпців, колонковий добуток lambda_max, емпіричний RI, фіксований поріг 10%.
     /// </summary>

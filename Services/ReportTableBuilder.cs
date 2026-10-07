@@ -26,7 +26,7 @@ public static class ReportTableBuilder
         Dictionary<string, CriterionSensitivityResult>? sensitivityResults = null)
     {
         var tables = new List<ReportTable>();
-        var opts = calculationOptions ?? result.Options ?? AhpCalculationOptions.ClassicSaatyProfile;
+        var opts = calculationOptions ?? result.Options ?? AhpCalculationOptions.Default;
 
         // 1. Параметри розрахунку
         string weightDesc = opts.WeightMethod switch

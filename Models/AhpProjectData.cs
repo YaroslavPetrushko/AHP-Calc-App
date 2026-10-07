@@ -13,7 +13,7 @@ public class AhpProjectData
     public string Version { get; set; } = "1.2.0";
     public DateTime SavedAt { get; set; } = DateTime.Now;
 
-    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.ClassicSaatyProfile;
+    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.Default;
 
     /// <summary>
     /// Для зворотної сумісності з файлами версії 1.1.

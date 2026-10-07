@@ -133,7 +133,7 @@ public static class AhpCalculator
         string matrixName = "",
         AhpCalculationOptions? options = null)
     {
-        var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
+        var opts = options ?? AhpCalculationOptions.Default;
         int n = matrix.Size;
 
         if (n > 10 && opts.RiMode == RiCalculationMode.SaatyTable)
@@ -313,7 +313,7 @@ public static class AhpCalculator
         Dictionary<string, ComparisonMatrix> alternativeMatrices,
         AhpCalculationOptions? options = null)
     {
-        var opts = options ?? AhpCalculationOptions.ClassicSaatyProfile;
+        var opts = options ?? AhpCalculationOptions.Default;
 
         var ahpResult = new AhpResult
         {
