@@ -232,6 +232,7 @@ SysAnalysis/MAI/
 │       ├── InconsistencyHintTests.cs
 │       ├── JudgedPairsTests.cs
 │       ├── LambdaCalculationTests.cs
+│       ├── PresetGpu2026Tests.cs
 │       ├── PresetTests.cs
 │       ├── ProfileComparisonTests.cs
 │       ├── ProjectStorageTests.cs
@@ -244,6 +245,7 @@ SysAnalysis/MAI/
 ├── ResultsWindow.xaml / .cs     # Вікно результатів: підсумок, синтез, чутливість, експорт
 ├── ProfileComparisonWindow.xaml # Вікно порівняльного аналізу розрахункових профілів
 ├── AboutWindow.xaml / .cs       # Діалогове вікно «Про програму»
+├── LICENSE                      # Ліцензія MIT
 ├── MAI.csproj                   # Специфікація основного проєкту .NET 10 WPF
 └── README.md                    # Документація проєкту
 ```
@@ -276,7 +278,7 @@ dotnet test -c Release
 
 Результат виконання тестів:
 ```text
-Passed!  - Failed: 0, Passed: 66, Skipped: 0, Total: 66
+Passed!  - Failed: 0, Passed: 81, Skipped: 0, Total: 81
 ```
 
 ---
@@ -339,5 +341,5 @@ dotnet publish MAI.csproj `
 
 ## 📄 Ліцензія
 
-Ліцензія: MIT
+Ліцензія: [MIT](LICENSE)
 
