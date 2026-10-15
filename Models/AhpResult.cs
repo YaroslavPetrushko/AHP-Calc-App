@@ -36,9 +36,13 @@ public class MatrixResult
     public bool IsConsistent => ActiveCR <= AcceptableCRThreshold;
 
     public string ConsistencyMessage =>
-        IsConsistent
-            ? $"Узгоджено (CR = {ActiveCR:P1} <= {AcceptableCRThresholdText})"
-            : $"Порушено узгодженість (CR = {ActiveCR:P1} > {AcceptableCRThresholdText})";
+        Services.LocalizationService.CurrentLanguage == AppLanguage.En
+            ? (IsConsistent
+                ? $"Consistent (CR = {ActiveCR.ToString("P1", Services.LocalizationService.ActiveCulture)} <= {AcceptableCRThresholdText})"
+                : $"Inconsistent (CR = {ActiveCR.ToString("P1", Services.LocalizationService.ActiveCulture)} > {AcceptableCRThresholdText})")
+            : (IsConsistent
+                ? $"Узгоджено (CR = {ActiveCR.ToString("P1", Services.LocalizationService.ActiveCulture)} <= {AcceptableCRThresholdText})"
+                : $"Порушено узгодженість (CR = {ActiveCR.ToString("P1", Services.LocalizationService.ActiveCulture)} > {AcceptableCRThresholdText})");
 }
 
 /// <summary>
@@ -103,7 +107,11 @@ public class AhpResult
     }
 
     public string HierarchyConsistencyMessage =>
-        IsHierarchyConsistent
-            ? $"Ієрархічна узгодженість прийнятна (CRh = {ActiveHierarchicalCR:P1} <= {HierarchicalThresholdText})"
-            : $"Увага: Ієрархічна неузгодженість перевищує норму (CRh = {ActiveHierarchicalCR:P1} > {HierarchicalThresholdText})";
+        Services.LocalizationService.CurrentLanguage == AppLanguage.En
+            ? (IsHierarchyConsistent
+                ? $"Hierarchical consistency acceptable (CRh = {ActiveHierarchicalCR.ToString("P1", Services.LocalizationService.ActiveCulture)} <= {HierarchicalThresholdText})"
+                : $"Warning: Hierarchical inconsistency exceeds threshold (CRh = {ActiveHierarchicalCR.ToString("P1", Services.LocalizationService.ActiveCulture)} > {HierarchicalThresholdText})")
+            : (IsHierarchyConsistent
+                ? $"Ієрархічна узгодженість прийнятна (CRh = {ActiveHierarchicalCR.ToString("P1", Services.LocalizationService.ActiveCulture)} <= {HierarchicalThresholdText})"
+                : $"Увага: Ієрархічна неузгодженість перевищує норму (CRh = {ActiveHierarchicalCR.ToString("P1", Services.LocalizationService.ActiveCulture)} > {HierarchicalThresholdText})");
 }

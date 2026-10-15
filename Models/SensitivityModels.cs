@@ -55,7 +55,7 @@ public class LeadershipInterval
     public double FromT { get; set; }
     public double ToT { get; set; }
 
-    public string IntervalText => $"[{FromT:F3}; {ToT:F3}] ({FromT:P1} – {ToT:P1})";
+    public string IntervalText => $"[{FromT.ToString("F3", Services.LocalizationService.ActiveCulture)}; {ToT.ToString("F3", Services.LocalizationService.ActiveCulture)}] ({FromT.ToString("P1", Services.LocalizationService.ActiveCulture)} – {ToT.ToString("P1", Services.LocalizationService.ActiveCulture)})";
     public string DisplayText => $"{IntervalText} ➔ {AlternativeId} ({AlternativeName})";
 }
 
@@ -103,13 +103,20 @@ public class SensitivityDynamicRankingItem
     public double OriginalPriority { get; set; }
     public double DeltaPriority => CurrentPriority - OriginalPriority;
 
-    public string PriorityPercentText => $"{CurrentPriority:P1} ({CurrentPriority:F4})";
-    public string DeltaText => DeltaPriority switch
+    public string PriorityPercentText => $"{CurrentPriority.ToString("P1", Services.LocalizationService.ActiveCulture)} ({CurrentPriority.ToString("F4", Services.LocalizationService.ActiveCulture)})";
+    public string DeltaText
     {
-        > 0.0005 => $"▲ +{DeltaPriority * 100:F1} п.п.",
-        < -0.0005 => $"▼ {DeltaPriority * 100:F1} п.п.",
-        _ => "— 0.0 п.п."
-    };
+        get
+        {
+            string unit = Services.LocalizationService.CurrentLanguage == AppLanguage.En ? "pp" : "п.п.";
+            return DeltaPriority switch
+            {
+                > 0.0005 => $"▲ +{(DeltaPriority * 100).ToString("F1", Services.LocalizationService.ActiveCulture)} {unit}",
+                < -0.0005 => $"▼ {(DeltaPriority * 100).ToString("F1", Services.LocalizationService.ActiveCulture)} {unit}",
+                _ => $"— 0.0 {unit}"
+            };
+        }
+    }
 
     public bool IsWinner => Rank == 1;
 }
