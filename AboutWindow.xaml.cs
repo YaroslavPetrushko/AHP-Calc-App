@@ -13,7 +13,7 @@ public partial class AboutWindow : Window
         InitializeComponent();
 
         var ver = Assembly.GetExecutingAssembly().GetName().Version;
-        string verStr = ver != null ? $"{ver.Major}.{ver.Minor}.{(ver.Build >= 0 ? ver.Build : 0)}" : "1.2.1";
+        string verStr = ver != null ? $"{ver.Major}.{ver.Minor}.{(ver.Build >= 0 ? ver.Build : 0)}" : "1.2.2";
         TxtAppVersion.Text = $"Версія {verStr}";
     }
 
