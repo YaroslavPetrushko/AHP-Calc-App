@@ -19,7 +19,6 @@ namespace MAI;
 /// </summary>
 public partial class ProfileComparisonWindow : Window
 {
-    private static readonly CultureInfo UkCulture = new("uk-UA");
     private readonly ProfileComparisonResult _comparisonResult;
 
     public ProfileComparisonWindow(ProfileComparisonResult result)
@@ -64,7 +63,7 @@ public partial class ProfileComparisonWindow : Window
         GridCriteriaWeights.Columns.Clear();
         GridCriteriaWeights.Columns.Add(new DataGridTextColumn
         {
-            Header = "Критерій",
+            Header = LocalizationService.Get("Str_Comp_ColCriterion"),
             Binding = new Binding("[col_name]"),
             FontWeight = FontWeights.SemiBold,
             Width = new DataGridLength(180)
@@ -92,7 +91,7 @@ public partial class ProfileComparisonWindow : Window
                 double w = (prof.Result.CriteriaMatrixResult?.Weights != null && prof.Result.CriteriaMatrixResult.Weights.Length > cIdx)
                     ? prof.Result.CriteriaMatrixResult.Weights[cIdx]
                     : 0.0;
-                row[$"col_prof_{pIdx}"] = w.ToString("0.0000", UkCulture);
+                row[$"col_prof_{pIdx}"] = w.ToString("0.0000", LocalizationService.ActiveCulture);
             }
             dt.Rows.Add(row);
         }
@@ -113,24 +112,27 @@ public partial class ProfileComparisonWindow : Window
         GridAlternativePriorities.Columns.Clear();
         GridAlternativePriorities.Columns.Add(new DataGridTextColumn
         {
-            Header = "Альтернатива",
+            Header = LocalizationService.Get("Str_Comp_ColAlternative"),
             Binding = new Binding("[col_alt_name]"),
             FontWeight = FontWeights.SemiBold,
             Width = new DataGridLength(200)
         });
+
+        string prioritySuffix = LocalizationService.CurrentLanguage == AppLanguage.En ? "Priority" : "Пріоритет";
+        string rankSuffix = LocalizationService.CurrentLanguage == AppLanguage.En ? "Rank" : "Ранг";
 
         for (int i = 0; i < _comparisonResult.Profiles.Count; i++)
         {
             var prof = _comparisonResult.Profiles[i];
             GridAlternativePriorities.Columns.Add(new DataGridTextColumn
             {
-                Header = $"{prof.ProfileName} (Пріоритет)",
+                Header = $"{prof.ProfileName} ({prioritySuffix})",
                 Binding = new Binding($"[col_p_{i}]"),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star)
             });
             GridAlternativePriorities.Columns.Add(new DataGridTextColumn
             {
-                Header = $"{prof.ProfileName} (Ранг)",
+                Header = $"{prof.ProfileName} ({rankSuffix})",
                 Binding = new Binding($"[col_r_{i}]"),
                 Width = new DataGridLength(80)
             });
@@ -147,7 +149,7 @@ public partial class ProfileComparisonWindow : Window
                 var matched = prof.Result.RankedAlternatives.FirstOrDefault(a => a.Id == alt.Id);
                 double priority = matched?.GlobalPriority ?? 0.0;
                 string rank = matched?.RankText ?? "-";
-                row[$"col_p_{pIdx}"] = priority.ToString("0.0000", UkCulture);
+                row[$"col_p_{pIdx}"] = priority.ToString("0.0000", LocalizationService.ActiveCulture);
                 row[$"col_r_{pIdx}"] = rank;
             }
             dt.Rows.Add(row);
@@ -165,10 +167,12 @@ public partial class ProfileComparisonWindow : Window
             dt.Columns.Add($"col_metric_{i}", typeof(string));
         }
 
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
+
         GridConsistencyIndices.Columns.Clear();
         GridConsistencyIndices.Columns.Add(new DataGridTextColumn
         {
-            Header = "Показник узгодженості",
+            Header = isEn ? "Consistency Metric" : "Показник узгодженості",
             Binding = new Binding("[col_metric_name]"),
             FontWeight = FontWeights.SemiBold,
             Width = new DataGridLength(240)
@@ -187,20 +191,20 @@ public partial class ProfileComparisonWindow : Window
 
         // 1. λmax критеріїв
         var rowLam = dt.NewRow();
-        rowLam["col_metric_name"] = "λmax (матриця критеріїв)";
+        rowLam["col_metric_name"] = isEn ? "λmax (criteria matrix)" : "λmax (матриця критеріїв)";
         for (int pIdx = 0; pIdx < _comparisonResult.Profiles.Count; pIdx++)
         {
-            rowLam[$"col_metric_{pIdx}"] = (_comparisonResult.Profiles[pIdx].Result.CriteriaMatrixResult?.LambdaMax ?? 0.0).ToString("0.0000", UkCulture);
+            rowLam[$"col_metric_{pIdx}"] = (_comparisonResult.Profiles[pIdx].Result.CriteriaMatrixResult?.LambdaMax ?? 0.0).ToString("0.0000", LocalizationService.ActiveCulture);
         }
         dt.Rows.Add(rowLam);
 
         // 2. CR критеріїв
         var rowCrCrit = dt.NewRow();
-        rowCrCrit["col_metric_name"] = "CR (матриця критеріїв)";
+        rowCrCrit["col_metric_name"] = isEn ? "CR (criteria matrix)" : "CR (матриця критеріїв)";
         for (int pIdx = 0; pIdx < _comparisonResult.Profiles.Count; pIdx++)
         {
             double cr = _comparisonResult.Profiles[pIdx].Result.CriteriaMatrixResult?.ActiveCR ?? 0.0;
-            rowCrCrit[$"col_metric_{pIdx}"] = (cr * 100.0).ToString("0.00", UkCulture) + " %";
+            rowCrCrit[$"col_metric_{pIdx}"] = (cr * 100.0).ToString("0.00", LocalizationService.ActiveCulture) + " %";
         }
         dt.Rows.Add(rowCrCrit);
 
@@ -208,25 +212,25 @@ public partial class ProfileComparisonWindow : Window
         foreach (var c in _comparisonResult.Criteria)
         {
             var rowCrAlt = dt.NewRow();
-            rowCrAlt["col_metric_name"] = $"CR (альтернативи за «{c.Name}»)";
+            rowCrAlt["col_metric_name"] = isEn ? $"CR (alternatives for \"{c.Name}\")" : $"CR (альтернативи за «{c.Name}»)";
             for (int pIdx = 0; pIdx < _comparisonResult.Profiles.Count; pIdx++)
             {
                 var prof = _comparisonResult.Profiles[pIdx];
                 double cr = (prof.Result.AlternativeMatrixResults != null && prof.Result.AlternativeMatrixResults.TryGetValue(c.Id, out var mr))
                     ? mr.ActiveCR
                     : 0.0;
-                rowCrAlt[$"col_metric_{pIdx}"] = (cr * 100.0).ToString("0.00", UkCulture) + " %";
+                rowCrAlt[$"col_metric_{pIdx}"] = (cr * 100.0).ToString("0.00", LocalizationService.ActiveCulture) + " %";
             }
             dt.Rows.Add(rowCrAlt);
         }
 
         // 4. CRh
         var rowCrh = dt.NewRow();
-        rowCrh["col_metric_name"] = "CRh (узгодженість ієрархії)";
+        rowCrh["col_metric_name"] = isEn ? "CRh (hierarchy consistency)" : "CRh (узгодженість ієрархії)";
         for (int pIdx = 0; pIdx < _comparisonResult.Profiles.Count; pIdx++)
         {
             double crh = _comparisonResult.Profiles[pIdx].Result.ActiveHierarchicalCR;
-            rowCrh[$"col_metric_{pIdx}"] = (crh * 100.0).ToString("0.00", UkCulture) + " %";
+            rowCrh[$"col_metric_{pIdx}"] = (crh * 100.0).ToString("0.00", LocalizationService.ActiveCulture) + " %";
         }
         dt.Rows.Add(rowCrh);
 
@@ -245,10 +249,11 @@ public partial class ProfileComparisonWindow : Window
 
     private void MenuExportCsv_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти порівняння профілів у CSV...",
-            Filter = "Файли CSV (*.csv)|*.csv",
+            Title = isEn ? "Save profile comparison to CSV..." : "Зберегти порівняння профілів у CSV...",
+            Filter = isEn ? "CSV Files (*.csv)|*.csv" : "Файли CSV (*.csv)|*.csv",
             FileName = "profile_comparison.csv"
         };
         if (sfd.ShowDialog(this) == true)
@@ -256,21 +261,23 @@ public partial class ProfileComparisonWindow : Window
             try
             {
                 ReportExporter.SaveCsv(sfd.FileName, _comparisonResult.ToReportTables());
-                TxtStatus.Text = $"Збережено: {Path.GetFileName(sfd.FileName)}";
+                TxtStatus.Text = (isEn ? "Saved: " : "Збережено: ") + Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту в CSV: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "Error exporting to CSV: " : "Помилка експорту в CSV: ") + ex.Message,
+                    isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 
     private void MenuExportMarkdown_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти порівняння профілів у Markdown...",
-            Filter = "Файли Markdown (*.md)|*.md",
+            Title = isEn ? "Save profile comparison to Markdown..." : "Зберегти порівняння профілів у Markdown...",
+            Filter = isEn ? "Markdown Files (*.md)|*.md" : "Файли Markdown (*.md)|*.md",
             FileName = "profile_comparison.md"
         };
         if (sfd.ShowDialog(this) == true)
@@ -278,21 +285,23 @@ public partial class ProfileComparisonWindow : Window
             try
             {
                 ReportExporter.SaveMarkdown(sfd.FileName, _comparisonResult.ToReportTables());
-                TxtStatus.Text = $"Збережено: {Path.GetFileName(sfd.FileName)}";
+                TxtStatus.Text = (isEn ? "Saved: " : "Збережено: ") + Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту в Markdown: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "Error exporting to Markdown: " : "Помилка експорту в Markdown: ") + ex.Message,
+                    isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 
     private void MenuExportHtml_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти порівняння профілів у HTML...",
-            Filter = "Веб-сторінка HTML (*.html)|*.html",
+            Title = isEn ? "Save profile comparison to HTML..." : "Зберегти порівняння профілів у HTML...",
+            Filter = isEn ? "HTML Webpage (*.html)|*.html" : "Веб-сторінка HTML (*.html)|*.html",
             FileName = "profile_comparison.html"
         };
         if (sfd.ShowDialog(this) == true)
@@ -300,11 +309,12 @@ public partial class ProfileComparisonWindow : Window
             try
             {
                 ReportExporter.SaveHtml(sfd.FileName, _comparisonResult.ToReportTables());
-                TxtStatus.Text = $"Збережено: {Path.GetFileName(sfd.FileName)}";
+                TxtStatus.Text = (isEn ? "Saved: " : "Збережено: ") + Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту в HTML: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "Error exporting to HTML: " : "Помилка експорту в HTML: ") + ex.Message,
+                    isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
