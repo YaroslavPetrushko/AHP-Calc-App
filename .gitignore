@@ -11,3 +11,5 @@
 publish/
 TestResults/
 *.nupkg
+docs/
+project_dump.txt
