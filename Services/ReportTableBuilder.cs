@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using MAI.Models;
 
@@ -11,11 +10,9 @@ namespace MAI.Services;
 /// </summary>
 public static class ReportTableBuilder
 {
-    private static readonly CultureInfo UkCulture = new("uk-UA");
+    public static string FormatNumber(double value) => value.ToString("0.0000", LocalizationService.ActiveCulture);
 
-    public static string FormatNumber(double value) => value.ToString("0.0000", UkCulture);
-
-    public static string FormatPercent(double value) => (value * 100.0).ToString("0.00", UkCulture) + " %";
+    public static string FormatPercent(double value) => (value * 100.0).ToString("0.00", LocalizationService.ActiveCulture) + " %";
 
     /// <summary>
     /// Побудова повного переліку таблиць для звіту за результатами розрахунку.
@@ -31,39 +28,39 @@ public static class ReportTableBuilder
         // 1. Параметри розрахунку
         string weightDesc = opts.WeightMethod switch
         {
-            WeightCalculationMethod.ColumnNormalization => "Нормалізація стовпців (Column Normalization)",
-            WeightCalculationMethod.GeometricMean => "Геометричне середнє (Geometric Mean / LLSM)",
-            WeightCalculationMethod.PrincipalEigenvector => "Степеневий метод (Power Iteration)",
+            WeightCalculationMethod.ColumnNormalization => LocalizationService.Get("Str_Menu_Weight_ColNorm"),
+            WeightCalculationMethod.GeometricMean => LocalizationService.Get("Str_Menu_Weight_Geometric"),
+            WeightCalculationMethod.PrincipalEigenvector => LocalizationService.Get("Str_Menu_Weight_PowerIteration"),
             _ => opts.WeightMethod.ToString()
         };
         string lambdaDesc = AhpCalculationOptions.GetLambdaMethodDescription(opts.LambdaMethod);
         string riDesc = opts.RiMode == RiCalculationMode.Empirical
-            ? "Емпірична формула (1.98 · (n-2) / n)"
-            : "Табличні значення Сааті";
+            ? LocalizationService.Get("Str_Menu_Ri_Empirical")
+            : LocalizationService.Get("Str_Menu_Ri_Table");
         string threshDesc = opts.ThresholdMode switch
         {
-            ConsistencyThresholdMode.Uniform10Percent => "Фіксований 10% для всіх n",
-            ConsistencyThresholdMode.SaatyAdaptive => "Адаптивний Сааті (5% при n=3, 8% при n=4, 10% при n≥5)",
+            ConsistencyThresholdMode.Uniform10Percent => LocalizationService.Get("Str_Menu_Threshold_Uniform"),
+            ConsistencyThresholdMode.SaatyAdaptive => LocalizationService.Get("Str_Menu_Threshold_Adaptive"),
             _ => opts.ThresholdMode.ToString()
         };
 
         tables.Add(new ReportTable(
-            "Параметри розрахунку",
-            new[] { "Параметр", "Значення" },
+            LocalizationService.Get("Str_Report_TableParams"),
+            new[] { LocalizationService.Get("Str_Report_Param"), LocalizationService.Get("Str_Report_Value") },
             new List<string[]>
             {
-                new[] { "Профіль розрахунку", opts.ProfileName },
-                new[] { "Метод розрахунку ваг", weightDesc },
-                new[] { "Метод власного значення (λmax)", lambdaDesc },
-                new[] { "Режим індексу узгодженості (RI)", riDesc },
-                new[] { "Режим порогу узгодженості", threshDesc }
+                new[] { LocalizationService.Get("Str_Menu_Profile"), opts.ProfileName },
+                new[] { LocalizationService.Get("Str_Menu_WeightMethod"), weightDesc },
+                new[] { LocalizationService.Get("Str_Menu_LambdaMethod"), lambdaDesc },
+                new[] { LocalizationService.Get("Str_Menu_RiMode"), riDesc },
+                new[] { LocalizationService.Get("Str_Report_Threshold"), threshDesc }
             }
         ));
 
         // 2. Матриця парних порівнянь критеріїв
         var critRes = result.CriteriaMatrixResult;
         int nCrit = result.Criteria.Count;
-        var critHeaders = new[] { "Критерій" }.Concat(result.Criteria.Select(c => c.Name)).ToArray();
+        var critHeaders = new[] { LocalizationService.Get("Str_Main_CornerCrit") }.Concat(result.Criteria.Select(c => c.Name)).ToArray();
         var critPwRows = new List<string[]>();
         for (int i = 0; i < nCrit; i++)
         {
@@ -78,10 +75,11 @@ public static class ReportTableBuilder
             }
             critPwRows.Add(row);
         }
-        tables.Add(new ReportTable("Матриця парних порівнянь критеріїв", critHeaders, critPwRows));
+        tables.Add(new ReportTable(LocalizationService.Get("Str_Report_TableCritPw"), critHeaders, critPwRows));
 
         // 3. Нормалізована матриця критеріїв і вектор ваг
-        var critNormHeaders = new[] { "Критерій" }.Concat(result.Criteria.Select(c => c.Name)).Concat(new[] { "Вага (w)" }).ToArray();
+        string weightHeader = LocalizationService.CurrentLanguage == AppLanguage.En ? "Weight (w)" : "Вага (w)";
+        var critNormHeaders = new[] { LocalizationService.Get("Str_Main_CornerCrit") }.Concat(result.Criteria.Select(c => c.Name)).Concat(new[] { weightHeader }).ToArray();
         var critNormRows = new List<string[]>();
         for (int i = 0; i < nCrit; i++)
         {
@@ -99,33 +97,33 @@ public static class ReportTableBuilder
         }
         // Рядок сум колонок
         var colSumsRow = new string[nCrit + 2];
-        colSumsRow[0] = "Сума стовпця";
+        colSumsRow[0] = LocalizationService.Get("Str_Report_ColSum");
         for (int j = 0; j < nCrit; j++)
         {
             colSumsRow[j + 1] = FormatNumber(critRes.ColumnSums.Length > j ? critRes.ColumnSums[j] : 0.0);
         }
         colSumsRow[nCrit + 1] = FormatNumber(critRes.Weights.Sum());
         critNormRows.Add(colSumsRow);
-        tables.Add(new ReportTable("Нормалізована матриця критеріїв і вектор ваг", critNormHeaders, critNormRows));
+        tables.Add(new ReportTable(LocalizationService.Get("Str_Report_TableCritNorm"), critNormHeaders, critNormRows));
 
         // 4. Показники узгодженості матриці критеріїв
         tables.Add(new ReportTable(
-            "Показники узгодженості матриці критеріїв",
-            new[] { "Показник", "Значення" },
+            LocalizationService.Get("Str_Report_TableCritConsistency"),
+            new[] { LocalizationService.Get("Str_Report_Indicator"), LocalizationService.Get("Str_Report_Value") },
             new List<string[]>
             {
                 new[] { "λmax", FormatNumber(critRes.LambdaMax) },
-                new[] { "Індекс узгодженості (CI)", FormatNumber(critRes.CI) },
-                new[] { "Випадковий індекс (RI)", FormatNumber(critRes.ActiveRI) },
-                new[] { "Відношення узгодженості (CR)", FormatPercent(critRes.ActiveCR) },
-                new[] { "Поріг узгодженості", FormatPercent(critRes.Threshold) },
-                new[] { "Висновок", critRes.IsConsistent ? "Узгоджено" : "Неузгоджено" }
+                new[] { LocalizationService.Get("Str_Report_CI"), FormatNumber(critRes.CI) },
+                new[] { LocalizationService.Get("Str_Report_RI"), FormatNumber(critRes.ActiveRI) },
+                new[] { LocalizationService.Get("Str_Report_CR"), FormatPercent(critRes.ActiveCR) },
+                new[] { LocalizationService.Get("Str_Report_Threshold"), FormatPercent(critRes.Threshold) },
+                new[] { LocalizationService.Get("Str_Report_Conclusion"), critRes.IsConsistent ? LocalizationService.Get("Str_Report_Consistent") : LocalizationService.Get("Str_Report_Inconsistent") }
             }
         ));
 
         // 5. Для кожного критерію: матриця альтернатив, нормалізована матриця та рядок показників
         int nAlt = result.Alternatives.Count;
-        var altHeaders = new[] { "Альтернатива" }.Concat(result.Alternatives.Select(a => a.Name)).ToArray();
+        var altHeaders = new[] { LocalizationService.Get("Str_Main_CornerAlt") }.Concat(result.Alternatives.Select(a => a.Name)).ToArray();
 
         foreach (var c in result.Criteria)
         {
@@ -147,10 +145,10 @@ public static class ReportTableBuilder
                 }
                 altPwRows.Add(row);
             }
-            tables.Add(new ReportTable($"Матриця порівнянь альтернатив за критерієм «{c.Name}»", altHeaders, altPwRows));
+            tables.Add(new ReportTable(LocalizationService.Format("Str_Report_TableAltPwFmt", c.Name), altHeaders, altPwRows));
 
             // 5b. Нормалізована матриця й локальні пріоритети
-            var altNormHeaders = new[] { "Альтернатива" }.Concat(result.Alternatives.Select(a => a.Name)).Concat(new[] { "Локальний пріоритет" }).ToArray();
+            var altNormHeaders = new[] { LocalizationService.Get("Str_Main_CornerAlt") }.Concat(result.Alternatives.Select(a => a.Name)).Concat(new[] { LocalizationService.Get("Str_Report_LocalPriority") }).ToArray();
             var altNormRows = new List<string[]>();
             for (int i = 0; i < nAlt; i++)
             {
@@ -167,19 +165,20 @@ public static class ReportTableBuilder
                 altNormRows.Add(row);
             }
             var altColSumsRow = new string[nAlt + 2];
-            altColSumsRow[0] = "Сума стовпця";
+            altColSumsRow[0] = LocalizationService.Get("Str_Report_ColSum");
             for (int j = 0; j < nAlt; j++)
             {
                 altColSumsRow[j + 1] = FormatNumber(altRes.ColumnSums.Length > j ? altRes.ColumnSums[j] : 0.0);
             }
             altColSumsRow[nAlt + 1] = FormatNumber(altRes.Weights.Sum());
             altNormRows.Add(altColSumsRow);
-            tables.Add(new ReportTable($"Нормалізована матриця й локальні пріоритети за критерієм «{c.Name}»", altNormHeaders, altNormRows));
+            tables.Add(new ReportTable(LocalizationService.Format("Str_Report_TableAltNormFmt", c.Name), altNormHeaders, altNormRows));
 
             // 5c. Рядок показників узгодженості за критерієм
+            string thresholdColName = LocalizationService.CurrentLanguage == AppLanguage.En ? "Threshold" : "Поріг";
             tables.Add(new ReportTable(
-                $"Показники узгодженості матриці альтернатив за критерієм «{c.Name}»",
-                new[] { "λmax", "CI", "RI", "CR", "Поріг", "Висновок" },
+                LocalizationService.Format("Str_Report_TableAltConsistencyFmt", c.Name),
+                new[] { "λmax", "CI", "RI", "CR", thresholdColName, LocalizationService.Get("Str_Report_Conclusion") },
                 new List<string[]>
                 {
                     new[]
@@ -189,14 +188,14 @@ public static class ReportTableBuilder
                         FormatNumber(altRes.ActiveRI),
                         FormatPercent(altRes.ActiveCR),
                         FormatPercent(altRes.Threshold),
-                        altRes.IsConsistent ? "Узгоджено" : "Неузгоджено"
+                        altRes.IsConsistent ? LocalizationService.Get("Str_Report_Consistent") : LocalizationService.Get("Str_Report_Inconsistent")
                     }
                 }
             ));
         }
 
         // 6. Зведення локальних пріоритетів
-        var summaryHeaders = new[] { "Альтернатива" }.Concat(result.Criteria.Select(c => c.Name)).Concat(new[] { "Глобальний пріоритет", "Ранг" }).ToArray();
+        var summaryHeaders = new[] { LocalizationService.Get("Str_Main_CornerAlt") }.Concat(result.Criteria.Select(c => c.Name)).Concat(new[] { LocalizationService.Get("Str_Report_GlobalPriorityCol"), LocalizationService.Get("Str_Report_RankCol") }).ToArray();
         var summaryRows = new List<string[]>();
         foreach (var alt in result.RankedAlternatives)
         {
@@ -217,20 +216,20 @@ public static class ReportTableBuilder
             row[nCrit + 2] = alt.RankText;
             summaryRows.Add(row);
         }
-        tables.Add(new ReportTable("Зведення локальних пріоритетів", summaryHeaders, summaryRows));
+        tables.Add(new ReportTable(LocalizationService.Get("Str_Report_TableSummary"), summaryHeaders, summaryRows));
 
         // 7. Узгодженість ієрархії
         tables.Add(new ReportTable(
-            "Узгодженість ієрархії",
-            new[] { "Показник", "Значення" },
+            LocalizationService.Get("Str_Report_TableHierarchy"),
+            new[] { LocalizationService.Get("Str_Report_Indicator"), LocalizationService.Get("Str_Report_Value") },
             new List<string[]>
             {
-                new[] { "CIh (індекс узгодженості ієрархії)", FormatNumber(result.HierarchicalCI) },
-                new[] { "RIh (випадковий індекс ієрархії)", FormatNumber(result.ActiveHierarchicalRI) },
-                new[] { "CRh (коефіцієнт узгодженості ієрархії)", FormatPercent(result.ActiveHierarchicalCR) },
-                new[] { "Поріг узгодженості", FormatPercent(result.HierarchyThreshold) },
-                new[] { "Статус узгодженості", result.IsHierarchyConsistent ? "Узгоджено" : "Неузгоджено" },
-                new[] { "Неузгоджені матриці", result.InconsistentMatrices.Count > 0 ? string.Join(", ", result.InconsistentMatrices) : "Відсутні (усі матриці узгоджені)" }
+                new[] { LocalizationService.Get("Str_Report_CIh"), FormatNumber(result.HierarchicalCI) },
+                new[] { LocalizationService.Get("Str_Report_RIh"), FormatNumber(result.ActiveHierarchicalRI) },
+                new[] { LocalizationService.Get("Str_Report_CRh"), FormatPercent(result.ActiveHierarchicalCR) },
+                new[] { LocalizationService.Get("Str_Report_Threshold"), FormatPercent(result.HierarchyThreshold) },
+                new[] { LocalizationService.Get("Str_Report_HierarchyStatus"), result.IsHierarchyConsistent ? LocalizationService.Get("Str_Report_Consistent") : LocalizationService.Get("Str_Report_Inconsistent") },
+                new[] { LocalizationService.Get("Str_Report_InconsistentMatrices"), result.InconsistentMatrices.Count > 0 ? string.Join(", ", result.InconsistentMatrices) : LocalizationService.Get("Str_Report_NoneAllConsistent") }
             }
         ));
 
@@ -257,12 +256,12 @@ public static class ReportTableBuilder
 
             if (sens != null)
             {
-                var sensHeaders = new[] { "Пара альтернатив", "Вага критерію (t*)", "Пріоритет (P*)", "Тип події", "Опис" };
+                var sensHeaders = new[] { LocalizationService.Get("Str_Report_PairAlt"), LocalizationService.Get("Str_Report_WeightCritT"), LocalizationService.Get("Str_Report_PriorityP"), LocalizationService.Get("Str_Report_EventType"), LocalizationService.Get("Str_Report_Description") };
                 var sensRows = new List<string[]>();
 
                 if (sens.Intersections.Count == 0)
                 {
-                    sensRows.Add(new[] { "—", "—", "—", "—", "Точок перетину в діапазоні [0; 1] не виявлено" });
+                    sensRows.Add(new[] { "—", "—", "—", "—", LocalizationService.Get("Str_Report_NoIntersections") });
                 }
                 else
                 {
@@ -273,14 +272,14 @@ public static class ReportTableBuilder
                             $"{p.Alt1Name} = {p.Alt2Name}",
                             FormatPercent(p.WeightT),
                             FormatNumber(p.PriorityP),
-                            p.IsLeadershipChange ? "Зміна лідера" : "Зміна рангів",
+                            p.IsLeadershipChange ? LocalizationService.Get("Str_Report_LeaderChange") : LocalizationService.Get("Str_Report_RankChange"),
                             p.EventDescription
                         });
                     }
                 }
 
                 tables.Add(new ReportTable(
-                    $"Чутливість: точки перетину і зміни лідера за критерієм «{c.Name}»",
+                    LocalizationService.Format("Str_Report_TableSensFmt", c.Name),
                     sensHeaders,
                     sensRows,
                     sens.StabilitySummary
@@ -288,16 +287,19 @@ public static class ReportTableBuilder
             }
             else if (sensError != null)
             {
-                var sensHeaders = new[] { "Пара альтернатив", "Вага критерію (t*)", "Пріоритет (P*)", "Тип події", "Опис" };
+                var sensHeaders = new[] { LocalizationService.Get("Str_Report_PairAlt"), LocalizationService.Get("Str_Report_WeightCritT"), LocalizationService.Get("Str_Report_PriorityP"), LocalizationService.Get("Str_Report_EventType"), LocalizationService.Get("Str_Report_Description") };
+                string errorMsg = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Sensitivity calculation unavailable: {sensError}"
+                    : $"Розрахунок чутливості недоступний: {sensError}";
                 var sensRows = new List<string[]>
                 {
-                    new[] { "—", "—", "—", "—", $"Розрахунок чутливості недоступний: {sensError}" }
+                    new[] { "—", "—", "—", "—", errorMsg }
                 };
                 tables.Add(new ReportTable(
-                    $"Чутливість: точки перетину і зміни лідера за критерієм «{c.Name}»",
+                    LocalizationService.Format("Str_Report_TableSensFmt", c.Name),
                     sensHeaders,
                     sensRows,
-                    $"Чутливість для критерію «{c.Name}» недоступна: {sensError}"
+                    LocalizationService.Format("Str_Report_SensUnavailable", c.Name, sensError)
                 ));
             }
         }

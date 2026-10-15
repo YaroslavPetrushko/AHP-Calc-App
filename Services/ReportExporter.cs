@@ -43,7 +43,7 @@ public static class ReportExporter
             // Примітка, якщо є
             if (!string.IsNullOrWhiteSpace(t.Note))
             {
-                sb.AppendLine(EscapeCsvField($"Примітка: {t.Note}"));
+                sb.AppendLine(EscapeCsvField($"{LocalizationService.Get("Str_Report_Note")} {t.Note}"));
             }
         }
 
@@ -94,7 +94,7 @@ public static class ReportExporter
             if (!string.IsNullOrWhiteSpace(t.Note))
             {
                 sb.AppendLine();
-                sb.AppendLine($"*Примітка: {t.Note}*");
+                sb.AppendLine($"*{LocalizationService.Get("Str_Report_Note")} {t.Note}*");
             }
 
             sb.AppendLine();
@@ -117,12 +117,15 @@ public static class ReportExporter
     /// </summary>
     public static string ToHtml(IEnumerable<ReportTable> tables)
     {
+        string lang = LocalizationService.CurrentLanguage == AppLanguage.En ? "en" : "uk";
+        string htmlTitle = LocalizationService.CurrentLanguage == AppLanguage.En ? "AHP Report (MAI)" : "Звіт МАІ (AHP)";
+
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html>");
-        sb.AppendLine("<html lang=\"uk\">");
+        sb.AppendLine($"<html lang=\"{lang}\">");
         sb.AppendLine("<head>");
         sb.AppendLine("  <meta charset=\"utf-8\">");
-        sb.AppendLine("  <title>Звіт МАІ (AHP)</title>");
+        sb.AppendLine($"  <title>{htmlTitle}</title>");
         sb.AppendLine("  <style>");
         sb.AppendLine("    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.3; color: #000; margin: 20px; }");
         sb.AppendLine("    table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }");
@@ -165,7 +168,7 @@ public static class ReportExporter
 
             if (!string.IsNullOrWhiteSpace(t.Note))
             {
-                sb.AppendLine($"  <p class=\"table-note\"><i>Примітка: {System.Net.WebUtility.HtmlEncode(t.Note)}</i></p>");
+                sb.AppendLine($"  <p class=\"table-note\"><i>{LocalizationService.Get("Str_Report_Note")} {System.Net.WebUtility.HtmlEncode(t.Note)}</i></p>");
             }
         }
 
