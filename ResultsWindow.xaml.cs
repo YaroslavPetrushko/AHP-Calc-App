@@ -35,17 +35,22 @@ public class SensitivityLegendItem
 public class SensitivityDynamicRankingDisplayItem
 {
     public int Rank { get; set; }
-    public string RankText => $"#{Rank}";
+    private string _rankText = string.Empty;
+    public string RankText
+    {
+        get => string.IsNullOrEmpty(_rankText) ? $"#{Rank}" : _rankText;
+        set => _rankText = value;
+    }
     public string AlternativeId { get; set; } = string.Empty;
     public string AlternativeName { get; set; } = string.Empty;
     public double CurrentPriority { get; set; }
     public double OriginalPriority { get; set; }
     public double DeltaPriority => CurrentPriority - OriginalPriority;
-    public string PriorityPercentText => $"{CurrentPriority * 100:F1}% ({CurrentPriority:F4})";
+    public string PriorityPercentText => ResultsWindow.Fmt($"{CurrentPriority * 100:F1}% ({CurrentPriority:F4})");
     public string DeltaText => DeltaPriority switch
     {
-        > 0.0005 => $"▲ +{DeltaPriority * 100:F1} п.п.",
-        < -0.0005 => $"▼ {DeltaPriority * 100:F1} п.п.",
+        > 0.0005 => ResultsWindow.Fmt($"▲ +{DeltaPriority * 100:F1} п.п."),
+        < -0.0005 => ResultsWindow.Fmt($"▼ {DeltaPriority * 100:F1} п.п."),
         _ => "— 0.0 п.п."
     };
     public Brush RankBackground { get; set; } = Brushes.Gray;
@@ -95,6 +100,9 @@ public class ConsistencyRowItem
 
 public partial class ResultsWindow : Window
 {
+    internal static readonly System.Globalization.CultureInfo UkCulture = new("uk-UA");
+    internal static string Fmt(FormattableString fs) => fs.ToString(UkCulture);
+
     private readonly AhpResult _result;
     private readonly List<MatrixResult> _allMatrixResults = new();
 
@@ -168,7 +176,7 @@ public partial class ResultsWindow : Window
     {
         if (_result.BestAlternative != null)
         {
-            TxtWinnerName.Text = $"{_result.BestAlternative.Name} ({_result.BestAlternative.GlobalPriority:P1})";
+            TxtWinnerName.Text = Fmt($"{_result.BestAlternative.Name} ({_result.BestAlternative.GlobalPriority:P1})");
         }
         else
         {
@@ -177,15 +185,15 @@ public partial class ResultsWindow : Window
 
         string profileName = _result.Options?.ProfileName ?? "Користувацький профіль";
 
-        TxtBannerSubtitle.Text = $"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}";
+        TxtBannerSubtitle.Text = Fmt($"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}");
 
-        TxtHierarchicalCR.Text = $"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})";
+        TxtHierarchicalCR.Text = Fmt($"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})");
         string weightDesc = _result.Options?.WeightMethod.ToString() ?? "Default";
         string lambdaDesc = _result.Options != null
             ? AhpCalculationOptions.GetLambdaMethodDescription(_result.Options.LambdaMethod)
             : "Default";
         string riLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпірична формула (1.98·(n-2)/n)" : "таблиця Сааті";
-        TxtHierarchicalCR.ToolTip = $"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}";
+        TxtHierarchicalCR.ToolTip = Fmt($"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}");
 
         if (_result.IsHierarchyConsistent)
         {
@@ -215,7 +223,7 @@ public partial class ResultsWindow : Window
                 Description = a.Description,
                 GlobalPriority = a.GlobalPriority,
                 PriorityPercent = pct,
-                PriorityPercentText = $"{pct:F1}% ({a.GlobalPriority:F3})",
+                PriorityPercentText = Fmt($"{pct:F1}% ({a.GlobalPriority:F3})"),
                 RankBackground = a.Rank switch
                 {
                     1 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#10B981" : "#059669")),
@@ -256,7 +264,7 @@ public partial class ResultsWindow : Window
             Name = c.Name,
             Description = c.Description,
             Weight = c.Weight,
-            WeightPercentText = $"{c.Weight:P1} ({c.Weight:F3})"
+            WeightPercentText = Fmt($"{c.Weight:P1} ({c.Weight:F3})")
         }).ToList();
 
         ListCriteriaCards.ItemsSource = cards;
@@ -274,12 +282,12 @@ public partial class ResultsWindow : Window
         var runnerUp = _result.RankedAlternatives.Count > 1 ? _result.RankedAlternatives[1] : null;
 
         var sb = new StringBuilder();
-        sb.AppendLine($"1. Оптимальною альтернативою за методом аналізу ієрархій визначено «{winner.Name}» із підсумковим глобальним пріоритетом {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4}).");
+        sb.AppendLine(Fmt($"1. Оптимальною альтернативою за методом аналізу ієрархій визначено «{winner.Name}» із підсумковим глобальним пріоритетом {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4})."));
 
         if (runnerUp != null)
         {
             double margin = winner.GlobalPriority - runnerUp.GlobalPriority;
-            sb.AppendLine($"2. Друге місце посіла альтернатива «{runnerUp.Name}» з пріоритетом {runnerUp.GlobalPriority:P2} (відрив становить {margin:P2}).");
+            sb.AppendLine(Fmt($"2. Друге місце посіла альтернатива «{runnerUp.Name}» з пріоритетом {runnerUp.GlobalPriority:P2} (відрив становить {margin:P2})."));
             if (margin < 0.02)
             {
                 sb.AppendLine("   Зверніть увагу: відрив між лідерами є незначним (< 2%), що свідчить про високу чутливість розв'язку до коливань оцінок або ринкових цін.");
@@ -289,16 +297,16 @@ public partial class ResultsWindow : Window
         var topCriterion = _result.Criteria.OrderByDescending(c => c.Weight).FirstOrDefault();
         if (topCriterion != null)
         {
-            sb.AppendLine($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}.");
+            sb.AppendLine(Fmt($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}."));
         }
 
         string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою Сааті" : "табличними значеннями Сааті";
-        string thresholdStr = $"{_result.HierarchyThreshold:P0}";
+        string thresholdStr = Fmt($"{_result.HierarchyThreshold:P0}");
         string passFailStr = _result.IsHierarchyConsistent
             ? $"що задовольняє умову узгодженості (CRh ≤ {thresholdStr}). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень)."
             : $"що перевищує допустимий поріг {thresholdStr} (CRh > {thresholdStr}). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.";
 
-        sb.AppendLine($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}");
+        sb.AppendLine(Fmt($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}"));
 
         if (_result.InconsistentMatrices.Count > 0)
         {
@@ -352,12 +360,12 @@ public partial class ResultsWindow : Window
             {
                 double locPri = alt.LocalPriorities.TryGetValue(item.Crit.Id, out var lp) ? lp : 0.0;
                 double wScore = alt.WeightedScores.TryGetValue(item.Crit.Id, out var ws) ? ws : 0.0;
-                row[item.LijCol] = locPri.ToString("F3");
-                row[item.ScoreCol] = wScore.ToString("F3");
+                row[item.LijCol] = locPri.ToString("F3", UkCulture);
+                row[item.ScoreCol] = wScore.ToString("F3", UkCulture);
             }
 
-            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F3");
-            row["Частка (%)"] = $"{alt.GlobalPriority * 100:F1}%";
+            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F3", UkCulture);
+            row["Частка (%)"] = Fmt($"{alt.GlobalPriority * 100:F1}%");
             dt.Rows.Add(row);
         }
 
@@ -375,14 +383,14 @@ public partial class ResultsWindow : Window
         {
             MatrixName = "Матриця критеріїв (A)",
             Dimension = crCrit.Size,
-            LambdaMax = crCrit.LambdaMax.ToString("F4"),
-            CI = crCrit.CI.ToString("F4"),
-            RITable = crCrit.RITable.ToString("F2"),
-            RIEmpirical = crCrit.RIEmpirical.ToString("F2"),
-            CRTable = $"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})",
-            CREmpirical = $"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})",
+            LambdaMax = crCrit.LambdaMax.ToString("F4", UkCulture),
+            CI = crCrit.CI.ToString("F4", UkCulture),
+            RITable = crCrit.RITable.ToString("F2", UkCulture),
+            RIEmpirical = crCrit.RIEmpirical.ToString("F2", UkCulture),
+            CRTable = Fmt($"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})"),
+            CREmpirical = Fmt($"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})"),
             Status = crCrit.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = crCrit.IsConsistent ? $"CR <= {crCrit.Threshold:P0} ({modeLabel})" : $"CR > {crCrit.Threshold:P0} ({modeLabel})"
+            Verdict = crCrit.IsConsistent ? Fmt($"CR <= {crCrit.Threshold:P0} ({modeLabel})") : Fmt($"CR > {crCrit.Threshold:P0} ({modeLabel})")
         });
 
         // Матриці альтернатив
@@ -396,14 +404,14 @@ public partial class ResultsWindow : Window
             {
                 MatrixName = $"Альтернативи: {critTitle}",
                 Dimension = res.Size,
-                LambdaMax = res.LambdaMax.ToString("F4"),
-                CI = res.CI.ToString("F4"),
-                RITable = res.RITable.ToString("F2"),
-                RIEmpirical = res.RIEmpirical.ToString("F2"),
-                CRTable = $"{res.CRTable:P1} ({res.CRTable:F3})",
-                CREmpirical = $"{res.CREmpirical:P1} ({res.CREmpirical:F3})",
+                LambdaMax = res.LambdaMax.ToString("F4", UkCulture),
+                CI = res.CI.ToString("F4", UkCulture),
+                RITable = res.RITable.ToString("F2", UkCulture),
+                RIEmpirical = res.RIEmpirical.ToString("F2", UkCulture),
+                CRTable = Fmt($"{res.CRTable:P1} ({res.CRTable:F3})"),
+                CREmpirical = Fmt($"{res.CREmpirical:P1} ({res.CREmpirical:F3})"),
                 Status = res.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-                Verdict = res.IsConsistent ? $"CR <= {res.Threshold:P0} ({modeLabel})" : $"CR > {res.Threshold:P0} ({modeLabel})"
+                Verdict = res.IsConsistent ? Fmt($"CR <= {res.Threshold:P0} ({modeLabel})") : Fmt($"CR > {res.Threshold:P0} ({modeLabel})")
             });
         }
 
@@ -413,13 +421,13 @@ public partial class ResultsWindow : Window
             MatrixName = "⭐ Композиція всієї ієрархії (CRh)",
             Dimension = _result.RankedAlternatives.Count,
             LambdaMax = "-",
-            CI = _result.HierarchicalCI.ToString("F4"),
-            RITable = _result.HierarchicalRITable.ToString("F3"),
-            RIEmpirical = _result.HierarchicalRIEmpirical.ToString("F3"),
-            CRTable = $"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})",
-            CREmpirical = $"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})",
+            CI = _result.HierarchicalCI.ToString("F4", UkCulture),
+            RITable = _result.HierarchicalRITable.ToString("F3", UkCulture),
+            RIEmpirical = _result.HierarchicalRIEmpirical.ToString("F3", UkCulture),
+            CRTable = Fmt($"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})"),
+            CREmpirical = Fmt($"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})"),
             Status = _result.IsHierarchyConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
-            Verdict = _result.IsHierarchyConsistent ? $"CRh <= {_result.HierarchyThreshold:P0} ({modeLabel})" : $"CRh > {_result.HierarchyThreshold:P0} ({modeLabel})"
+            Verdict = _result.IsHierarchyConsistent ? Fmt($"CRh <= {_result.HierarchyThreshold:P0} ({modeLabel})") : Fmt($"CRh > {_result.HierarchyThreshold:P0} ({modeLabel})")
         });
 
         GridConsistency.ItemsSource = list;
@@ -454,7 +462,7 @@ public partial class ResultsWindow : Window
         if (idx < 0 || idx >= _allMatrixResults.Count) return;
 
         var mRes = _allMatrixResults[idx];
-        TxtSelectedMatrixInfo.Text = $"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.ActiveCR:P2} ({mRes.ConsistencyMessage})";
+        TxtSelectedMatrixInfo.Text = Fmt($"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.ActiveCR:P2} ({mRes.ConsistencyMessage})");
 
         // Показ нормалізованої матриці та ваг
         var dt = new DataTable();
@@ -484,11 +492,11 @@ public partial class ResultsWindow : Window
 
             for (int j = 0; j < mRes.Size; j++)
             {
-                row[colNames[j]] = mRes.NormalizedMatrix[i, j].ToString("F4");
+                row[colNames[j]] = mRes.NormalizedMatrix[i, j].ToString("F4", UkCulture);
             }
 
-            row["Вага (wi)"] = mRes.Weights[i].ToString("F4");
-            row["Відсоток"] = $"{mRes.Weights[i] * 100:F2}%";
+            row["Вага (wi)"] = mRes.Weights[i].ToString("F4", UkCulture);
+            row["Відсоток"] = Fmt($"{mRes.Weights[i] * 100:F2}%");
             dt.Rows.Add(row);
         }
 
@@ -497,10 +505,10 @@ public partial class ResultsWindow : Window
         sumRow["Елемент"] = "Сума стовпця вихідної матриці";
         for (int j = 0; j < mRes.Size; j++)
         {
-            sumRow[colNames[j]] = mRes.ColumnSums[j].ToString("F3");
+            sumRow[colNames[j]] = mRes.ColumnSums[j].ToString("F3", UkCulture);
         }
-        sumRow["Вага (wi)"] = "1.0000";
-        sumRow["Відсоток"] = "100.00%";
+        sumRow["Вага (wi)"] = (1.0).ToString("F4", UkCulture);
+        sumRow["Відсоток"] = Fmt($"{100.0:F2}%");
         dt.Rows.Add(sumRow);
 
         GridSelectedMatrix.ItemsSource = dt.DefaultView;
@@ -573,7 +581,7 @@ public partial class ResultsWindow : Window
         ComboSensitivityCriterion.Items.Clear();
         foreach (var c in _result.Criteria)
         {
-            ComboSensitivityCriterion.Items.Add($"{c.Name} ({c.Id}, вага {c.Weight:P1})");
+            ComboSensitivityCriterion.Items.Add(Fmt($"{c.Name} ({c.Id}, вага {c.Weight:P1})"));
         }
 
         if (ComboSensitivityCriterion.Items.Count > 0)
@@ -594,9 +602,9 @@ public partial class ResultsWindow : Window
         _isUpdatingSensitivityUi = true;
         try
         {
-            TxtSensBaselineWeight.Text = $"Базова вага: {_currentSensitivityResult.OriginalWeight:P1}";
+            TxtSensBaselineWeight.Text = Fmt($"Базова вага: {_currentSensitivityResult.OriginalWeight:P1}");
             SliderSensitivityWeight.Value = _currentSensitivityResult.OriginalWeight * 100.0;
-            TxtSensCurrentWeight.Text = $"Поточна вага t = {_currentSensitivityT:P1}";
+            TxtSensCurrentWeight.Text = Fmt($"Поточна вага t = {_currentSensitivityT:P1}");
             TxtSensStabilityComment.Text = _currentSensitivityResult.StabilitySummary;
 
             // Інтервали лідерства
@@ -607,8 +615,8 @@ public partial class ResultsWindow : Window
             {
                 Alt1Name = p.Alt1Name,
                 Alt2Name = p.Alt2Name,
-                WeightTText = $"{p.WeightT:P1} ({p.WeightT:F3})",
-                PriorityPText = $"{p.PriorityP:P1} ({p.PriorityP:F3})",
+                WeightTText = Fmt($"{p.WeightT:P1} ({p.WeightT:F3})"),
+                PriorityPText = Fmt($"{p.PriorityP:P1} ({p.PriorityP:F3})"),
                 ChangeTypeText = p.IsLeadershipChange ? "⭐ Зміна лідера (#1)" : "Перетин рангів",
                 EventDescription = p.EventDescription
             }).ToList();
@@ -635,7 +643,7 @@ public partial class ResultsWindow : Window
         if (_isUpdatingSensitivityUi || _currentSensitivityResult == null) return;
 
         _currentSensitivityT = SliderSensitivityWeight.Value / 100.0;
-        TxtSensCurrentWeight.Text = $"Поточна вага t = {_currentSensitivityT:P1}";
+        TxtSensCurrentWeight.Text = Fmt($"Поточна вага t = {_currentSensitivityT:P1}");
 
         UpdateSensitivityDynamicState(_currentSensitivityT);
     }
@@ -656,16 +664,22 @@ public partial class ResultsWindow : Window
         if (_currentSensitivityResult == null) return;
 
         bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
-        var dynamicList = _currentSensitivityResult.Lines
+        var sorted = _currentSensitivityResult.Lines
             .Select(l => new
             {
                 Line = l,
                 Priority = l.PriorityAt(t)
             })
             .OrderByDescending(x => x.Priority)
-            .Select((x, rankIdx) =>
+            .ToList();
+
+        var dynamicList = sorted
+            .Select(x =>
             {
-                int rank = rankIdx + 1;
+                int rank = 1 + sorted.Count(other => other.Priority > x.Priority + 1e-9);
+                bool isTied = sorted.Any(other => !ReferenceEquals(other, x) && Math.Abs(other.Priority - x.Priority) <= 1e-9);
+                string rankText = isTied ? $"#{rank}=" : $"#{rank}";
+
                 double delta = x.Priority - x.Line.OriginalPriority;
                 Brush rankBg = rank switch
                 {
@@ -685,6 +699,7 @@ public partial class ResultsWindow : Window
                 return new SensitivityDynamicRankingDisplayItem
                 {
                     Rank = rank,
+                    RankText = rankText,
                     AlternativeId = x.Line.AlternativeId,
                     AlternativeName = x.Line.AlternativeName,
                     CurrentPriority = x.Priority,
@@ -700,7 +715,7 @@ public partial class ResultsWindow : Window
         if (dynamicList.Count > 0)
         {
             var top = dynamicList[0];
-            TxtSensPlotLeader.Text = $"Поточний лідер: {top.AlternativeName} ({top.CurrentPriority:P1})";
+            TxtSensPlotLeader.Text = Fmt($"Поточний лідер: {top.AlternativeName} ({top.CurrentPriority:P1})");
         }
 
         RedrawSensitivityPlot(t);
@@ -844,7 +859,7 @@ public partial class ResultsWindow : Window
             Stroke = baseLineBrush,
             StrokeThickness = 1.8,
             StrokeDashArray = new DoubleCollection { 4, 3 },
-            ToolTip = $"Базова вага критерію w_k^0 = {_currentSensitivityResult.OriginalWeight:P1}"
+            ToolTip = Fmt($"Базова вага критерію w_k^0 = {_currentSensitivityResult.OriginalWeight:P1}")
         };
         CanvasSensitivityPlot.Children.Add(baseLine);
 
@@ -858,7 +873,7 @@ public partial class ResultsWindow : Window
             Y2 = marginTop + ph,
             Stroke = currLineBrush,
             StrokeThickness = 2.2,
-            ToolTip = $"Поточна вага t = {currentT:P1}"
+            ToolTip = Fmt($"Поточна вага t = {currentT:P1}")
         };
         CanvasSensitivityPlot.Children.Add(currLine);
 
@@ -882,7 +897,7 @@ public partial class ResultsWindow : Window
                 Y2 = y1,
                 Stroke = lineBrush,
                 StrokeThickness = 2.5,
-                ToolTip = $"{l.AlternativeId} ({l.AlternativeName})\nP(t) = {l.Alpha:+0.000;-0.000}·t + {l.Beta:F3}\nПри t={currentT:P1}: P={l.PriorityAt(currentT):P1}"
+                ToolTip = Fmt($"{l.AlternativeId} ({l.AlternativeName})\nP(t) = {l.Alpha:+0.000;-0.000}·t + {l.Beta:F3}\nПри t={currentT:P1}: P={l.PriorityAt(currentT):P1}")
             };
             CanvasSensitivityPlot.Children.Add(sensLine);
 
@@ -895,7 +910,7 @@ public partial class ResultsWindow : Window
                 Fill = lineBrush,
                 Stroke = Brushes.White,
                 StrokeThickness = 1.5,
-                ToolTip = $"{l.AlternativeName}: P({currentT:P1}) = {l.PriorityAt(currentT):P1}"
+                ToolTip = Fmt($"{l.AlternativeName}: P({currentT:P1}) = {l.PriorityAt(currentT):P1}")
             };
             Canvas.SetLeft(dot, currX - 4);
             Canvas.SetTop(dot, cy - 4);
@@ -919,7 +934,7 @@ public partial class ResultsWindow : Window
                     Fill = Brushes.Gold,
                     Stroke = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B45309")),
                     StrokeThickness = 1.5,
-                    ToolTip = $"⭐ Точка зміни переможця:\n{pt.Alt1Name} = {pt.Alt2Name}\nКритична вага t* = {pt.WeightT:P1}, P* = {pt.PriorityP:P1}"
+                    ToolTip = Fmt($"⭐ Точка зміни переможця:\n{pt.Alt1Name} = {pt.Alt2Name}\nКритична вага t* = {pt.WeightT:P1}, P* = {pt.PriorityP:P1}")
                 };
                 Canvas.SetLeft(star, ix - 5);
                 Canvas.SetTop(star, iy - 5);
@@ -933,7 +948,7 @@ public partial class ResultsWindow : Window
                     Height = 6,
                     Fill = textBrush,
                     Opacity = 0.7,
-                    ToolTip = $"Точка перетину: {pt.Alt1Name} = {pt.Alt2Name} при t* = {pt.WeightT:P1}"
+                    ToolTip = Fmt($"Точка перетину: {pt.Alt1Name} = {pt.Alt2Name} при t* = {pt.WeightT:P1}")
                 };
                 Canvas.SetLeft(smallDot, ix - 3);
                 Canvas.SetTop(smallDot, iy - 3);

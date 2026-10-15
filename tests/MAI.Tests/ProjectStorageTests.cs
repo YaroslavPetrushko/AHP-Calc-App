@@ -271,7 +271,10 @@ public class ProjectStorageTests
             var options = AhpCalculationOptions.ClassicSaatyProfile;
             var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, options);
 
-            string report = ProjectStorageService.GenerateFullReportText(result);
+            string sampleRecommendation = string.Create(new System.Globalization.CultureInfo("uk-UA"),
+                $"Оптимальною альтернативою визначено {result.BestAlternative?.Name} із пріоритетом {result.BestAlternative?.GlobalPriority:P2} ({result.BestAlternative?.GlobalPriority:F4}).");
+
+            string report = ProjectStorageService.GenerateFullReportText(result, sampleRecommendation);
 
             // Report header does NOT contain (.NET 10)
             Assert.DoesNotContain("(.NET 10)", report);
@@ -281,11 +284,30 @@ public class ProjectStorageTests
             Assert.Contains("0,", report);
             // Check that percentages use comma
             Assert.Contains(",0%)", report);
+
+            // Check Section 6 exists and uses comma formatting
+            Assert.Contains("--- 6. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---", report);
+            Assert.Contains(sampleRecommendation, report);
+            Assert.Contains(",", sampleRecommendation);
         }
         finally
         {
             System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
         }
+    }
+
+    [Fact]
+    public void SensitivityDynamicRankingItem_TiedRanks_PreservesCustomRankText()
+    {
+        var itemDefault = new SensitivityDynamicRankingItem { Rank = 1 };
+        Assert.Equal("#1", itemDefault.RankText);
+
+        var itemTied = new SensitivityDynamicRankingItem
+        {
+            Rank = 1,
+            RankText = "#1="
+        };
+        Assert.Equal("#1=", itemTied.RankText);
     }
 
     [Fact]

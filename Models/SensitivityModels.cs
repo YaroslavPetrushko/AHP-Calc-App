@@ -91,7 +91,12 @@ public class CriterionSensitivityResult
 public class SensitivityDynamicRankingItem
 {
     public int Rank { get; set; }
-    public string RankText => $"#{Rank}";
+    private string _rankText = string.Empty;
+    public string RankText
+    {
+        get => string.IsNullOrEmpty(_rankText) ? $"#{Rank}" : _rankText;
+        set => _rankText = value;
+    }
     public string AlternativeId { get; set; } = string.Empty;
     public string AlternativeName { get; set; } = string.Empty;
     public double CurrentPriority { get; set; }
