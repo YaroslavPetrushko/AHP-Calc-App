@@ -25,6 +25,8 @@ public partial class MainWindow : Window
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
     private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.Default.Clone();
+    private string _projectTitle = "Задача багатокритеріального вибору";
+    private string _projectDescription = string.Empty;
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
@@ -46,6 +48,9 @@ public partial class MainWindow : Window
 
     private void LoadPreset(AhpProblemPreset preset)
     {
+        _projectTitle = !string.IsNullOrWhiteSpace(preset.Name) ? preset.Name : "Задача багатокритеріального вибору";
+        _projectDescription = preset.Description ?? string.Empty;
+
         _criteria.Clear();
         foreach (var c in preset.Criteria)
         {
@@ -783,8 +788,10 @@ public partial class MainWindow : Window
 
                 Dispatcher.BeginInvoke(() =>
                 {
+                    BuildCriteriaMatrixGrid();
                     BuildAlternativesCriteriaSelector();
                     UpdateCountsUI();
+                    UpdateAllDiagnostics();
                 });
             }
         }
@@ -858,6 +865,7 @@ public partial class MainWindow : Window
             alt.Id = newVal;
             Dispatcher.BeginInvoke(() =>
             {
+                BuildAlternativeMatrixGrid();
                 UpdateAllDiagnostics();
             });
         }
@@ -915,9 +923,9 @@ public partial class MainWindow : Window
 
     private void BtnAddCriterion_Click(object sender, RoutedEventArgs e)
     {
-        if (_criteria.Count >= 8)
+        if (_criteria.Count >= 10)
         {
-            MessageBox.Show("Рекомендована максимальна кількість критеріїв за методом Сааті — не більше 8 (для запобігання втрати узгодженості суджень).", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Рекомендована максимальна кількість критеріїв за методом Сааті — не більше 10 (для запобігання втрати узгодженості суджень).", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -985,9 +993,9 @@ public partial class MainWindow : Window
 
     private void BtnAddAlternative_Click(object sender, RoutedEventArgs e)
     {
-        if (_alternatives.Count >= 8)
+        if (_alternatives.Count >= 10)
         {
-            MessageBox.Show("Рекомендована максимальна кількість альтернатив — до 8 варіантів.", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Рекомендована максимальна кількість альтернатив — до 10 варіантів.", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -1449,8 +1457,10 @@ public partial class MainWindow : Window
             {
                 var data = new AhpProjectData
                 {
-                    Title = "Задача багатокритеріального вибору",
-                    Description = $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
+                    Title = !string.IsNullOrWhiteSpace(_projectTitle) ? _projectTitle : "Задача багатокритеріального вибору",
+                    Description = !string.IsNullOrWhiteSpace(_projectDescription)
+                        ? _projectDescription
+                        : $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
                     Options = _calculationOptions.Clone(),
                     RiMode = _calculationOptions.RiMode,
                     Criteria = _criteria.ToList(),
@@ -1484,6 +1494,8 @@ public partial class MainWindow : Window
             if (ofd.ShowDialog(this) == true)
             {
                 var data = ProjectStorageService.LoadProject(ofd.FileName);
+                _projectTitle = !string.IsNullOrWhiteSpace(data.Title) ? data.Title : "Задача багатокритеріального вибору";
+                _projectDescription = data.Description ?? string.Empty;
 
                 // Транзакційне застосування: спочатку готуємо всі матриці локально
                 var newCriteriaMatrix = new ComparisonMatrix(data.Criteria.Count, data.Criteria.Select(c => c.Name).ToList());
@@ -1520,14 +1532,7 @@ public partial class MainWindow : Window
                 _alternativeMatrices = newAlternativeMatrices;
                 _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
 
-                if (data.Options != null)
-                {
-                    _calculationOptions = data.Options.Clone();
-                }
-                else
-                {
-                    _calculationOptions = new AhpCalculationOptions { RiMode = data.RiMode };
-                }
+                _calculationOptions = data.Options.Clone();
                 SyncCalculationOptionsUI();
 
                 UpdateCountsUI();

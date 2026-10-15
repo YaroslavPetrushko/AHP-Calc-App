@@ -115,4 +115,18 @@ public class PresetTests
 
         Assert.Contains("не знайдено в збірці", ex.Message);
     }
+
+    [Fact]
+    public void CreateEmptyPreset_ClampsDimensionsBetween2And10()
+    {
+        var preset10 = PresetService.CreateEmptyPreset(12, 15);
+        Assert.Equal(10, preset10.Criteria.Count);
+        Assert.Equal(10, preset10.Alternatives.Count);
+        Assert.Equal(10, preset10.CriteriaMatrix.Size);
+
+        var preset2 = PresetService.CreateEmptyPreset(1, 1);
+        Assert.Equal(2, preset2.Criteria.Count);
+        Assert.Equal(2, preset2.Alternatives.Count);
+        Assert.Equal(2, preset2.CriteriaMatrix.Size);
+    }
 }

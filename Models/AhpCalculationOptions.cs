@@ -64,10 +64,10 @@ public enum ConsistencyThresholdMode
 /// </summary>
 public class AhpCalculationOptions
 {
-    public WeightCalculationMethod WeightMethod { get; set; } = WeightCalculationMethod.PrincipalEigenvector;
-    public LambdaCalculationMethod LambdaMethod { get; set; } = LambdaCalculationMethod.ExactEigenvalue;
-    public RiCalculationMode RiMode { get; set; } = RiCalculationMode.SaatyTable;
-    public ConsistencyThresholdMode ThresholdMode { get; set; } = ConsistencyThresholdMode.SaatyAdaptive;
+    public WeightCalculationMethod WeightMethod { get; set; } = WeightCalculationMethod.ColumnNormalization;
+    public LambdaCalculationMethod LambdaMethod { get; set; } = LambdaCalculationMethod.ColumnSumProduct;
+    public RiCalculationMode RiMode { get; set; } = RiCalculationMode.Empirical;
+    public ConsistencyThresholdMode ThresholdMode { get; set; } = ConsistencyThresholdMode.Uniform10Percent;
 
     public AhpCalculationOptions()
     {

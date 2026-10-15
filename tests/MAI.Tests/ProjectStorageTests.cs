@@ -169,6 +169,7 @@ public class ProjectStorageTests
             Assert.Equal("1.1", loaded.Version);
             Assert.Equal("Проєкт версії 1.1", loaded.Title);
             Assert.Equal(RiCalculationMode.SaatyTable, loaded.RiMode);
+            Assert.True(loaded.Options.IsClassicSaatyProfile);
             Assert.Equal(2, loaded.Criteria.Count);
             Assert.Equal(2, loaded.Alternatives.Count);
         }
@@ -179,6 +180,17 @@ public class ProjectStorageTests
                 File.Delete(tempFile);
             }
         }
+    }
+
+    [Fact]
+    public void DefaultConstructor_AhpCalculationOptions_MatchesMethodicalProfile()
+    {
+        var options = new AhpCalculationOptions();
+        Assert.True(options.IsMethodicalProfile);
+        Assert.Equal(WeightCalculationMethod.ColumnNormalization, options.WeightMethod);
+        Assert.Equal(LambdaCalculationMethod.ColumnSumProduct, options.LambdaMethod);
+        Assert.Equal(RiCalculationMode.Empirical, options.RiMode);
+        Assert.Equal(ConsistencyThresholdMode.Uniform10Percent, options.ThresholdMode);
     }
 
     [Fact]
@@ -259,7 +271,10 @@ public class ProjectStorageTests
             var options = AhpCalculationOptions.ClassicSaatyProfile;
             var result = AhpCalculator.SolveHierarchy(preset.Criteria, preset.Alternatives, preset.CriteriaMatrix, preset.AlternativeMatrices, options);
 
-            string report = ProjectStorageService.GenerateFullReportText(result);
+            string sampleRecommendation = string.Create(new System.Globalization.CultureInfo("uk-UA"),
+                $"Оптимальною альтернативою визначено {result.BestAlternative?.Name} із пріоритетом {result.BestAlternative?.GlobalPriority:P2} ({result.BestAlternative?.GlobalPriority:F4}).");
+
+            string report = ProjectStorageService.GenerateFullReportText(result, sampleRecommendation);
 
             // Report header does NOT contain (.NET 10)
             Assert.DoesNotContain("(.NET 10)", report);
@@ -269,10 +284,64 @@ public class ProjectStorageTests
             Assert.Contains("0,", report);
             // Check that percentages use comma
             Assert.Contains(",0%)", report);
+
+            // Check Section 6 exists and uses comma formatting
+            Assert.Contains("--- 6. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---", report);
+            Assert.Contains(sampleRecommendation, report);
+            Assert.Contains(",", sampleRecommendation);
         }
         finally
         {
             System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
+        }
+    }
+
+    [Fact]
+    public void SensitivityDynamicRankingItem_TiedRanks_PreservesCustomRankText()
+    {
+        var itemDefault = new SensitivityDynamicRankingItem { Rank = 1 };
+        Assert.Equal("#1", itemDefault.RankText);
+
+        var itemTied = new SensitivityDynamicRankingItem
+        {
+            Rank = 1,
+            RankText = "#1="
+        };
+        Assert.Equal("#1=", itemTied.RankText);
+    }
+
+    [Fact]
+    public void SaveAndLoadPresetProject_PreservesPresetTitleAndDescription()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"ahp_preset_{Guid.NewGuid():N}.ahp.json");
+        try
+        {
+            var preset = PresetService.GetGpu2026Preset();
+            var data = new AhpProjectData
+            {
+                Title = preset.Name,
+                Description = preset.Description,
+                Criteria = preset.Criteria,
+                Alternatives = preset.Alternatives,
+                CriteriaMatrix = preset.CriteriaMatrix.ToJaggedArray(),
+                AlternativeMatrices = preset.AlternativeMatrices.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToJaggedArray())
+            };
+
+            ProjectStorageService.SaveProject(tempFile, data);
+
+            var loaded = ProjectStorageService.LoadProject(tempFile);
+
+            Assert.Equal(preset.Name, loaded.Title);
+            Assert.Equal(preset.Description, loaded.Description);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
         }
     }
 }

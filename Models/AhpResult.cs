@@ -22,7 +22,7 @@ public class MatrixResult
     public double CRTable { get; set; }
     public double CREmpirical { get; set; }
 
-    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.ClassicSaatyProfile;
+    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.Default;
 
     public RiCalculationMode ActiveRiMode => Options.RiMode;
 
@@ -60,7 +60,7 @@ public class AhpResult
     public double HierarchicalCRTable { get; set; }
     public double HierarchicalCREmpirical { get; set; }
 
-    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.ClassicSaatyProfile;
+    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.Default;
 
     public RiCalculationMode ActiveRiMode => Options.RiMode;
 

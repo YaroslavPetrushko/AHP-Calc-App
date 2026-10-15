@@ -171,7 +171,7 @@
                                         <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..8). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..10). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridCriteria" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
                                               IsReadOnly="False"
@@ -218,7 +218,7 @@
                                         <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..8). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..10). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridAlternatives" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
                                               IsReadOnly="False"
