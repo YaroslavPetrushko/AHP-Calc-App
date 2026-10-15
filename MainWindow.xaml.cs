@@ -25,6 +25,8 @@ public partial class MainWindow : Window
     private string _selectedCriterionId = string.Empty;
     private bool _isUpdatingMatrixCell = false;
     private AhpCalculationOptions _calculationOptions = AhpCalculationOptions.Default.Clone();
+    private string _projectTitle = "Задача багатокритеріального вибору";
+    private string _projectDescription = string.Empty;
 
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
@@ -46,6 +48,9 @@ public partial class MainWindow : Window
 
     private void LoadPreset(AhpProblemPreset preset)
     {
+        _projectTitle = !string.IsNullOrWhiteSpace(preset.Name) ? preset.Name : "Задача багатокритеріального вибору";
+        _projectDescription = preset.Description ?? string.Empty;
+
         _criteria.Clear();
         foreach (var c in preset.Criteria)
         {
@@ -1449,8 +1454,10 @@ public partial class MainWindow : Window
             {
                 var data = new AhpProjectData
                 {
-                    Title = "Задача багатокритеріального вибору",
-                    Description = $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
+                    Title = !string.IsNullOrWhiteSpace(_projectTitle) ? _projectTitle : "Задача багатокритеріального вибору",
+                    Description = !string.IsNullOrWhiteSpace(_projectDescription)
+                        ? _projectDescription
+                        : $"Критеріїв: {_criteria.Count}, Альтернатив: {_alternatives.Count}",
                     Options = _calculationOptions.Clone(),
                     RiMode = _calculationOptions.RiMode,
                     Criteria = _criteria.ToList(),
@@ -1484,6 +1491,8 @@ public partial class MainWindow : Window
             if (ofd.ShowDialog(this) == true)
             {
                 var data = ProjectStorageService.LoadProject(ofd.FileName);
+                _projectTitle = !string.IsNullOrWhiteSpace(data.Title) ? data.Title : "Задача багатокритеріального вибору";
+                _projectDescription = data.Description ?? string.Empty;
 
                 // Транзакційне застосування: спочатку готуємо всі матриці локально
                 var newCriteriaMatrix = new ComparisonMatrix(data.Criteria.Count, data.Criteria.Select(c => c.Name).ToList());

@@ -287,4 +287,39 @@ public class ProjectStorageTests
             System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
         }
     }
+
+    [Fact]
+    public void SaveAndLoadPresetProject_PreservesPresetTitleAndDescription()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"ahp_preset_{Guid.NewGuid():N}.ahp.json");
+        try
+        {
+            var preset = PresetService.GetGpu2026Preset();
+            var data = new AhpProjectData
+            {
+                Title = preset.Name,
+                Description = preset.Description,
+                Criteria = preset.Criteria,
+                Alternatives = preset.Alternatives,
+                CriteriaMatrix = preset.CriteriaMatrix.ToJaggedArray(),
+                AlternativeMatrices = preset.AlternativeMatrices.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToJaggedArray())
+            };
+
+            ProjectStorageService.SaveProject(tempFile, data);
+
+            var loaded = ProjectStorageService.LoadProject(tempFile);
+
+            Assert.Equal(preset.Name, loaded.Title);
+            Assert.Equal(preset.Description, loaded.Description);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
 }
