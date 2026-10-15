@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using MAI.Models;
@@ -12,8 +11,6 @@ namespace MAI.Services;
 /// </summary>
 public static class ProfileComparisonService
 {
-    private static readonly CultureInfo UkCulture = new("uk-UA");
-
     /// <summary>
     /// Порівняння результатів розрахунку задачі за стандартними або визначеними профілями.
     /// </summary>
@@ -44,7 +41,8 @@ public static class ProfileComparisonService
             // Якщо поточний активний профіль відрізняється від усіх трьох, додаємо його
             if (activeOptions != null && !profileList.Any(p => p.Options.ValueEquals(activeOptions)))
             {
-                profileList.Add(($"Поточний профіль ({activeOptions.ProfileName})", activeOptions.Clone()));
+                string currentProfPrefix = LocalizationService.CurrentLanguage == AppLanguage.En ? "Current Profile" : "Поточний профіль";
+                profileList.Add(($"{currentProfPrefix} ({activeOptions.ProfileName})", activeOptions.Clone()));
             }
         }
 
@@ -92,18 +90,36 @@ public static class ProfileComparisonService
 
         // 3. Формування підсумкового тексту
         var sb = new StringBuilder();
-        sb.AppendLine("Підсумок порівняння профілів:");
-        sb.AppendLine("• Лідери за профілями:");
-        foreach (var p in result.Profiles)
+        if (LocalizationService.CurrentLanguage == AppLanguage.En)
         {
-            sb.AppendLine($"  - «{p.ProfileName}»: {p.WinnerName} ({p.WinnerPriority.ToString("0.0000", UkCulture)})");
+            sb.AppendLine("Profiles Comparison Summary:");
+            sb.AppendLine("• Leaders by profile:");
+            foreach (var p in result.Profiles)
+            {
+                sb.AppendLine($"  - '{p.ProfileName}': {p.WinnerName} ({p.WinnerPriority.ToString("0.0000", LocalizationService.ActiveCulture)})");
+            }
+
+            bool allMatch = result.AllRankingsMatchBenchmark;
+            sb.AppendLine($"• Ranking matches benchmark (Classic T. Saaty Method): {(allMatch ? "yes" : "no")}");
+
+            double maxDeltaAcross = result.MaxDeltaPriorityAcrossProfiles;
+            sb.Append($"• Maximum priority deviation max |ΔP| relative to benchmark: {maxDeltaAcross.ToString("0.0000", LocalizationService.ActiveCulture)}");
         }
+        else
+        {
+            sb.AppendLine("Підсумок порівняння профілів:");
+            sb.AppendLine("• Лідери за профілями:");
+            foreach (var p in result.Profiles)
+            {
+                sb.AppendLine($"  - «{p.ProfileName}»: {p.WinnerName} ({p.WinnerPriority.ToString("0.0000", LocalizationService.ActiveCulture)})");
+            }
 
-        bool allMatch = result.AllRankingsMatchBenchmark;
-        sb.AppendLine($"• Ранжування збігається з опорним (Класичний метод Т. Сааті): {(allMatch ? "так" : "ні")}");
+            bool allMatch = result.AllRankingsMatchBenchmark;
+            sb.AppendLine($"• Ранжування збігається з опорним (Класичний метод Т. Сааті): {(allMatch ? "так" : "ні")}");
 
-        double maxDeltaAcross = result.MaxDeltaPriorityAcrossProfiles;
-        sb.Append($"• Максимальне відхилення пріоритету max |ΔP| відносно опорного: {maxDeltaAcross.ToString("0.0000", UkCulture)}");
+            double maxDeltaAcross = result.MaxDeltaPriorityAcrossProfiles;
+            sb.Append($"• Максимальне відхилення пріоритету max |ΔP| відносно опорного: {maxDeltaAcross.ToString("0.0000", LocalizationService.ActiveCulture)}");
+        }
 
         result.SummaryText = sb.ToString();
 

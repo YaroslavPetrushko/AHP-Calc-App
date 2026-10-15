@@ -1,6 +1,6 @@
-﻿using System.Configuration;
-using System.Data;
 using System.Windows;
+using MAI.Models;
+using MAI.Services;
 
 namespace MAI;
 
@@ -9,4 +9,9 @@ namespace MAI;
 /// </summary>
 public partial class App : Application
 {
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        LocalizationService.ApplyLanguage(AppLanguage.Uk);
+        base.OnStartup(e);
+    }
 }

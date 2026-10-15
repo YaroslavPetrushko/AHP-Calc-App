@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,9 +14,8 @@ namespace MAI.Services;
 /// </summary>
 public static class ProjectStorageService
 {
-    private static readonly CultureInfo UkCulture = new("uk-UA");
+    private static string Fmt(FormattableString fs) => fs.ToString(LocalizationService.ActiveCulture);
 
-    private static string Fmt(FormattableString fs) => fs.ToString(UkCulture);
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -43,10 +41,11 @@ public static class ProjectStorageService
     public static List<string> ValidateProject(AhpProjectData data)
     {
         var errors = new List<string>();
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
 
         if (data == null)
         {
-            errors.Add("Дані проєкту відсутні (null).");
+            errors.Add(isEn ? "Project data is null." : "Дані проєкту відсутні (null).");
             return errors;
         }
 
@@ -54,13 +53,17 @@ public static class ProjectStorageService
         int critCount = data.Criteria?.Count ?? 0;
         if (data.Criteria == null || critCount < 2 || critCount > 10)
         {
-            errors.Add($"Кількість критеріїв повинна бути в межах від 2 до 10 (отримано: {critCount}).");
+            errors.Add(isEn
+                ? $"Criteria count must be between 2 and 10 (received: {critCount})."
+                : $"Кількість критеріїв повинна бути в межах від 2 до 10 (отримано: {critCount}).");
         }
 
         int altCount = data.Alternatives?.Count ?? 0;
         if (data.Alternatives == null || altCount < 2 || altCount > 10)
         {
-            errors.Add($"Кількість альтернатив повинна бути в межах від 2 до 10 (отримано: {altCount}).");
+            errors.Add(isEn
+                ? $"Alternatives count must be between 2 and 10 (received: {altCount})."
+                : $"Кількість альтернатив повинна бути в межах від 2 до 10 (отримано: {altCount}).");
         }
 
         // 2. Унікальні Id критеріїв, унікальні Id альтернатив
@@ -73,7 +76,9 @@ public static class ProjectStorageService
                 .ToList();
             if (duplicateCritIds.Count > 0)
             {
-                errors.Add($"Виявлено дублікати ID критеріїв: {string.Join(", ", duplicateCritIds)}.");
+                errors.Add(isEn
+                    ? $"Duplicate criteria IDs detected: {string.Join(", ", duplicateCritIds)}."
+                    : $"Виявлено дублікати ID критеріїв: {string.Join(", ", duplicateCritIds)}.");
             }
         }
 
@@ -86,7 +91,9 @@ public static class ProjectStorageService
                 .ToList();
             if (duplicateAltIds.Count > 0)
             {
-                errors.Add($"Виявлено дублікати ID альтернатив: {string.Join(", ", duplicateAltIds)}.");
+                errors.Add(isEn
+                    ? $"Duplicate alternative IDs detected: {string.Join(", ", duplicateAltIds)}."
+                    : $"Виявлено дублікати ID альтернатив: {string.Join(", ", duplicateAltIds)}.");
             }
         }
 
@@ -100,7 +107,9 @@ public static class ProjectStorageService
                 .ToList();
             if (duplicateCritNames.Count > 0)
             {
-                errors.Add($"Виявлено повторювані назви критеріїв: {string.Join(", ", duplicateCritNames)}.");
+                errors.Add(isEn
+                    ? $"Duplicate criteria names detected: {string.Join(", ", duplicateCritNames)}."
+                    : $"Виявлено повторювані назви критеріїв: {string.Join(", ", duplicateCritNames)}.");
             }
         }
 
@@ -113,7 +122,9 @@ public static class ProjectStorageService
                 .ToList();
             if (duplicateAltNames.Count > 0)
             {
-                errors.Add($"Виявлено повторювані назви альтернатив: {string.Join(", ", duplicateAltNames)}.");
+                errors.Add(isEn
+                    ? $"Duplicate alternative names detected: {string.Join(", ", duplicateAltNames)}."
+                    : $"Виявлено повторювані назви альтернатив: {string.Join(", ", duplicateAltNames)}.");
             }
         }
 
@@ -122,7 +133,9 @@ public static class ProjectStorageService
         {
             if (data.CriteriaMatrix == null || data.CriteriaMatrix.Length != critCount)
             {
-                errors.Add($"Розмір матриці критеріїв ({data.CriteriaMatrix?.Length ?? 0}) не відповідає кількості критеріїв ({critCount}).");
+                errors.Add(isEn
+                    ? $"Criteria matrix size ({data.CriteriaMatrix?.Length ?? 0}) does not match criteria count ({critCount})."
+                    : $"Розмір матриці критеріїв ({data.CriteriaMatrix?.Length ?? 0}) не відповідає кількості критеріїв ({critCount}).");
             }
             else
             {
@@ -130,7 +143,9 @@ public static class ProjectStorageService
                 {
                     if (data.CriteriaMatrix[i] == null || data.CriteriaMatrix[i].Length != critCount)
                     {
-                        errors.Add($"Рядок {i + 1} матриці критеріїв має некоректний розмір ({data.CriteriaMatrix[i]?.Length ?? 0} замість {critCount}).");
+                        errors.Add(isEn
+                            ? $"Row {i + 1} of criteria matrix has incorrect size ({data.CriteriaMatrix[i]?.Length ?? 0} instead of {critCount})."
+                            : $"Рядок {i + 1} матриці критеріїв має некоректний розмір ({data.CriteriaMatrix[i]?.Length ?? 0} замість {critCount}).");
                         break;
                     }
                 }
@@ -141,7 +156,9 @@ public static class ProjectStorageService
         {
             if (data.AlternativeMatrices == null)
             {
-                errors.Add("Словник матриць порівняння альтернатив відсутній.");
+                errors.Add(isEn
+                    ? "Alternative comparison matrices dictionary is missing."
+                    : "Словник матриць порівняння альтернатив відсутній.");
             }
             else
             {
@@ -149,13 +166,17 @@ public static class ProjectStorageService
                 {
                     if (!data.AlternativeMatrices.TryGetValue(c.Id, out var altMat) || altMat == null)
                     {
-                        errors.Add($"Відсутня матриця альтернатив для критерію «{c.Name}» (ID: {c.Id}).");
+                        errors.Add(isEn
+                            ? $"Alternative matrix for criterion '{c.Name}' (ID: {c.Id}) is missing."
+                            : $"Відсутня матриця альтернатив для критерію «{c.Name}» (ID: {c.Id}).");
                         continue;
                     }
 
                     if (altMat.Length != altCount)
                     {
-                        errors.Add($"Розмір матриці альтернатив для критерію «{c.Name}» ({altMat.Length}) не відповідає кількості альтернатив ({altCount}).");
+                        errors.Add(isEn
+                            ? $"Alternative matrix size for criterion '{c.Name}' ({altMat.Length}) does not match alternatives count ({altCount})."
+                            : $"Розмір матриці альтернатив для критерію «{c.Name}» ({altMat.Length}) не відповідає кількості альтернатив ({altCount}).");
                         continue;
                     }
 
@@ -163,7 +184,9 @@ public static class ProjectStorageService
                     {
                         if (altMat[i] == null || altMat[i].Length != altCount)
                         {
-                            errors.Add($"Рядок {i + 1} матриці альтернатив для критерію «{c.Name}» має некоректний розмір ({altMat[i]?.Length ?? 0} замість {altCount}).");
+                            errors.Add(isEn
+                                ? $"Row {i + 1} of alternative matrix for criterion '{c.Name}' has incorrect size ({altMat[i]?.Length ?? 0} instead of {altCount})."
+                                : $"Рядок {i + 1} матриці альтернатив для критерію «{c.Name}» має некоректний розмір ({altMat[i]?.Length ?? 0} замість {altCount}).");
                             break;
                         }
                     }
@@ -185,7 +208,9 @@ public static class ProjectStorageService
                     double v = data.CriteriaMatrix[i][j];
                     if (double.IsNaN(v) || double.IsInfinity(v) || v < minAllowed || v > maxAllowed)
                     {
-                        errors.Add($"Значення в матриці критеріїв на позиції [{i + 1}, {j + 1}] дорівнює {v}, що виходить за межі шкали Сааті [1/9; 9].");
+                        errors.Add(isEn
+                            ? $"Value in criteria matrix at [{i + 1}, {j + 1}] is {v}, which exceeds Saaty scale [1/9; 9]."
+                            : $"Значення в матриці критеріїв на позиції [{i + 1}, {j + 1}] дорівнює {v}, що виходить за межі шкали Сааті [1/9; 9].");
                     }
                 }
             }
@@ -205,7 +230,9 @@ public static class ProjectStorageService
                             double v = altMat[i][j];
                             if (double.IsNaN(v) || double.IsInfinity(v) || v < minAllowed || v > maxAllowed)
                             {
-                                errors.Add($"Значення в матриці альтернатив для «{c.Name}» на позиції [{i + 1}, {j + 1}] дорівнює {v}, що виходить за межі шкали Сааті [1/9; 9].");
+                                errors.Add(isEn
+                                    ? $"Value in alternative matrix for '{c.Name}' at [{i + 1}, {j + 1}] is {v}, which exceeds Saaty scale [1/9; 9]."
+                                    : $"Значення в матриці альтернатив для «{c.Name}» на позиції [{i + 1}, {j + 1}] дорівнює {v}, що виходить за межі шкали Сааті [1/9; 9].");
                             }
                         }
                     }
@@ -221,19 +248,23 @@ public static class ProjectStorageService
     /// </summary>
     public static AhpProjectData LoadProject(string filePath)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         if (!File.Exists(filePath))
-            throw new FileNotFoundException($"Файл проєкту не знайдено: {filePath}");
+            throw new FileNotFoundException(isEn ? $"Project file not found: {filePath}" : $"Файл проєкту не знайдено: {filePath}");
 
         string json = File.ReadAllText(filePath, Encoding.UTF8);
         var data = JsonSerializer.Deserialize<AhpProjectData>(json, JsonOptions);
 
         if (data == null)
-            throw new InvalidOperationException("Не вдалося десеріалізувати дані проєкту. Файл пошкоджений або порожній.");
+            throw new InvalidOperationException(isEn
+                ? "Failed to deserialize project data. File is corrupted or empty."
+                : "Не вдалося десеріалізувати дані проєкту. Файл пошкоджений або порожній.");
 
         var errors = ValidateProject(data);
         if (errors.Count > 0)
         {
-            throw new InvalidOperationException("Помилки валідації файлу проєкту:\n" + string.Join("\n", errors.Select(e => $"• {e}")));
+            string errHeader = isEn ? "Project file validation errors:\n" : "Помилки валідації файлу проєкту:\n";
+            throw new InvalidOperationException(errHeader + string.Join("\n", errors.Select(e => $"• {e}")));
         }
 
         return data;
@@ -246,73 +277,84 @@ public static class ProjectStorageService
     {
         var sb = new StringBuilder();
         sb.AppendLine("================================================================================");
-        sb.AppendLine("        ЗВІТ ЗА МЕТОДОМ АНАЛІЗУ ІЄРАРХІЙ (МАІ) ТОМАСА СААТІ");
+        sb.AppendLine($"        {LocalizationService.Get("Str_Report_Title")}");
         sb.AppendLine("================================================================================");
-        sb.AppendLine(Fmt($"Дата та час розрахунку: {DateTime.Now:dd.MM.yyyy HH:mm:ss}"));
+        sb.AppendLine(Fmt($"{LocalizationService.Format("Str_Report_CalcDate", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss", LocalizationService.ActiveCulture))}"));
+
         string weightDesc = result.Options.WeightMethod switch
         {
-            WeightCalculationMethod.ColumnNormalization => "Нормалізація стовпців (Column Normalization)",
-            WeightCalculationMethod.GeometricMean => "Геометричне середнє (Geometric Mean / LLSM)",
-            WeightCalculationMethod.PrincipalEigenvector => "Степеневий метод (Power Iteration)",
+            WeightCalculationMethod.ColumnNormalization => LocalizationService.Get("Str_Menu_Weight_ColNorm"),
+            WeightCalculationMethod.GeometricMean => LocalizationService.Get("Str_Menu_Weight_Geometric"),
+            WeightCalculationMethod.PrincipalEigenvector => LocalizationService.Get("Str_Menu_Weight_PowerIteration"),
             _ => result.Options.WeightMethod.ToString()
         };
         string lambdaDesc = AhpCalculationOptions.GetLambdaMethodDescription(result.Options.LambdaMethod);
         string riDesc = result.ActiveRiMode == RiCalculationMode.Empirical
-            ? "Емпірична формула (1.98 · (n-2) / n)"
-            : "Табличні значення Сааті";
+            ? LocalizationService.Get("Str_Menu_Ri_Empirical")
+            : LocalizationService.Get("Str_Menu_Ri_Table");
         string threshDesc = result.Options.ThresholdMode switch
         {
-            ConsistencyThresholdMode.Uniform10Percent => "Фіксований 10% для всіх n",
-            ConsistencyThresholdMode.SaatyAdaptive => "Адаптивний Сааті (5% при n=3, 8% при n=4, 10% при n≥5)",
+            ConsistencyThresholdMode.Uniform10Percent => LocalizationService.Get("Str_Menu_Threshold_Uniform"),
+            ConsistencyThresholdMode.SaatyAdaptive => LocalizationService.Get("Str_Menu_Threshold_Adaptive"),
             _ => result.Options.ThresholdMode.ToString()
         };
 
-        sb.AppendLine($"Параметри конфігурації розрахунку:");
-        sb.AppendLine($"  • Метод обчислення векторів ваг: {weightDesc}");
-        sb.AppendLine($"  • Метод власного значення (λmax): {lambdaDesc}");
-        sb.AppendLine($"  • Індекс випадкової узгодженості (RI): {riDesc}");
-        sb.AppendLine(Fmt($"  • Поріг узгодженості: {threshDesc} (Поріг для критеріїв n={result.Criteria.Count}: {result.CriteriaMatrixResult.Threshold:P0})"));
+        sb.AppendLine(LocalizationService.Get("Str_Report_ConfigParams"));
+        sb.AppendLine($"  • {LocalizationService.Format("Str_Report_WeightMethod", weightDesc)}");
+        sb.AppendLine($"  • {LocalizationService.Format("Str_Report_LambdaMethod", lambdaDesc)}");
+        sb.AppendLine($"  • {LocalizationService.Format("Str_Report_RiMode", riDesc)}");
+        sb.AppendLine(Fmt($"  • {LocalizationService.Format("Str_Report_ThresholdMode", threshDesc, result.Criteria.Count, result.CriteriaMatrixResult.Threshold.ToString("P0", LocalizationService.ActiveCulture))}"));
         sb.AppendLine();
 
-        sb.AppendLine("--- 1. ПІДСУМКОВИЙ РЕЙТИНГ АЛЬТЕРНАТИВ ---");
+        // 1. ПІДСУМКОВИЙ РЕЙТИНГ АЛЬТЕРНАТИВ
+        sb.AppendLine(LocalizationService.Get("Str_Report_Sec1"));
+        string globalPriLabel = LocalizationService.Get("Str_Report_GlobalPriority");
         foreach (var alt in result.RankedAlternatives)
         {
-            sb.AppendLine(Fmt($"#{alt.Rank,-2} {alt.Name,-35} | Глобальний пріоритет: {alt.GlobalPriority:F4} ({alt.GlobalPriority * 100,5:F1}%)"));
+            sb.AppendLine(Fmt($"#{alt.RankText,-3} {alt.Name,-35} | {globalPriLabel}: {alt.GlobalPriority:F4} ({alt.GlobalPriority * 100,5:F1}%)"));
         }
         sb.AppendLine();
 
-        sb.AppendLine("--- 2. ВАГОВІ КОЕФІЦІЄНТИ КРИТЕРІЇВ ---");
+        // 2. ВАГОВІ КОЕФІЦІЄНТИ КРИТЕРІЇВ
+        sb.AppendLine(LocalizationService.Get("Str_Report_Sec2"));
+        string weightLabel = LocalizationService.Get("Str_Report_Weight");
         foreach (var c in result.Criteria)
         {
-            sb.AppendLine(Fmt($"{c.Name,-35} | Вага: {c.Weight:F4} ({c.Weight * 100,5:F1}%)"));
+            sb.AppendLine(Fmt($"{c.Name,-35} | {weightLabel}: {c.Weight:F4} ({c.Weight * 100,5:F1}%)"));
         }
         sb.AppendLine();
 
-        sb.AppendLine("--- 3. ПЕРЕВІРКА УЗГОДЖЕНОСТІ СУДЖЕНЬ (CI, RI, CR) ---");
-        sb.AppendLine(Fmt($"Матриця критеріїв:           λmax={result.CriteriaMatrixResult.LambdaMax:F4}, CI={result.CriteriaMatrixResult.CI:F4}, CR(табл)={result.CriteriaMatrixResult.CRTable:P1}, CR(емп)={result.CriteriaMatrixResult.CREmpirical:P1} [{result.CriteriaMatrixResult.ConsistencyMessage}]"));
+        // 3. ПЕРЕВІРКА УЗГОДЖЕНОСТІ СУДЖЕНЬ
+        sb.AppendLine(LocalizationService.Get("Str_Report_Sec3"));
+        string critMatrixLabel = LocalizationService.Get("Str_Report_CriteriaMatrix");
+        sb.AppendLine(Fmt($"{critMatrixLabel,-29} λmax={result.CriteriaMatrixResult.LambdaMax:F4}, CI={result.CriteriaMatrixResult.CI:F4}, CR(табл)={result.CriteriaMatrixResult.CRTable:P1}, CR(емп)={result.CriteriaMatrixResult.CREmpirical:P1} [{result.CriteriaMatrixResult.ConsistencyMessage}]"));
 
         foreach (var kvp in result.AlternativeMatrixResults)
         {
             var res = kvp.Value;
             var critObj = result.Criteria.FirstOrDefault(c => c.Id == kvp.Key);
             string title = critObj != null ? critObj.Name : res.Name;
-            sb.AppendLine(Fmt($"Альтернативи ({title,-20}): λmax={res.LambdaMax:F4}, CI={res.CI:F4}, CR(табл)={res.CRTable:P1}, CR(емп)={res.CREmpirical:P1} [{res.ConsistencyMessage}]"));
+            string altLabel = LocalizationService.Format("Str_Report_AlternativesFor", title);
+            sb.AppendLine(Fmt($"{altLabel,-29} λmax={res.LambdaMax:F4}, CI={res.CI:F4}, CR(табл)={res.CRTable:P1}, CR(емп)={res.CREmpirical:P1} [{res.ConsistencyMessage}]"));
         }
 
-        sb.AppendLine(Fmt($"Композиція всієї ієрархії:   CIh={result.HierarchicalCI:F4}, CRh(табл)={result.HierarchicalCRTable:P1}, CRh(емп)={result.HierarchicalCREmpirical:P1} [{result.HierarchyConsistencyMessage}]"));
+        string compLabel = LocalizationService.Get("Str_Report_HierarchyComp");
+        sb.AppendLine(Fmt($"{compLabel,-29} CIh={result.HierarchicalCI:F4}, CRh(табл)={result.HierarchicalCRTable:P1}, CRh(емп)={result.HierarchicalCREmpirical:P1} [{result.HierarchyConsistencyMessage}]"));
         if (result.InconsistentMatrices.Count > 0)
         {
-            sb.AppendLine($"УВАГА: Матриці з порушенням порогу: {string.Join(", ", result.InconsistentMatrices)}");
+            sb.AppendLine(LocalizationService.Format("Str_Report_InconsistentWarn", string.Join(", ", result.InconsistentMatrices)));
         }
         sb.AppendLine();
 
-        sb.AppendLine("--- 4. МАТРИЦЯ СИНТЕЗУ (Lij · wj) ---");
-        sb.Append($"{"Альтернатива",-30} | ");
+        // 4. МАТРИЦЯ СИНТЕЗУ
+        sb.AppendLine(LocalizationService.Get("Str_Report_Sec4"));
+        string altCorner = LocalizationService.Get("Str_Main_CornerAlt");
+        sb.Append($"{altCorner,-30} | ");
         foreach (var c in result.Criteria)
         {
             sb.Append($"{c.Name,-16} | ");
         }
-        sb.AppendLine("Підсумок (Pi)");
+        sb.AppendLine(LocalizationService.Get("Str_Report_SummaryPi"));
 
         foreach (var alt in result.RankedAlternatives)
         {
@@ -324,36 +366,39 @@ public static class ProjectStorageService
             }
             sb.AppendLine(Fmt($"{alt.GlobalPriority:F3}"));
         }
-
         sb.AppendLine();
-        sb.AppendLine("--- 5. АНАЛІЗ ЧУТЛИВОСТІ РЕЙТИНГУ ДО ВАГ КРИТЕРІЇВ (SENSITIVITY ANALYSIS) ---");
+
+        // 5. АНАЛІЗ ЧУТЛИВОСТІ
+        sb.AppendLine(LocalizationService.Get("Str_Report_Sec5"));
         foreach (var c in result.Criteria)
         {
             try
             {
                 var sens = AhpCalculator.CalculateSensitivity(result, c.Id);
-                sb.AppendLine(Fmt($"Критерій: {c.Name} (вихідна вага: {c.Weight:P1})"));
+                sb.AppendLine(Fmt($"{LocalizationService.Format("Str_Report_CritInitialWeight", c.Name, c.Weight.ToString("P1", LocalizationService.ActiveCulture))}"));
                 sb.AppendLine($"  {sens.StabilitySummary}");
                 if (sens.LeadershipIntervals.Count > 0)
                 {
-                    sb.AppendLine($"  Інтервали лідерства: {string.Join(" | ", sens.LeadershipIntervals.Select(i => i.DisplayText))}");
+                    sb.AppendLine($"  {LocalizationService.Format("Str_Report_LeadershipIntervals", string.Join(" | ", sens.LeadershipIntervals.Select(i => i.DisplayText)))}");
                 }
                 var leaderIntersections = sens.Intersections.Where(p => p.IsLeadershipChange).ToList();
                 if (leaderIntersections.Count > 0)
                 {
-                    sb.AppendLine("  Критичні точки зміни лідера: " + string.Join("; ", leaderIntersections.Select(p => Fmt($"{p.Alt1Name} = {p.Alt2Name} при t*={p.WeightT:P1} (P*={p.PriorityP:F3})"))));
+                    string atWord = LocalizationService.CurrentLanguage == AppLanguage.En ? "at" : "при";
+                    string pointsStr = string.Join("; ", leaderIntersections.Select(p => Fmt($"{p.Alt1Name} = {p.Alt2Name} {atWord} t*={p.WeightT:P1} (P*={p.PriorityP:F3})")));
+                    sb.AppendLine($"  {LocalizationService.Format("Str_Report_CriticalLeaderPoints", pointsStr)}");
                 }
                 sb.AppendLine();
             }
             catch (Exception ex)
             {
-                sb.AppendLine($"  Чутливість для критерію «{c.Name}» недоступна: {ex.Message}");
+                sb.AppendLine($"  {LocalizationService.Format("Str_Report_SensUnavailable", c.Name, ex.Message)}");
             }
         }
 
         if (!string.IsNullOrWhiteSpace(recommendationText))
         {
-            sb.AppendLine("--- 6. АНАЛІТИЧНИЙ ВИСНОВОК ТА РЕКОМЕНДАЦІЇ ---");
+            sb.AppendLine(LocalizationService.Get("Str_Report_Sec6"));
             sb.AppendLine(recommendationText);
         }
 

@@ -138,7 +138,9 @@ public static class AhpCalculator
 
         if (n > 10 && opts.RiMode == RiCalculationMode.SaatyTable)
         {
-            throw new InvalidOperationException("Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
+            throw new InvalidOperationException(LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Saaty Table RI is defined for n ≤ 10; use empirical formula."
+                : "Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
         }
 
         var result = new MatrixResult
@@ -330,11 +332,16 @@ public static class AhpCalculator
 
         if ((critCount > 10 || altCount > 10) && opts.RiMode == RiCalculationMode.SaatyTable)
         {
-            throw new InvalidOperationException("Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
+            throw new InvalidOperationException(LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Saaty Table RI is defined for n ≤ 10; use empirical formula."
+                : "Табличний RI визначений для n ≤ 10; використайте емпіричну формулу.");
         }
 
         // 1. Розрахунок матриці критеріїв
-        var critResult = CalculateMatrix(criteriaMatrix, "Матриця порівняння критеріїв", opts);
+        string critMatName = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? "Criteria Comparison Matrix"
+            : "Матриця порівняння критеріїв";
+        var critResult = CalculateMatrix(criteriaMatrix, critMatName, opts);
         ahpResult.CriteriaMatrixResult = critResult;
 
         for (int i = 0; i < critCount; i++)
@@ -350,15 +357,22 @@ public static class AhpCalculator
             var crit = criteria[j];
             if (!alternativeMatrices.TryGetValue(crit.Id, out var altMatrix) || altMatrix == null)
             {
-                throw new InvalidOperationException($"Матриця попарних порівнянь альтернатив для критерію «{crit.Name}» ({crit.Id}) відсутня.");
+                throw new InvalidOperationException(LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Pairwise comparison matrix of alternatives for criterion '{crit.Name}' ({crit.Id}) is missing."
+                    : $"Матриця попарних порівнянь альтернатив для критерію «{crit.Name}» ({crit.Id}) відсутня.");
             }
 
             if (altMatrix.Size != altCount)
             {
-                throw new InvalidOperationException($"Розмірність матриці альтернатив для критерію «{crit.Name}» ({altMatrix.Size}) не відповідає кількості альтернатив ({altCount}).");
+                throw new InvalidOperationException(LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Alternatives matrix dimension for criterion '{crit.Name}' ({altMatrix.Size}) does not match alternatives count ({altCount})."
+                    : $"Розмірність матриці альтернатив для критерію «{crit.Name}» ({altMatrix.Size}) не відповідає кількості альтернатив ({altCount}).");
             }
 
-            var altResult = CalculateMatrix(altMatrix, $"Матриця альтернатив за критерієм: {crit.Name}", opts);
+            string altMatName = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Alternatives Matrix for criterion: {crit.Name}"
+                : $"Матриця альтернатив за критерієм: {crit.Name}";
+            var altResult = CalculateMatrix(altMatrix, altMatName, opts);
             ahpResult.AlternativeMatrixResults[crit.Id] = altResult;
 
             for (int i = 0; i < altCount; i++)
@@ -464,7 +478,9 @@ public static class AhpCalculator
     public static CriterionSensitivityResult CalculateSensitivity(AhpResult result, string criterionId)
     {
         var crit = result.Criteria.FirstOrDefault(c => c.Id == criterionId)
-            ?? throw new ArgumentException($"Критерій з ID '{criterionId}' не знайдено в результатах.");
+            ?? throw new ArgumentException(LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Criterion with ID '{criterionId}' not found in results."
+                : $"Критерій з ID '{criterionId}' не знайдено в результатах.");
 
         var res = new CriterionSensitivityResult
         {
@@ -605,8 +621,12 @@ public static class AhpCalculator
                             NewLeaderId = newLeaderId,
                             NewLeaderName = newLeaderName,
                             EventDescription = isLeaderChange
-                                ? $"Зміна лідера (#1): «{oldLeaderName}» ➔ «{newLeaderName}»"
-                                : $"Перетин рейтингів між «{line1.AlternativeName}» та «{line2.AlternativeName}»"
+                                ? (LocalizationService.CurrentLanguage == AppLanguage.En
+                                    ? $"Leadership Change (#1): '{oldLeaderName}' ➔ '{newLeaderName}'"
+                                    : $"Зміна лідера (#1): «{oldLeaderName}» ➔ «{newLeaderName}»")
+                                : (LocalizationService.CurrentLanguage == AppLanguage.En
+                                    ? $"Rank inversion between '{line1.AlternativeName}' and '{line2.AlternativeName}'"
+                                    : $"Перетин рейтингів між «{line1.AlternativeName}» та «{line2.AlternativeName}»")
                         });
                     }
                 }
@@ -720,39 +740,78 @@ public static class AhpCalculator
             double hiPct = hi * 100.0;
             double w0Pct = wk0 * 100.0;
 
-            string marginPart;
-            if (res.LowerMarginPp.HasValue && res.UpperMarginPp.HasValue)
+            if (LocalizationService.CurrentLanguage == AppLanguage.En)
             {
-                marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз, +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
-            }
-            else if (res.LowerMarginPp.HasValue)
-            {
-                marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз.";
-            }
-            else if (res.UpperMarginPp.HasValue)
-            {
-                marginPart = $"Запас стійкості: +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+                string marginPart;
+                if (res.LowerMarginPp.HasValue && res.UpperMarginPp.HasValue)
+                {
+                    marginPart = $"Stability margin: −{res.LowerMarginPp.Value.ToString("0.0", LocalizationService.ActiveCulture)} pp lower, +{res.UpperMarginPp.Value.ToString("0.0", LocalizationService.ActiveCulture)} pp upper.";
+                }
+                else if (res.LowerMarginPp.HasValue)
+                {
+                    marginPart = $"Stability margin: −{res.LowerMarginPp.Value.ToString("0.0", LocalizationService.ActiveCulture)} pp lower.";
+                }
+                else if (res.UpperMarginPp.HasValue)
+                {
+                    marginPart = $"Stability margin: +{res.UpperMarginPp.Value.ToString("0.0", LocalizationService.ActiveCulture)} pp upper.";
+                }
+                else
+                {
+                    marginPart = "Stability margin: absolute across entire range.";
+                }
+
+                string successorPart = "";
+                if (!string.IsNullOrEmpty(res.LowerSuccessorName) && !string.IsNullOrEmpty(res.UpperSuccessorName))
+                {
+                    successorPart = $" Below {loPct.ToString("0.0", LocalizationService.ActiveCulture)}% leader becomes '{res.LowerSuccessorName}', above {hiPct.ToString("0.0", LocalizationService.ActiveCulture)}% — '{res.UpperSuccessorName}'.";
+                }
+                else if (!string.IsNullOrEmpty(res.LowerSuccessorName))
+                {
+                    successorPart = $" Below {loPct.ToString("0.0", LocalizationService.ActiveCulture)}% leader becomes '{res.LowerSuccessorName}'.";
+                }
+                else if (!string.IsNullOrEmpty(res.UpperSuccessorName))
+                {
+                    successorPart = $" Above {hiPct.ToString("0.0", LocalizationService.ActiveCulture)}% leader becomes '{res.UpperSuccessorName}'.";
+                }
+
+                res.StabilitySummary = $"Leader '{currentOptInterval.AlternativeName}' remains optimal while the weight of criterion '{crit.Name}' is within {loPct.ToString("0.0", LocalizationService.ActiveCulture)}%–{hiPct.ToString("0.0", LocalizationService.ActiveCulture)}% (current {w0Pct.ToString("0.0", LocalizationService.ActiveCulture)}%). {marginPart}{successorPart}";
             }
             else
             {
-                marginPart = "Запас стійкості: абсолютний на всьому інтервалі.";
-            }
+                string marginPart;
+                if (res.LowerMarginPp.HasValue && res.UpperMarginPp.HasValue)
+                {
+                    marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз, +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+                }
+                else if (res.LowerMarginPp.HasValue)
+                {
+                    marginPart = $"Запас стійкості: −{res.LowerMarginPp.Value:0.0} п.п. вниз.";
+                }
+                else if (res.UpperMarginPp.HasValue)
+                {
+                    marginPart = $"Запас стійкості: +{res.UpperMarginPp.Value:0.0} п.п. вгору.";
+                }
+                else
+                {
+                    marginPart = "Запас стійкості: абсолютний на всьому інтервалі.";
+                }
 
-            string successorPart = "";
-            if (!string.IsNullOrEmpty(res.LowerSuccessorName) && !string.IsNullOrEmpty(res.UpperSuccessorName))
-            {
-                successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}», вище {hiPct:0.0} % — «{res.UpperSuccessorName}».";
-            }
-            else if (!string.IsNullOrEmpty(res.LowerSuccessorName))
-            {
-                successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}».";
-            }
-            else if (!string.IsNullOrEmpty(res.UpperSuccessorName))
-            {
-                successorPart = $" Вище {hiPct:0.0} % лідером стає «{res.UpperSuccessorName}».";
-            }
+                string successorPart = "";
+                if (!string.IsNullOrEmpty(res.LowerSuccessorName) && !string.IsNullOrEmpty(res.UpperSuccessorName))
+                {
+                    successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}», вище {hiPct:0.0} % — «{res.UpperSuccessorName}».";
+                }
+                else if (!string.IsNullOrEmpty(res.LowerSuccessorName))
+                {
+                    successorPart = $" Нижче {loPct:0.0} % лідером стає «{res.LowerSuccessorName}».";
+                }
+                else if (!string.IsNullOrEmpty(res.UpperSuccessorName))
+                {
+                    successorPart = $" Вище {hiPct:0.0} % лідером стає «{res.UpperSuccessorName}».";
+                }
 
-            res.StabilitySummary = $"Лідер «{currentOptInterval.AlternativeName}» зберігається, поки вага критерію «{crit.Name}» лежить у межах {loPct:0.0} %–{hiPct:0.0} % (поточна {w0Pct:0.0} %). {marginPart}{successorPart}";
+                res.StabilitySummary = $"Лідер «{currentOptInterval.AlternativeName}» зберігається, поки вага критерію «{crit.Name}» лежить у межах {loPct:0.0} %–{hiPct:0.0} % (поточна {w0Pct:0.0} %). {marginPart}{successorPart}";
+            }
         }
         else
         {
@@ -762,7 +821,9 @@ public static class AhpCalculator
             res.UpperMarginPp = null;
             res.LowerSuccessorName = null;
             res.UpperSuccessorName = null;
-            res.StabilitySummary = $"Поточний вибір залишається лідером на всьому діапазоні ваг критерію «{crit.Name}».";
+            res.StabilitySummary = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Current choice remains leader across the entire range of criterion '{crit.Name}' weights."
+                : $"Поточний вибір залишається лідером на всьому діапазоні ваг критерію «{crit.Name}».";
         }
 
         return res;

@@ -30,24 +30,44 @@ public static class PresetService
     /// <summary>
     /// Контрольний набір даних: відеокарти попереднього покоління.
     /// </summary>
-    public static AhpProblemPreset GetReferencePreset()
+    public static AhpProblemPreset GetReferencePreset(AppLanguage? language = null)
     {
-        var criteria = new List<Criterion>
-        {
-            new("P", "Продуктивність", "Чиста обчислювальна потужність, FPS у 3D та растровому рендерингу"),
-            new("F", "Функціональність", "Обсяг VRAM, тензорні блоки, екосистема CUDA під AI/ML"),
-            new("A", "Актуальність", "Актуальність архітектури, апаратна підтримка DLSS/FSR, енкодери AV1"),
-            new("C", "Вартість", "Цінова доступність за даними роздробу України")
-        };
+        var lang = language ?? LocalizationService.CurrentLanguage;
+        bool isEn = lang == AppLanguage.En;
 
-        var alternatives = new List<Alternative>
-        {
-            new("A1", "NVIDIA RTX 3050 8GB", "Базовий рівень минулого покоління, низька ціна"),
-            new("A2", "NVIDIA RTX 3070 8GB", "Висока растрово-графічна потужність, обмеження 8GB"),
-            new("A3", "NVIDIA RTX 4060 Ti 16GB", "Збалансована модель з 16GB VRAM та DLSS 3"),
-            new("A4", "NVIDIA RTX 5060 Ti 16GB", "Нове покоління Blackwell, 16GB VRAM, оптимум для AI/ML"),
-            new("A5", "Radeon RX 7700 XT 12GB", "Альтернатива AMD, 12GB пам'яті, високий чистий FPS")
-        };
+        var criteria = isEn
+            ? new List<Criterion>
+            {
+                new("P", "Performance", "Pure computing power, FPS in 3D and raster rendering"),
+                new("F", "Functionality", "VRAM capacity, tensor cores, CUDA ecosystem for AI/ML"),
+                new("A", "Relevance", "Architecture relevance, DLSS/FSR hardware support, AV1 encoders"),
+                new("C", "Cost", "Retail price affordability in Ukraine")
+            }
+            : new List<Criterion>
+            {
+                new("P", "Продуктивність", "Чиста обчислювальна потужність, FPS у 3D та растровому рендерингу"),
+                new("F", "Функціональність", "Обсяг VRAM, тензорні блоки, екосистема CUDA під AI/ML"),
+                new("A", "Актуальність", "Актуальність архітектури, апаратна підтримка DLSS/FSR, енкодери AV1"),
+                new("C", "Вартість", "Цінова доступність за даними роздробу України")
+            };
+
+        var alternatives = isEn
+            ? new List<Alternative>
+            {
+                new("A1", "NVIDIA RTX 3050 8GB", "Previous generation entry-level, low price"),
+                new("A2", "NVIDIA RTX 3070 8GB", "High raster graphics power, 8GB limitation"),
+                new("A3", "NVIDIA RTX 4060 Ti 16GB", "Balanced model with 16GB VRAM and DLSS 3"),
+                new("A4", "NVIDIA RTX 5060 Ti 16GB", "New Blackwell generation, 16GB VRAM, optimal for AI/ML"),
+                new("A5", "Radeon RX 7700 XT 12GB", "AMD alternative, 12GB memory, high raw FPS")
+            }
+            : new List<Alternative>
+            {
+                new("A1", "NVIDIA RTX 3050 8GB", "Базовий рівень минулого покоління, низька ціна"),
+                new("A2", "NVIDIA RTX 3070 8GB", "Висока растрово-графічна потужність, обмеження 8GB"),
+                new("A3", "NVIDIA RTX 4060 Ti 16GB", "Збалансована модель з 16GB VRAM та DLSS 3"),
+                new("A4", "NVIDIA RTX 5060 Ti 16GB", "Нове покоління Blackwell, 16GB VRAM, оптимум для AI/ML"),
+                new("A5", "Radeon RX 7700 XT 12GB", "Альтернатива AMD, 12GB пам'яті, високий чистий FPS")
+            };
 
         var critLabels = criteria.Select(c => c.Name).ToList();
         var altLabels = alternatives.Select(a => a.Name).ToList();
@@ -121,8 +141,12 @@ public static class PresetService
 
         return new AhpProblemPreset
         {
-            Name = "Контрольний набір №1: відеокарти (попереднє покоління)",
-            Description = "Вибір дискретної відеокарти для студента-програміста: 4 критерії, 5 альтернатив.",
+            Name = isEn
+                ? "Reference Set #1: Graphics Cards (Previous Gen)"
+                : "Контрольний набір №1: відеокарти (попереднє покоління)",
+            Description = isEn
+                ? "Discrete graphics card selection for a software engineering student: 4 criteria, 5 alternatives."
+                : "Вибір дискретної відеокарти для студента-програміста: 4 критерії, 5 альтернатив.",
             Criteria = criteria,
             Alternatives = alternatives,
             CriteriaMatrix = critMatrix,
@@ -133,9 +157,59 @@ public static class PresetService
     /// <summary>
     /// Набір №2: відеокарти 2026 (RTX 50 / RX 9000) — завантажується з вбудованого ресурсу gpu_2026.ahp.json.
     /// </summary>
-    public static AhpProblemPreset GetGpu2026Preset()
+    public static AhpProblemPreset GetGpu2026Preset(AppLanguage? language = null)
     {
-        return LoadPresetFromResource("gpu_2026.ahp.json");
+        var preset = LoadPresetFromResource("gpu_2026.ahp.json");
+        var lang = language ?? LocalizationService.CurrentLanguage;
+        if (lang == AppLanguage.En)
+        {
+            preset.Name = "Dataset #2: Graphics Cards 2026 (RTX 50 / RX 9000)";
+            preset.Description = "Comprehensive choice of modern graphics card: RTX 50 Blackwell vs AMD RX 9000 RDNA 4. 4 criteria, 5 alternatives.";
+
+            var enCritNames = new Dictionary<string, (string Name, string Desc)>
+            {
+                ["P"] = ("Performance", "Pure computing power, gaming FPS in 1440p/4K, ray tracing and raster rendering"),
+                ["F"] = ("Functionality", "VRAM capacity, memory bus width, AI/ML tensor performance, CUDA/ROCm software stack"),
+                ["A"] = ("Relevance", "Architecture modernness, PCIe 5.0, DisplayPort 2.1, DLSS 4 / FSR 4 frame generation"),
+                ["C"] = ("Cost", "Retail market price, availability and price-to-performance ratio")
+            };
+
+            foreach (var c in preset.Criteria)
+            {
+                if (enCritNames.TryGetValue(c.Id, out var info))
+                {
+                    c.Name = info.Name;
+                    c.Description = info.Desc;
+                }
+            }
+
+            var enAltNames = new Dictionary<string, (string Name, string Desc)>
+            {
+                ["A1"] = ("RTX 5060 8GB", "Mid-range Blackwell architecture with 8GB GDDR7, entry-level gaming and everyday tasks"),
+                ["A2"] = ("RTX 5060 Ti 16GB", "Mid-range Blackwell architecture with 16GB GDDR7, optimal for 1440p and local neural network inference"),
+                ["A3"] = ("RTX 5070 12GB", "High graphics performance, GDDR7, DLSS 4, optimal for demanding gaming workloads"),
+                ["A4"] = ("RX 9060 XT 16GB", "Competitive price, 16GB VRAM, solid raster FPS and RDNA 4 ray tracing acceleration"),
+                ["A5"] = ("RX 9070 16GB", "Direct RTX 5070 competitor with 16GB memory and high compute throughput")
+            };
+
+            foreach (var a in preset.Alternatives)
+            {
+                if (enAltNames.TryGetValue(a.Id, out var info))
+                {
+                    a.Name = info.Name;
+                    a.Description = info.Desc;
+                }
+            }
+
+            preset.CriteriaMatrix.Labels = preset.Criteria.Select(c => c.Name).ToList();
+            var altLabels = preset.Alternatives.Select(a => a.Name).ToList();
+            foreach (var mat in preset.AlternativeMatrices.Values)
+            {
+                mat.Labels = new List<string>(altLabels);
+            }
+        }
+
+        return preset;
     }
 
     /// <summary>
@@ -215,21 +289,26 @@ public static class PresetService
     /// <summary>
     /// Створення чистого шаблону для довільної задачі користувача.
     /// </summary>
-    public static AhpProblemPreset CreateEmptyPreset(int criteriaCount = 3, int alternativesCount = 3)
+    public static AhpProblemPreset CreateEmptyPreset(int criteriaCount = 3, int alternativesCount = 3, AppLanguage? language = null)
     {
+        var lang = language ?? LocalizationService.CurrentLanguage;
+        bool isEn = lang == AppLanguage.En;
+
         int cCount = Math.Clamp(criteriaCount, 2, 10);
         int aCount = Math.Clamp(alternativesCount, 2, 10);
 
         var criteria = new List<Criterion>();
         for (int i = 0; i < cCount; i++)
         {
-            criteria.Add(new Criterion($"C{i + 1}", $"Критерій {i + 1}", ""));
+            string critName = isEn ? $"Criterion {i + 1}" : $"Критерій {i + 1}";
+            criteria.Add(new Criterion($"C{i + 1}", critName, ""));
         }
 
         var alternatives = new List<Alternative>();
         for (int i = 0; i < aCount; i++)
         {
-            alternatives.Add(new Alternative($"A{i + 1}", $"Альтернатива {i + 1}", ""));
+            string altName = isEn ? $"Alternative {i + 1}" : $"Альтернатива {i + 1}";
+            alternatives.Add(new Alternative($"A{i + 1}", altName, ""));
         }
 
         var critLabels = criteria.Select(c => c.Name).ToList();
@@ -245,8 +324,10 @@ public static class PresetService
 
         return new AhpProblemPreset
         {
-            Name = "Нова задача",
-            Description = "Чистий шаблон для власної постановки задачі багатокритеріального вибору.",
+            Name = isEn ? "New Problem" : "Нова задача",
+            Description = isEn
+                ? "Clean template for custom multi-criteria decision making problem."
+                : "Чистий шаблон для власної постановки задачі багатокритеріального вибору.",
             Criteria = criteria,
             Alternatives = alternatives,
             CriteriaMatrix = critMatrix,

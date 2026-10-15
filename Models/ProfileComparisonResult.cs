@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using MAI.Services;
 
 namespace MAI.Models;
 
@@ -25,8 +25,6 @@ public class ProfileComparisonItem
 /// </summary>
 public class ProfileComparisonResult
 {
-    private static readonly CultureInfo UkCulture = new("uk-UA");
-
     public List<Criterion> Criteria { get; set; } = new();
     public List<Alternative> Alternatives { get; set; } = new();
     public List<ProfileComparisonItem> Profiles { get; set; } = new();
@@ -43,8 +41,8 @@ public class ProfileComparisonResult
 
     public string SummaryText { get; set; } = string.Empty;
 
-    private static string FormatNumber(double val) => val.ToString("0.0000", UkCulture);
-    private static string FormatPercent(double val) => (val * 100.0).ToString("0.00", UkCulture) + " %";
+    private static string FormatNumber(double val) => val.ToString("0.0000", LocalizationService.ActiveCulture);
+    private static string FormatPercent(double val) => (val * 100.0).ToString("0.00", LocalizationService.ActiveCulture) + " %";
 
     /// <summary>
     /// Генерація 3-х структурованих звітних таблиць порівняння профілів.
@@ -54,7 +52,8 @@ public class ProfileComparisonResult
         var tables = new List<ReportTable>();
 
         // 1. Ваги критеріїв за профілями
-        var critHeaders = new[] { "Критерій" }.Concat(Profiles.Select(p => p.ProfileName)).ToArray();
+        string critColName = LocalizationService.Get("Str_Comp_ColCriterion");
+        var critHeaders = new[] { critColName }.Concat(Profiles.Select(p => p.ProfileName)).ToArray();
         var critRows = new List<string[]>();
         for (int i = 0; i < Criteria.Count; i++)
         {
@@ -71,14 +70,21 @@ public class ProfileComparisonResult
             }
             critRows.Add(row);
         }
-        tables.Add(new ReportTable("Порівняння ваг критеріїв за профілями", critHeaders, critRows));
+        string table1Title = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? "Comparison of Criteria Weights Across Profiles"
+            : "Порівняння ваг критеріїв за профілями";
+        tables.Add(new ReportTable(table1Title, critHeaders, critRows));
 
         // 2. Глобальні пріоритети та ранги альтернатив за профілями
-        var altHeadersList = new List<string> { "Альтернатива" };
+        string altColName = LocalizationService.Get("Str_Comp_ColAlternative");
+        string priorityLabel = LocalizationService.CurrentLanguage == AppLanguage.En ? "Priority" : "Пріоритет";
+        string rankLabel = LocalizationService.CurrentLanguage == AppLanguage.En ? "Rank" : "Ранг";
+
+        var altHeadersList = new List<string> { altColName };
         foreach (var prof in Profiles)
         {
-            altHeadersList.Add($"{prof.ProfileName} (Пріоритет)");
-            altHeadersList.Add($"{prof.ProfileName} (Ранг)");
+            altHeadersList.Add($"{prof.ProfileName} ({priorityLabel})");
+            altHeadersList.Add($"{prof.ProfileName} ({rankLabel})");
         }
         var altRows = new List<string[]>();
         for (int i = 0; i < Alternatives.Count; i++)
@@ -97,15 +103,19 @@ public class ProfileComparisonResult
             }
             altRows.Add(row);
         }
-        tables.Add(new ReportTable("Порівняння глобальних пріоритетів та рангів альтернатив за профілями", altHeadersList.ToArray(), altRows));
+        string table2Title = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? "Comparison of Global Priorities and Ranks Across Profiles"
+            : "Порівняння глобальних пріоритетів та рангів альтернатив за профілями";
+        tables.Add(new ReportTable(table2Title, altHeadersList.ToArray(), altRows));
 
         // 3. Показники узгодженості: lambda_max і CR матриці критеріїв, CR кожної матриці альтернатив, CRh
-        var metricHeaders = new[] { "Показник" }.Concat(Profiles.Select(p => p.ProfileName)).ToArray();
+        string indicatorColName = LocalizationService.Get("Str_Report_Indicator");
+        var metricHeaders = new[] { indicatorColName }.Concat(Profiles.Select(p => p.ProfileName)).ToArray();
         var metricRows = new List<string[]>();
 
         // Рядок lambda_max критеріїв
         var rowLambda = new string[Profiles.Count + 1];
-        rowLambda[0] = "λmax (матриця критеріїв)";
+        rowLambda[0] = LocalizationService.CurrentLanguage == AppLanguage.En ? "λmax (criteria matrix)" : "λmax (матриця критеріїв)";
         for (int pIdx = 0; pIdx < Profiles.Count; pIdx++)
         {
             rowLambda[pIdx + 1] = FormatNumber(Profiles[pIdx].Result.CriteriaMatrixResult?.LambdaMax ?? 0.0);
@@ -114,7 +124,7 @@ public class ProfileComparisonResult
 
         // Рядок CR критеріїв
         var rowCrCrit = new string[Profiles.Count + 1];
-        rowCrCrit[0] = "CR (матриця критеріїв)";
+        rowCrCrit[0] = LocalizationService.CurrentLanguage == AppLanguage.En ? "CR (criteria matrix)" : "CR (матриця критеріїв)";
         for (int pIdx = 0; pIdx < Profiles.Count; pIdx++)
         {
             rowCrCrit[pIdx + 1] = FormatPercent(Profiles[pIdx].Result.CriteriaMatrixResult?.ActiveCR ?? 0.0);
@@ -125,7 +135,7 @@ public class ProfileComparisonResult
         foreach (var c in Criteria)
         {
             var rowCrAlt = new string[Profiles.Count + 1];
-            rowCrAlt[0] = $"CR (альтернативи за «{c.Name}»)";
+            rowCrAlt[0] = LocalizationService.CurrentLanguage == AppLanguage.En ? $"CR (alternatives for '{c.Name}')" : $"CR (альтернативи за «{c.Name}»)";
             for (int pIdx = 0; pIdx < Profiles.Count; pIdx++)
             {
                 var prof = Profiles[pIdx];
@@ -139,14 +149,17 @@ public class ProfileComparisonResult
 
         // Рядок CRh
         var rowCrh = new string[Profiles.Count + 1];
-        rowCrh[0] = "CRh (узгодженість ієрархії)";
+        rowCrh[0] = LocalizationService.CurrentLanguage == AppLanguage.En ? "CRh (hierarchy consistency)" : "CRh (узгодженість ієрархії)";
         for (int pIdx = 0; pIdx < Profiles.Count; pIdx++)
         {
             rowCrh[pIdx + 1] = FormatPercent(Profiles[pIdx].Result.ActiveHierarchicalCR);
         }
         metricRows.Add(rowCrh);
 
-        tables.Add(new ReportTable("Порівняння показників узгодженості за профілями", metricHeaders, metricRows, SummaryText));
+        string table3Title = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? "Comparison of Consistency Indicators Across Profiles"
+            : "Порівняння показників узгодженості за профілями";
+        tables.Add(new ReportTable(table3Title, metricHeaders, metricRows, SummaryText));
 
         return tables;
     }

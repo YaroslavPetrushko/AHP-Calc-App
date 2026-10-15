@@ -169,6 +169,14 @@ public class AhpCalculationOptions
     {
         get
         {
+            if (Services.LocalizationService.CurrentLanguage == AppLanguage.En)
+            {
+                if (IsMethodicalProfile) return "Methodical Guidelines";
+                if (IsClassicSaatyProfile) return "Classic T. Saaty Method";
+                if (IsGeometricMeanProfile) return "Classic, Geometric Mean";
+                return "Custom Profile";
+            }
+
             if (IsMethodicalProfile) return "Метод. рекомендації";
             if (IsClassicSaatyProfile) return "Класичний метод Т. Сааті";
             if (IsGeometricMeanProfile) return "Класичний, геометричне середнє";
@@ -183,6 +191,14 @@ public class AhpCalculationOptions
     {
         get
         {
+            if (Services.LocalizationService.CurrentLanguage == AppLanguage.En)
+            {
+                if (IsMethodicalProfile) return "Methodical";
+                if (IsClassicSaatyProfile) return "Classic";
+                if (IsGeometricMeanProfile) return "Geom. Mean";
+                return "Custom";
+            }
+
             if (IsMethodicalProfile) return "Методичний";
             if (IsClassicSaatyProfile) return "Класичний";
             if (IsGeometricMeanProfile) return "Геом. середнє";
@@ -207,18 +223,32 @@ public class AhpCalculationOptions
         if (ThresholdMode == ConsistencyThresholdMode.Uniform10Percent) return "CR <= 10%";
         return n switch
         {
-            <= 2 => "CR = 0% (ідеально)",
+            <= 2 => Services.LocalizationService.CurrentLanguage == AppLanguage.En ? "CR = 0% (ideal)" : "CR = 0% (ідеально)",
             3 => "CR <= 5%",
             4 => "CR <= 8%",
             _ => "CR <= 10%"
         };
     }
 
-    public static string GetLambdaMethodDescription(LambdaCalculationMethod method) => method switch
+    public static string GetLambdaMethodDescription(LambdaCalculationMethod method)
     {
-        LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (за метод. реком.)",
-        LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
-        LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
-        _ => method.ToString()
-    };
+        if (Services.LocalizationService.CurrentLanguage == AppLanguage.En)
+        {
+            return method switch
+            {
+                LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(ColSum_j · w_j) (Methodical Guidelines)",
+                LambdaCalculationMethod.RowRatioMean => "λmax = Average (A·w)_i / w_i",
+                LambdaCalculationMethod.ExactEigenvalue => "λmax — Principal Eigenvalue (Power Iteration)",
+                _ => method.ToString()
+            };
+        }
+
+        return method switch
+        {
+            LambdaCalculationMethod.ColumnSumProduct => "λmax = Σ(сума j-го стовпця · wⱼ) (за метод. реком.)",
+            LambdaCalculationMethod.RowRatioMean => "λmax = середнє (A·w)ᵢ / wᵢ",
+            LambdaCalculationMethod.ExactEigenvalue => "λmax — головне власне число (степеневий метод)",
+            _ => method.ToString()
+        };
+    }
 }

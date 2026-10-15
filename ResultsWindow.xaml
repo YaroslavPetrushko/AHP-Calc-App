@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MAI"
         mc:Ignorable="d"
-        Title="Результати багатокритеріального аналізу МАІ (Сааті)" 
+        Title="{DynamicResource Str_Results_Title}" 
         Height="750" Width="1100"
         MinHeight="620" MinWidth="960"
         WindowStartupLocation="CenterOwner"
@@ -28,8 +28,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="Підсумкові результати методу аналізу ієрархій" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource BannerTitle}"/>
-                    <TextBlock x:Name="TxtBannerSubtitle" Text="Ієрархічний синтез за шкалою Сааті: Мета → Критерії → Альтернативи" FontSize="13" Foreground="{DynamicResource BannerSubtitle}" Margin="0,3,0,0"/>
+                    <TextBlock Text="{DynamicResource Str_Results_BannerTitle}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource BannerTitle}"/>
+                    <TextBlock x:Name="TxtBannerSubtitle" Text="{DynamicResource Str_Results_BannerSubtitle}" FontSize="13" Foreground="{DynamicResource BannerSubtitle}" Margin="0,3,0,0"/>
                 </StackPanel>
 
                 <!-- Winner & Consistency Badges -->
@@ -37,7 +37,7 @@
                     <!-- Consistency Badge -->
                     <Border x:Name="BadgeConsistency" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="8" Padding="14,8" Margin="0,0,10,0">
                         <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="Ієрархічна узгодженість" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource Str_Results_HierarchicalCR}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="TxtHierarchicalCR" Text="CR = 1.9%" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PillConsistentFg}" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -45,7 +45,7 @@
                     <!-- Winner Badge -->
                     <Border x:Name="BadgeWinner" Background="{DynamicResource PrimaryBlue}" CornerRadius="8" Padding="16,8">
                         <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="🏆 Оптимальний вибір" FontSize="11" FontWeight="SemiBold" Foreground="#EFF6FF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource Str_Results_OptimalChoice}" FontSize="11" FontWeight="SemiBold" Foreground="#EFF6FF" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="TxtWinnerName" Text="Альтернатива 1" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -56,14 +56,17 @@
         <!-- Tabs: Compact Results vs Detailed Analysis -->
         <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,0,0,12">
             <!-- TAB 1: Компактні результати -->
-            <TabItem Header="📊 Компактний підсумок (Рейтинг)">
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="{DynamicResource Str_Results_TabSummary}"/>
+                </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,2,0,0">
                     <StackPanel>
                         <!-- Card 1: Leaderboard Table -->
                         <Border x:Name="CardRankingContainer" Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Підсумковий рейтинг альтернатив" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                <TextBlock Text="Ранжування виконано за глобальними пріоритетами ієрархічного синтезу (Pi = Σ Lij · wj)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,14"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardRankingsTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardRankingsDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,14"/>
 
                                 <ItemsControl x:Name="ListRankings">
                                     <ItemsControl.ItemTemplate>
@@ -113,8 +116,8 @@
                         <!-- Card 2: Criteria Weights Distribution -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Розподіл вагових коефіцієнтів критеріїв" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                <TextBlock Text="Важливість критеріїв визначено на основі нормалізованої матриці попарних порівнянь." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardCriteriaTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardCriteriaDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
 
                                 <ItemsControl x:Name="ListCriteriaCards">
                                     <ItemsControl.ItemsPanel>
@@ -146,7 +149,7 @@
                         <!-- Card 3: Analytical Conclusion / Recommendation -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Висновки та аналітичні рекомендації" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,6"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardConclusionTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,6"/>
                                 <TextBlock x:Name="TxtRecommendation" Text="Текст аналітичного висновку..." FontSize="13" LineHeight="20" Foreground="{DynamicResource TextDark}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
@@ -155,14 +158,17 @@
             </TabItem>
 
             <!-- TAB 2: Детальний аналіз та матриці -->
-            <TabItem Header="🔬 Детальний аналіз та матриці">
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="{DynamicResource Str_Results_TabDetails}"/>
+                </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,2,0,0">
                     <StackPanel>
                         <!-- Synthesis Matrix Card -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Матриця ієрархічного синтезу (P = L · w)" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                <TextBlock Text="Для кожної альтернативи наведено локальні пріоритети за критеріями (Lij) та їхній зважений внесок у підсумковий бал (Lij · wj)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardSynthesisTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardSynthesisDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
 
                                 <DataGrid x:Name="GridSynthesis" AutoGenerateColumns="True" MaxHeight="300" HeadersVisibility="Column" SelectionMode="Single"
                                           IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
@@ -174,23 +180,63 @@
                         <!-- Consistency Table Card -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Показники узгодженості суджень (λmax, CI, RI, CR)" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                <TextBlock Text="Оцінка логічної несуперечливості експертних оцінок. Згідно із методикою Сааті, прийнятною вважається умова CR ≤ 0.10 (10%)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardConsistencyTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Results_CardConsistencyDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
 
                                 <DataGrid x:Name="GridConsistency" AutoGenerateColumns="False" MaxHeight="300" HeadersVisibility="Column" SelectionMode="Single"
                                           IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Матриця порівнянь" Binding="{Binding MatrixName}" Width="190"/>
-                                        <DataGridTextColumn Header="Розмір (n)" Binding="{Binding Dimension}" Width="75"/>
-                                        <DataGridTextColumn Header="λmax" Binding="{Binding LambdaMax}" Width="75"/>
-                                        <DataGridTextColumn Header="CI" Binding="{Binding CI}" Width="75"/>
-                                        <DataGridTextColumn Header="RI (табл)" Binding="{Binding RITable}" Width="75"/>
-                                        <DataGridTextColumn Header="RI (емп)" Binding="{Binding RIEmpirical}" Width="75"/>
-                                        <DataGridTextColumn Header="CR (табл)" Binding="{Binding CRTable}" Width="105"/>
-                                        <DataGridTextColumn Header="CR (емп)" Binding="{Binding CREmpirical}" Width="105"/>
-                                        <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="110"/>
-                                        <DataGridTextColumn Header="Вердикт" Binding="{Binding Verdict}" Width="90"/>
+                                        <DataGridTextColumn Binding="{Binding MatrixName}" Width="190">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColMatrix}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Dimension}" Width="75">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColDimension}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding LambdaMax}" Width="75">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColLambda}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding CI}" Width="75">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColCI}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding RITable}" Width="75">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColRITable}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding RIEmpirical}" Width="75">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColRIEmp}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding CRTable}" Width="105">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColCRTable}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding CREmpirical}" Width="105">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColCREmp}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Status}" Width="110">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColStatus}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Verdict}" Width="90">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Results_ColVerdict}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>
@@ -206,8 +252,8 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="Детальний перегляд розрахунку матриць" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                                        <TextBlock Text="Вихідна матриця попарних порівнянь, нормалізована матриця та вектор пріоритетів." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                        <TextBlock Text="{DynamicResource Str_Results_CardMatrixViewTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="{DynamicResource Str_Results_CardMatrixViewDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
                                     <ComboBox Grid.Column="1" x:Name="ComboMatrixSelector" Width="260" Height="30" SelectionChanged="ComboMatrixSelector_SelectionChanged" VerticalAlignment="Center"/>
@@ -230,13 +276,13 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                                    <TextBlock Text="Експорт результатів дослідження" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextDark}"/>
-                                    <TextBlock Text="Формування повного текстового звіту з усіма коефіцієнтами для звіту або документації." FontSize="12" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{DynamicResource Str_Results_CardExportTitle}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextDark}"/>
+                                    <TextBlock Text="{DynamicResource Str_Results_CardExportDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Content="📋 Копіювати звіт у буфер" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnCopyReport_Click"/>
-                                    <Button Content="💾 Зберегти звіт у TXT" Style="{StaticResource SecondaryBtnStyle}" Click="BtnSaveReport_Click"/>
+                                    <Button Content="{DynamicResource Str_Results_BtnCopyReport}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnCopyReport_Click"/>
+                                    <Button Content="{DynamicResource Str_Results_BtnSaveReport}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnSaveReport_Click"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -245,7 +291,10 @@
             </TabItem>
 
             <!-- TAB 3: Аналіз чутливості (Sensitivity Analysis) -->
-            <TabItem Header="📈 Аналіз чутливості (Sensitivity)">
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="{DynamicResource Str_Results_TabSensitivity}"/>
+                </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,2,0,0">
                     <StackPanel>
                         <!-- Card 1: Criterion Selection & Interactive Slider Controls -->
@@ -258,13 +307,13 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Дослідження стійкості рейтингу до ваги критерію" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="Моделювання варіювання ваги обраного критерію t ∈ [0, 1] із пропорційним масштабуванням решти критеріїв: Pi(t) = αi · t + βi." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                        <TextBlock Text="{DynamicResource Str_Sens_Title}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{DynamicResource Str_Sens_Desc}" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
                                     <!-- Criterion Selector ComboBox -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Критерій:" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextDark}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{DynamicResource Str_Sens_CritLabel}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextDark}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <ComboBox x:Name="ComboSensitivityCriterion" Width="240" Height="32" SelectionChanged="ComboSensitivityCriterion_SelectionChanged" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -292,7 +341,7 @@
                                     <Slider Grid.Column="1" x:Name="SliderSensitivityWeight" Minimum="0" Maximum="100" SmallChange="1" LargeChange="5" Value="27.8" TickFrequency="10" IsSnapToTickEnabled="False" VerticalAlignment="Center" ValueChanged="SliderSensitivityWeight_ValueChanged"/>
 
                                     <!-- Reset to Baseline Button -->
-                                    <Button Grid.Column="2" x:Name="BtnResetSensWeight" Content="🔄 Скинути до базової" Style="{StaticResource SecondaryBtnStyle}" Margin="12,0,0,0" Padding="12,4" Height="32" Click="BtnResetSensWeight_Click"/>
+                                    <Button Grid.Column="2" x:Name="BtnResetSensWeight" Content="{DynamicResource Str_Sens_BtnReset}" Style="{StaticResource SecondaryBtnStyle}" Margin="12,0,0,0" Padding="12,4" Height="32" Click="BtnResetSensWeight_Click"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -312,7 +361,7 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Графік чутливості пріоритетів Pi(t)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Grid.Column="0" Text="{DynamicResource Str_Sens_PlotTitle}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock Grid.Column="1" x:Name="TxtSensPlotLeader" Text="Поточний лідер: RTX 5060 Ti" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}"/>
                                     </Grid>
 
@@ -345,8 +394,8 @@
                             <!-- Right: Dynamic Real-time Ranking at current t -->
                             <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="Рейтинг альтернатив при поточному t" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,2"/>
-                                    <TextBlock Text="Динамічна зміна позицій при поточному значенні ваги." FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="{DynamicResource Str_Sens_DynamicRankTitle}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Sens_DynamicRankDesc}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <ItemsControl x:Name="ListSensDynamicRankings">
                                         <ItemsControl.ItemTemplate>
@@ -381,10 +430,10 @@
                         <!-- Card 3: Leadership Intervals & Analytical Robustness Assessment -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Аналіз зон лідерства та стійкості вибору (Robustness Assessment)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Sens_RobustnessTitle}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
                                 <TextBlock x:Name="TxtSensStabilityComment" Text="Оцінка стабільності оптимального вибору..." FontSize="13" LineHeight="19" Foreground="{DynamicResource TextDark}" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
-                                <TextBlock Text="Діапазони домінування альтернатив на відрізку [0; 1]:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,6"/>
+                                <TextBlock Text="{DynamicResource Str_Sens_DominanceRanges}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,6"/>
                                 <ItemsControl x:Name="ListSensLeadershipIntervals">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -405,19 +454,43 @@
                         <!-- Card 4: Critical Intersection Points Table -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Критичні точки перетину функцій (точки інверсії ранжиру)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                <TextBlock Text="Значення ваги критерію t*, при яких дві альтернативи мають однаковий глобальний пріоритет (α1 · t + β1 = α2 · t + β2)." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                <TextBlock Text="{DynamicResource Str_Sens_CriticalPointsTitle}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Sens_CriticalPointsDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                 <DataGrid x:Name="GridCriticalPoints" AutoGenerateColumns="False" MaxHeight="220" HeadersVisibility="Column" SelectionMode="Single"
                                           IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Альтернатива 1" Binding="{Binding Alt1Name}" Width="160"/>
-                                        <DataGridTextColumn Header="Альтернатива 2" Binding="{Binding Alt2Name}" Width="160"/>
-                                        <DataGridTextColumn Header="Критична вага t*" Binding="{Binding WeightTText}" Width="120"/>
-                                        <DataGridTextColumn Header="Пріоритет P*" Binding="{Binding PriorityPText}" Width="110"/>
-                                        <DataGridTextColumn Header="Тип інверсії" Binding="{Binding ChangeTypeText}" Width="150"/>
-                                        <DataGridTextColumn Header="Опис" Binding="{Binding EventDescription}" Width="Auto"/>
+                                        <DataGridTextColumn Binding="{Binding Alt1Name}" Width="160">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Sens_ColAlt1}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Alt2Name}" Width="160">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Sens_ColAlt2}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding WeightTText}" Width="120">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Sens_ColWeightT}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding PriorityPText}" Width="110">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Sens_ColPriorityP}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding ChangeTypeText}" Width="150">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Sens_ColChangeType}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding EventDescription}" Width="Auto">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Sens_ColDesc}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>
@@ -430,38 +503,38 @@
         <!-- Bottom Action Bar -->
         <Border Grid.Row="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14,10">
             <Grid>
-                <TextBlock x:Name="TxtResultsStatus" Text="Розрахунок виконано математичним рушієм AHP (.NET 10)" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtResultsStatus" Text="{DynamicResource Str_Results_FooterStatus}" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="BtnCompareProfiles" Content="⚖️ Порівняти профілі" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,10,0" Click="BtnCompareProfiles_Click"/>
-                    <Button x:Name="BtnExport" Content="📥 Експорт таблиць та графіків ▾" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,10,0" Click="BtnExport_Click">
+                    <Button x:Name="BtnCompareProfiles" Content="{DynamicResource Str_Results_BtnCompareProfiles}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,10,0" Click="BtnCompareProfiles_Click"/>
+                    <Button x:Name="BtnExport" Content="{DynamicResource Str_Results_BtnExport}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,10,0" Click="BtnExport_Click">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="ExportContextMenu">
-                                <MenuItem Header="_Таблиці у CSV (Excel)" Click="MenuExportCsv_Click">
+                                <MenuItem Header="{DynamicResource Str_Results_MenuExportCsv}" Click="MenuExportCsv_Click">
                                     <MenuItem.Icon>
                                         <TextBlock Text="📊" FontSize="13" VerticalAlignment="Center"
                                                    HorizontalAlignment="Center" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="_Таблиці у Markdown (.md)" Click="MenuExportMarkdown_Click">
+                                <MenuItem Header="{DynamicResource Str_Results_MenuExportMd}" Click="MenuExportMarkdown_Click">
                                     <MenuItem.Icon>
                                         <TextBlock Text="📝" FontSize="13" VerticalAlignment="Center"
                                                    HorizontalAlignment="Center" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="_Таблиці у HTML (Word)" Click="MenuExportHtml_Click">
+                                <MenuItem Header="{DynamicResource Str_Results_MenuExportHtml}" Click="MenuExportHtml_Click">
                                     <MenuItem.Icon>
                                         <TextBlock Text="🌐" FontSize="13" VerticalAlignment="Center"
                                                    HorizontalAlignment="Center" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator/>
-                                <MenuItem Header="_Графік рейтингу (PNG, 192 DPI)" Click="MenuExportRankingPng_Click">
+                                <MenuItem Header="{DynamicResource Str_Results_MenuExportRankPng}" Click="MenuExportRankingPng_Click">
                                     <MenuItem.Icon>
                                         <TextBlock Text="🖼️" FontSize="13" VerticalAlignment="Center"
                                                    HorizontalAlignment="Center" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="_Графік чутливості (PNG, 192 DPI)" Click="MenuExportSensitivityPng_Click">
+                                <MenuItem Header="{DynamicResource Str_Results_MenuExportSensPng}" Click="MenuExportSensitivityPng_Click">
                                     <MenuItem.Icon>
                                         <TextBlock Text="📈" FontSize="13" VerticalAlignment="Center"
                                                    HorizontalAlignment="Center" />
@@ -470,7 +543,7 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <Button Content="Закрити вікно" Style="{StaticResource PrimaryBtnStyle}" Click="BtnClose_Click"/>
+                    <Button Content="{DynamicResource Str_Results_BtnClose}" Style="{StaticResource PrimaryBtnStyle}" Click="BtnClose_Click"/>
                 </StackPanel>
             </Grid>
         </Border>

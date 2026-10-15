@@ -47,12 +47,19 @@ public class SensitivityDynamicRankingDisplayItem
     public double OriginalPriority { get; set; }
     public double DeltaPriority => CurrentPriority - OriginalPriority;
     public string PriorityPercentText => ResultsWindow.Fmt($"{CurrentPriority * 100:F1}% ({CurrentPriority:F4})");
-    public string DeltaText => DeltaPriority switch
+    public string DeltaText
     {
-        > 0.0005 => ResultsWindow.Fmt($"▲ +{DeltaPriority * 100:F1} п.п."),
-        < -0.0005 => ResultsWindow.Fmt($"▼ {DeltaPriority * 100:F1} п.п."),
-        _ => "— 0.0 п.п."
-    };
+        get
+        {
+            string pp = LocalizationService.Get("Str_Sens_PP");
+            return DeltaPriority switch
+            {
+                > 0.0005 => ResultsWindow.Fmt($"▲ +{DeltaPriority * 100:F1} {pp}"),
+                < -0.0005 => ResultsWindow.Fmt($"▼ {DeltaPriority * 100:F1} {pp}"),
+                _ => $"— 0.0 {pp}"
+            };
+        }
+    }
     public Brush RankBackground { get; set; } = Brushes.Gray;
     public Brush DeltaBrush { get; set; } = Brushes.Gray;
     public bool IsWinner => Rank == 1;
@@ -100,8 +107,7 @@ public class ConsistencyRowItem
 
 public partial class ResultsWindow : Window
 {
-    internal static readonly System.Globalization.CultureInfo UkCulture = new("uk-UA");
-    internal static string Fmt(FormattableString fs) => fs.ToString(UkCulture);
+    internal static string Fmt(FormattableString fs) => fs.ToString(LocalizationService.ActiveCulture);
 
     private readonly AhpResult _result;
     private readonly List<MatrixResult> _allMatrixResults = new();
@@ -146,7 +152,9 @@ public partial class ResultsWindow : Window
         if (_rawCriteria == null || _rawAlternatives == null || _rawCriteriaMatrix == null || _rawAltMatrices == null)
         {
             BtnCompareProfiles.IsEnabled = false;
-            BtnCompareProfiles.ToolTip = "Порівняння доступне лише з головного вікна";
+            BtnCompareProfiles.ToolTip = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Comparison is available only from main window"
+                : "Порівняння доступне лише з головного вікна";
         }
 
         InitHeaderAndBadges();
@@ -159,6 +167,7 @@ public partial class ResultsWindow : Window
         InitSensitivityAnalysis();
 
         ThemeService.ThemeChanged += OnThemeChanged;
+        LocalizationService.LanguageChanged += OnLanguageChanged;
     }
 
     private void OnThemeChanged(AppTheme theme)
@@ -168,34 +177,63 @@ public partial class ResultsWindow : Window
         UpdateSensitivityDynamicState(_currentSensitivityT);
     }
 
+    private void OnLanguageChanged(AppLanguage lang)
+    {
+        InitHeaderAndBadges();
+        InitRankingsList();
+        InitCriteriaCards();
+        InitRecommendationText();
+        InitSynthesisDataGrid();
+        InitConsistencyDataGrid();
+        InitMatrixSelector();
+        int sensIdx = ComboSensitivityCriterion.SelectedIndex;
+        InitSensitivityAnalysis();
+        if (sensIdx >= 0 && sensIdx < ComboSensitivityCriterion.Items.Count)
+        {
+            ComboSensitivityCriterion.SelectedIndex = sensIdx;
+        }
+        else
+        {
+            UpdateSensitivityDynamicState(_currentSensitivityT);
+        }
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         ThemeService.ThemeChanged -= OnThemeChanged;
+        LocalizationService.LanguageChanged -= OnLanguageChanged;
         base.OnClosed(e);
     }
 
     private void InitHeaderAndBadges()
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         if (_result.BestAlternative != null)
         {
             TxtWinnerName.Text = Fmt($"{_result.BestAlternative.Name} ({_result.BestAlternative.GlobalPriority:P1})");
         }
         else
         {
-            TxtWinnerName.Text = "Не визначено";
+            TxtWinnerName.Text = isEn ? "Not determined" : "Не визначено";
         }
 
-        string profileName = _result.Options?.ProfileName ?? "Користувацький профіль";
+        string profileName = _result.Options?.ProfileName ?? (isEn ? "Custom profile" : "Користувацький профіль");
 
-        TxtBannerSubtitle.Text = Fmt($"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}");
+        TxtBannerSubtitle.Text = isEn
+            ? Fmt($"Profile: {profileName} | Consistency threshold CRh ≤ {_result.HierarchyThreshold:P0}")
+            : Fmt($"Профіль: {profileName} | Поріг узгодженості CRh ≤ {_result.HierarchyThreshold:P0}");
 
         TxtHierarchicalCR.Text = Fmt($"CRh = {_result.ActiveHierarchicalCR:P1} ({_result.ActiveHierarchicalCR:F3})");
         string weightDesc = _result.Options?.WeightMethod.ToString() ?? "Default";
         string lambdaDesc = _result.Options != null
             ? AhpCalculationOptions.GetLambdaMethodDescription(_result.Options.LambdaMethod)
             : "Default";
-        string riLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпірична формула (1.98·(n-2)/n)" : "таблиця Сааті";
-        TxtHierarchicalCR.ToolTip = Fmt($"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}");
+        string riLabel = _result.ActiveRiMode == RiCalculationMode.Empirical
+            ? (isEn ? "empirical formula (1.98·(n-2)/n)" : "емпірична формула (1.98·(n-2)/n)")
+            : (isEn ? "Saaty table" : "таблиця Сааті");
+        TxtHierarchicalCR.ToolTip = isEn
+            ? Fmt($"Profile: {profileName}\nWeight method: {weightDesc}\nλmax method: {lambdaDesc}\nRI calculation: {riLabel}\nConsistency threshold: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}")
+            : Fmt($"Профіль: {profileName}\nМетод ваг: {weightDesc}\nМетод λmax: {lambdaDesc}\nРозрахунок RI: {riLabel}\nПоріг узгодженості: {_result.HierarchyThreshold:P0}\nCRh = {_result.ActiveHierarchicalCR:P2}");
 
         if (_result.IsHierarchyConsistent)
         {
@@ -214,6 +252,7 @@ public partial class ResultsWindow : Window
     private void InitRankingsList()
     {
         bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var items = _result.RankedAlternatives.Select(a =>
         {
             double pct = a.GlobalPriority * 100.0;
@@ -252,7 +291,9 @@ public partial class ResultsWindow : Window
                     2 => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#93C5FD" : "#1D4ED8")),
                     _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#CBD5E1" : "#475569"))
                 },
-                BadgeText = a.RankText == "1" ? "🏆 Оптимум (1)" : $"{a.RankText} місце"
+                BadgeText = a.RankText == "1"
+                    ? (isEn ? "🏆 Optimum (1)" : "🏆 Оптимум (1)")
+                    : (isEn ? $"Rank {a.RankText}" : $"{a.RankText} місце")
             };
         }).ToList();
 
@@ -274,9 +315,10 @@ public partial class ResultsWindow : Window
 
     private void InitRecommendationText()
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         if (_result.RankedAlternatives.Count == 0)
         {
-            TxtRecommendation.Text = "Немає даних для формування висновку.";
+            TxtRecommendation.Text = isEn ? "No data for recommendation." : "Немає даних для формування висновку.";
             return;
         }
 
@@ -284,35 +326,53 @@ public partial class ResultsWindow : Window
         var runnerUp = _result.RankedAlternatives.Count > 1 ? _result.RankedAlternatives[1] : null;
 
         var sb = new StringBuilder();
-        sb.AppendLine(Fmt($"1. Оптимальною альтернативою за методом аналізу ієрархій визначено «{winner.Name}» із підсумковим глобальним пріоритетом {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4})."));
+        sb.AppendLine(isEn
+            ? Fmt($"1. The optimal alternative identified by the Analytic Hierarchy Process is \"{winner.Name}\" with a final global priority of {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4}).")
+            : Fmt($"1. Оптимальною альтернативою за методом аналізу ієрархій визначено «{winner.Name}» із підсумковим глобальним пріоритетом {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4})."));
 
         if (runnerUp != null)
         {
             double margin = winner.GlobalPriority - runnerUp.GlobalPriority;
-            sb.AppendLine(Fmt($"2. Друге місце посіла альтернатива «{runnerUp.Name}» з пріоритетом {runnerUp.GlobalPriority:P2} (відрив становить {margin:P2})."));
+            sb.AppendLine(isEn
+                ? Fmt($"2. Runner-up is alternative \"{runnerUp.Name}\" with priority {runnerUp.GlobalPriority:P2} (gap is {margin:P2}).")
+                : Fmt($"2. Друге місце посіла альтернатива «{runnerUp.Name}» з пріоритетом {runnerUp.GlobalPriority:P2} (відрив становить {margin:P2})."));
             if (margin < 0.02)
             {
-                sb.AppendLine("   Зверніть увагу: відрив між лідерами є незначним (< 2%), що свідчить про високу чутливість розв'язку до коливань оцінок або ринкових цін.");
+                sb.AppendLine(isEn
+                    ? "   Note: The margin between leaders is narrow (< 2%), indicating high sensitivity to fluctuations in judgments or market conditions."
+                    : "   Зверніть увагу: відрив між лідерами є незначним (< 2%), що свідчить про високу чутливість розв'язку до коливань оцінок або ринкових цін.");
             }
         }
 
         var topCriterion = _result.Criteria.OrderByDescending(c => c.Weight).FirstOrDefault();
         if (topCriterion != null)
         {
-            sb.AppendLine(Fmt($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}."));
+            sb.AppendLine(isEn
+                ? Fmt($"3. The most defining criterion in the model is \"{topCriterion.Name}\" with weight {topCriterion.Weight:P1}.")
+                : Fmt($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}."));
         }
 
-        string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емпіричною формулою Сааті" : "табличними значеннями Сааті";
+        string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical
+            ? (isEn ? "Saaty empirical formula" : "емпіричною формулою Сааті")
+            : (isEn ? "Saaty standard table" : "табличними значеннями Сааті");
         string thresholdStr = Fmt($"{_result.HierarchyThreshold:P0}");
         string passFailStr = _result.IsHierarchyConsistent
-            ? $"що задовольняє умову узгодженості (CRh ≤ {thresholdStr}). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень)."
-            : $"що перевищує допустимий поріг {thresholdStr} (CRh > {thresholdStr}). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.";
+            ? (isEn
+                ? $"satisfying the consistency condition (CRh ≤ {thresholdStr}). Expert judgments are mutually consistent (mathematical consistency confirms logical coherence of judgments, but does not guarantee absolute truth)."
+                : $"що задовольняє умову узгодженості (CRh ≤ {thresholdStr}). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень).")
+            : (isEn
+                ? $"exceeding acceptable threshold {thresholdStr} (CRh > {thresholdStr}). Review pairwise comparison matrices to resolve contradictory judgments."
+                : $"що перевищує допустимий поріг {thresholdStr} (CRh > {thresholdStr}). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.");
 
-        sb.AppendLine(Fmt($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}"));
+        sb.AppendLine(isEn
+            ? Fmt($"4. System hierarchy consistency (computed via: {activeMethodStr}): ratio CRh = {_result.ActiveHierarchicalCR:P2} (table: {_result.HierarchicalCRTable:P2}, empirical: {_result.HierarchicalCREmpirical:P2}), {passFailStr}")
+            : Fmt($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}"));
 
         if (_result.InconsistentMatrices.Count > 0)
         {
-            sb.AppendLine($"   Увага: виявлено матриці з порушенням власного порогу узгодженості: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"«{m}»"))}. Рекомендується скоригувати судження в цих матрицях.");
+            sb.AppendLine(isEn
+                ? $"   Warning: The following matrices violate their consistency threshold: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"\"{m}\""))}. It is recommended to adjust judgments in these matrices."
+                : $"   Увага: виявлено матриці з порушенням власного порогу узгодженості: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"«{m}»"))}. Рекомендується скоригувати судження в цих матрицях.");
         }
 
         TxtRecommendation.Text = sb.ToString();
@@ -320,9 +380,15 @@ public partial class ResultsWindow : Window
 
     private void InitSynthesisDataGrid()
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
+        string colRank = isEn ? "Rank" : "Ранг";
+        string colAlt = isEn ? "Alternative" : "Альтернатива";
+        string colGlobal = isEn ? "Global Score (Pi)" : "Глобальний бал (Pi)";
+        string colShare = isEn ? "Share (%)" : "Частка (%)";
+
         var dt = new DataTable();
-        dt.Columns.Add("Ранг", typeof(string));
-        dt.Columns.Add("Альтернатива", typeof(string));
+        dt.Columns.Add(colRank, typeof(string));
+        dt.Columns.Add(colAlt, typeof(string));
 
         var critColMap = new List<(string LijCol, string ScoreCol, Criterion Crit)>();
 
@@ -337,37 +403,37 @@ public partial class ResultsWindow : Window
             }
             dt.Columns.Add(lijCol, typeof(string));
 
-            string baseScore = $"{c.Name} (Внесок)";
+            string baseScore = isEn ? $"{c.Name} (Contribution)" : $"{c.Name} (Внесок)";
             string scoreCol = baseScore;
             counter = 2;
             while (dt.Columns.Contains(scoreCol))
             {
-                scoreCol = $"{c.Name} ({counter++}) (Внесок)";
+                scoreCol = isEn ? $"{c.Name} ({counter++}) (Contribution)" : $"{c.Name} ({counter++}) (Внесок)";
             }
             dt.Columns.Add(scoreCol, typeof(string));
 
             critColMap.Add((lijCol, scoreCol, c));
         }
 
-        dt.Columns.Add("Глобальний бал (Pi)", typeof(string));
-        dt.Columns.Add("Частка (%)", typeof(string));
+        dt.Columns.Add(colGlobal, typeof(string));
+        dt.Columns.Add(colShare, typeof(string));
 
         foreach (var alt in _result.RankedAlternatives)
         {
             var row = dt.NewRow();
-            row["Ранг"] = $"#{alt.RankText}";
-            row["Альтернатива"] = alt.Name;
+            row[colRank] = $"#{alt.RankText}";
+            row[colAlt] = alt.Name;
 
             foreach (var item in critColMap)
             {
                 double locPri = alt.LocalPriorities.TryGetValue(item.Crit.Id, out var lp) ? lp : 0.0;
                 double wScore = alt.WeightedScores.TryGetValue(item.Crit.Id, out var ws) ? ws : 0.0;
-                row[item.LijCol] = locPri.ToString("F3", UkCulture);
-                row[item.ScoreCol] = wScore.ToString("F3", UkCulture);
+                row[item.LijCol] = locPri.ToString("F3", LocalizationService.ActiveCulture);
+                row[item.ScoreCol] = wScore.ToString("F3", LocalizationService.ActiveCulture);
             }
 
-            row["Глобальний бал (Pi)"] = alt.GlobalPriority.ToString("F3", UkCulture);
-            row["Частка (%)"] = Fmt($"{alt.GlobalPriority * 100:F1}%");
+            row[colGlobal] = alt.GlobalPriority.ToString("F3", LocalizationService.ActiveCulture);
+            row[colShare] = Fmt($"{alt.GlobalPriority * 100:F1}%");
             dt.Rows.Add(row);
         }
 
@@ -376,22 +442,28 @@ public partial class ResultsWindow : Window
 
     private void InitConsistencyDataGrid()
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var list = new List<ConsistencyRowItem>();
-        string modeLabel = _result.ActiveRiMode == RiCalculationMode.Empirical ? "емп." : "табл.";
+        string modeLabel = _result.ActiveRiMode == RiCalculationMode.Empirical
+            ? (isEn ? "emp." : "емп.")
+            : (isEn ? "tab." : "табл.");
+
+        string statusOk = isEn ? "✅ Consistent" : "✅ Узгоджено";
+        string statusFail = isEn ? "❌ Inconsistent" : "❌ Неузгоджено";
 
         // Матриця критеріїв
         var crCrit = _result.CriteriaMatrixResult;
         list.Add(new ConsistencyRowItem
         {
-            MatrixName = "Матриця критеріїв (A)",
+            MatrixName = isEn ? "Criteria Matrix (A)" : "Матриця критеріїв (A)",
             Dimension = crCrit.Size,
-            LambdaMax = crCrit.LambdaMax.ToString("F4", UkCulture),
-            CI = crCrit.CI.ToString("F4", UkCulture),
-            RITable = crCrit.RITable.ToString("F2", UkCulture),
-            RIEmpirical = crCrit.RIEmpirical.ToString("F2", UkCulture),
+            LambdaMax = crCrit.LambdaMax.ToString("F4", LocalizationService.ActiveCulture),
+            CI = crCrit.CI.ToString("F4", LocalizationService.ActiveCulture),
+            RITable = crCrit.RITable.ToString("F2", LocalizationService.ActiveCulture),
+            RIEmpirical = crCrit.RIEmpirical.ToString("F2", LocalizationService.ActiveCulture),
             CRTable = Fmt($"{crCrit.CRTable:P1} ({crCrit.CRTable:F3})"),
             CREmpirical = Fmt($"{crCrit.CREmpirical:P1} ({crCrit.CREmpirical:F3})"),
-            Status = crCrit.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
+            Status = crCrit.IsConsistent ? statusOk : statusFail,
             Verdict = crCrit.IsConsistent ? Fmt($"CR <= {crCrit.Threshold:P0} ({modeLabel})") : Fmt($"CR > {crCrit.Threshold:P0} ({modeLabel})")
         });
 
@@ -404,15 +476,15 @@ public partial class ResultsWindow : Window
 
             list.Add(new ConsistencyRowItem
             {
-                MatrixName = $"Альтернативи: {critTitle}",
+                MatrixName = isEn ? $"Alternatives: {critTitle}" : $"Альтернативи: {critTitle}",
                 Dimension = res.Size,
-                LambdaMax = res.LambdaMax.ToString("F4", UkCulture),
-                CI = res.CI.ToString("F4", UkCulture),
-                RITable = res.RITable.ToString("F2", UkCulture),
-                RIEmpirical = res.RIEmpirical.ToString("F2", UkCulture),
+                LambdaMax = res.LambdaMax.ToString("F4", LocalizationService.ActiveCulture),
+                CI = res.CI.ToString("F4", LocalizationService.ActiveCulture),
+                RITable = res.RITable.ToString("F2", LocalizationService.ActiveCulture),
+                RIEmpirical = res.RIEmpirical.ToString("F2", LocalizationService.ActiveCulture),
                 CRTable = Fmt($"{res.CRTable:P1} ({res.CRTable:F3})"),
                 CREmpirical = Fmt($"{res.CREmpirical:P1} ({res.CREmpirical:F3})"),
-                Status = res.IsConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
+                Status = res.IsConsistent ? statusOk : statusFail,
                 Verdict = res.IsConsistent ? Fmt($"CR <= {res.Threshold:P0} ({modeLabel})") : Fmt($"CR > {res.Threshold:P0} ({modeLabel})")
             });
         }
@@ -420,15 +492,15 @@ public partial class ResultsWindow : Window
         // Загальна композиційна узгодженість ієрархії
         list.Add(new ConsistencyRowItem
         {
-            MatrixName = "⭐ Композиція всієї ієрархії (CRh)",
+            MatrixName = isEn ? "⭐ Total Hierarchy Composition (CRh)" : "⭐ Композиція всієї ієрархії (CRh)",
             Dimension = _result.RankedAlternatives.Count,
             LambdaMax = "-",
-            CI = _result.HierarchicalCI.ToString("F4", UkCulture),
-            RITable = _result.HierarchicalRITable.ToString("F3", UkCulture),
-            RIEmpirical = _result.HierarchicalRIEmpirical.ToString("F3", UkCulture),
+            CI = _result.HierarchicalCI.ToString("F4", LocalizationService.ActiveCulture),
+            RITable = _result.HierarchicalRITable.ToString("F3", LocalizationService.ActiveCulture),
+            RIEmpirical = _result.HierarchicalRIEmpirical.ToString("F3", LocalizationService.ActiveCulture),
             CRTable = Fmt($"{_result.HierarchicalCRTable:P1} ({_result.HierarchicalCRTable:F3})"),
             CREmpirical = Fmt($"{_result.HierarchicalCREmpirical:P1} ({_result.HierarchicalCREmpirical:F3})"),
-            Status = _result.IsHierarchyConsistent ? "✅ Узгоджено" : "❌ Неузгоджено",
+            Status = _result.IsHierarchyConsistent ? statusOk : statusFail,
             Verdict = _result.IsHierarchyConsistent ? Fmt($"CRh <= {_result.HierarchyThreshold:P0} ({modeLabel})") : Fmt($"CRh > {_result.HierarchyThreshold:P0} ({modeLabel})")
         });
 
@@ -437,18 +509,19 @@ public partial class ResultsWindow : Window
 
     private void InitMatrixSelector()
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         _allMatrixResults.Clear();
         ComboMatrixSelector.Items.Clear();
 
         _allMatrixResults.Add(_result.CriteriaMatrixResult);
-        ComboMatrixSelector.Items.Add("Матриця критеріїв");
+        ComboMatrixSelector.Items.Add(isEn ? "Criteria Matrix" : "Матриця критеріїв");
 
         foreach (var c in _result.Criteria)
         {
             if (_result.AlternativeMatrixResults.TryGetValue(c.Id, out var mRes))
             {
                 _allMatrixResults.Add(mRes);
-                ComboMatrixSelector.Items.Add($"Альтернативи за: {c.Name}");
+                ComboMatrixSelector.Items.Add(isEn ? $"Alternatives for: {c.Name}" : $"Альтернативи за: {c.Name}");
             }
         }
 
@@ -463,12 +536,17 @@ public partial class ResultsWindow : Window
         int idx = ComboMatrixSelector.SelectedIndex;
         if (idx < 0 || idx >= _allMatrixResults.Count) return;
 
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var mRes = _allMatrixResults[idx];
         TxtSelectedMatrixInfo.Text = Fmt($"{mRes.Name} | λmax = {mRes.LambdaMax:F4}, CI = {mRes.CI:F4}, CR = {mRes.ActiveCR:P2} ({mRes.ConsistencyMessage})");
 
+        string colElement = isEn ? "Element" : "Елемент";
+        string colWeight = isEn ? "Weight (wi)" : "Вага (wi)";
+        string colPercent = isEn ? "Percent" : "Відсоток";
+
         // Показ нормалізованої матриці та ваг
         var dt = new DataTable();
-        dt.Columns.Add("Елемент", typeof(string));
+        dt.Columns.Add(colElement, typeof(string));
 
         var colNames = new List<string>();
         for (int j = 0; j < mRes.Size; j++)
@@ -484,33 +562,33 @@ public partial class ResultsWindow : Window
             dt.Columns.Add(uniqueHeader, typeof(string));
         }
 
-        dt.Columns.Add("Вага (wi)", typeof(string));
-        dt.Columns.Add("Відсоток", typeof(string));
+        dt.Columns.Add(colWeight, typeof(string));
+        dt.Columns.Add(colPercent, typeof(string));
 
         for (int i = 0; i < mRes.Size; i++)
         {
             var row = dt.NewRow();
-            row["Елемент"] = i < mRes.Labels.Count ? mRes.Labels[i] : $"E{i + 1}";
+            row[colElement] = i < mRes.Labels.Count ? mRes.Labels[i] : $"E{i + 1}";
 
             for (int j = 0; j < mRes.Size; j++)
             {
-                row[colNames[j]] = mRes.NormalizedMatrix[i, j].ToString("F4", UkCulture);
+                row[colNames[j]] = mRes.NormalizedMatrix[i, j].ToString("F4", LocalizationService.ActiveCulture);
             }
 
-            row["Вага (wi)"] = mRes.Weights[i].ToString("F4", UkCulture);
-            row["Відсоток"] = Fmt($"{mRes.Weights[i] * 100:F2}%");
+            row[colWeight] = mRes.Weights[i].ToString("F4", LocalizationService.ActiveCulture);
+            row[colPercent] = Fmt($"{mRes.Weights[i] * 100:F2}%");
             dt.Rows.Add(row);
         }
 
         // Рядок сум стовпців
         var sumRow = dt.NewRow();
-        sumRow["Елемент"] = "Сума стовпця вихідної матриці";
+        sumRow[colElement] = isEn ? "Initial matrix column sum" : "Сума стовпця вихідної матриці";
         for (int j = 0; j < mRes.Size; j++)
         {
-            sumRow[colNames[j]] = mRes.ColumnSums[j].ToString("F3", UkCulture);
+            sumRow[colNames[j]] = mRes.ColumnSums[j].ToString("F3", LocalizationService.ActiveCulture);
         }
-        sumRow["Вага (wi)"] = (1.0).ToString("F4", UkCulture);
-        sumRow["Відсоток"] = Fmt($"{100.0:F2}%");
+        sumRow[colWeight] = (1.0).ToString("F4", LocalizationService.ActiveCulture);
+        sumRow[colPercent] = Fmt($"{100.0:F2}%");
         dt.Rows.Add(sumRow);
 
         GridSelectedMatrix.ItemsSource = dt.DefaultView;
@@ -523,37 +601,55 @@ public partial class ResultsWindow : Window
 
     private void BtnCopyReport_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         try
         {
             string report = GenerateFullReportText();
             Clipboard.SetText(report);
-            MessageBox.Show("Звіт успішно скопійовано в буфер обміну!", "Копіювання", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(
+                isEn ? "Report successfully copied to clipboard!" : "Звіт успішно скопійовано в буфер обміну!",
+                isEn ? "Copy" : "Копіювання",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка копіювання: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                (isEn ? "Copy error: " : "Помилка копіювання: ") + ex.Message,
+                isEn ? "Error" : "Помилка",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 
     private void BtnSaveReport_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         try
         {
             var sfd = new SaveFileDialog
             {
-                Filter = "Текстовий файл (*.txt)|*.txt|Усі файли (*.*)|*.*",
+                Filter = isEn ? "Text File (*.txt)|*.txt|All Files (*.*)|*.*" : "Текстовий файл (*.txt)|*.txt|Усі файли (*.*)|*.*",
                 FileName = $"AHP_Report_{DateTime.Now:yyyyMMdd_HHmm}.txt"
             };
 
             if (sfd.ShowDialog() == true)
             {
                 File.WriteAllText(sfd.FileName, GenerateFullReportText(), Encoding.UTF8);
-                MessageBox.Show($"Звіт успішно збережено у файл:\n{sfd.FileName}", "Збереження звіту", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    (isEn ? "Report successfully saved to file:\n" : "Звіт успішно збережено у файл:\n") + sfd.FileName,
+                    isEn ? "Save Report" : "Збереження звіту",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка збереження файлу: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                (isEn ? "File saving error: " : "Помилка збереження файлу: ") + ex.Message,
+                isEn ? "Error" : "Помилка",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 
@@ -565,7 +661,9 @@ public partial class ResultsWindow : Window
             boundColumn.Binding = new Binding($"[{e.PropertyName}]");
 
             // Format numeric values with right alignment and cell padding
-            if (e.PropertyName != "Ранг" && e.PropertyName != "Альтернатива" && e.PropertyName != "Елемент")
+            if (e.PropertyName != "Ранг" && e.PropertyName != "Rank" &&
+                e.PropertyName != "Альтернатива" && e.PropertyName != "Alternative" &&
+                e.PropertyName != "Елемент" && e.PropertyName != "Element")
             {
                 var style = new Style(typeof(TextBlock));
                 style.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right));
@@ -580,10 +678,12 @@ public partial class ResultsWindow : Window
 
     private void InitSensitivityAnalysis()
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
+        string weightLabel = isEn ? "weight" : "вага";
         ComboSensitivityCriterion.Items.Clear();
         foreach (var c in _result.Criteria)
         {
-            ComboSensitivityCriterion.Items.Add(Fmt($"{c.Name} ({c.Id}, вага {c.Weight:P1})"));
+            ComboSensitivityCriterion.Items.Add(Fmt($"{c.Name} ({c.Id}, {weightLabel} {c.Weight:P1})"));
         }
 
         if (ComboSensitivityCriterion.Items.Count > 0)
@@ -597,6 +697,7 @@ public partial class ResultsWindow : Window
         int idx = ComboSensitivityCriterion.SelectedIndex;
         if (idx < 0 || idx >= _result.Criteria.Count) return;
 
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var selectedCrit = _result.Criteria[idx];
         _currentSensitivityResult = AhpCalculator.CalculateSensitivity(_result, selectedCrit.Id);
         _currentSensitivityT = _currentSensitivityResult.OriginalWeight;
@@ -604,9 +705,13 @@ public partial class ResultsWindow : Window
         _isUpdatingSensitivityUi = true;
         try
         {
-            TxtSensBaselineWeight.Text = Fmt($"Базова вага: {_currentSensitivityResult.OriginalWeight:P1}");
+            TxtSensBaselineWeight.Text = isEn
+                ? Fmt($"Baseline weight: {_currentSensitivityResult.OriginalWeight:P1}")
+                : Fmt($"Базова вага: {_currentSensitivityResult.OriginalWeight:P1}");
             SliderSensitivityWeight.Value = _currentSensitivityResult.OriginalWeight * 100.0;
-            TxtSensCurrentWeight.Text = Fmt($"Поточна вага t = {_currentSensitivityT:P1}");
+            TxtSensCurrentWeight.Text = isEn
+                ? Fmt($"Current weight t = {_currentSensitivityT:P1}")
+                : Fmt($"Поточна вага t = {_currentSensitivityT:P1}");
             TxtSensStabilityComment.Text = _currentSensitivityResult.StabilitySummary;
 
             // Інтервали лідерства
@@ -619,7 +724,9 @@ public partial class ResultsWindow : Window
                 Alt2Name = p.Alt2Name,
                 WeightTText = Fmt($"{p.WeightT:P1} ({p.WeightT:F3})"),
                 PriorityPText = Fmt($"{p.PriorityP:P1} ({p.PriorityP:F3})"),
-                ChangeTypeText = p.IsLeadershipChange ? "⭐ Зміна лідера (#1)" : "Перетин рангів",
+                ChangeTypeText = p.IsLeadershipChange
+                    ? (isEn ? "⭐ Leader Change (#1)" : "⭐ Зміна лідера (#1)")
+                    : (isEn ? "Rank Inversion" : "Перетин рангів"),
                 EventDescription = p.EventDescription
             }).ToList();
             GridCriticalPoints.ItemsSource = points;
@@ -644,8 +751,11 @@ public partial class ResultsWindow : Window
     {
         if (_isUpdatingSensitivityUi || _currentSensitivityResult == null) return;
 
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         _currentSensitivityT = SliderSensitivityWeight.Value / 100.0;
-        TxtSensCurrentWeight.Text = Fmt($"Поточна вага t = {_currentSensitivityT:P1}");
+        TxtSensCurrentWeight.Text = isEn
+            ? Fmt($"Current weight t = {_currentSensitivityT:P1}")
+            : Fmt($"Поточна вага t = {_currentSensitivityT:P1}");
 
         UpdateSensitivityDynamicState(_currentSensitivityT);
     }
@@ -666,6 +776,7 @@ public partial class ResultsWindow : Window
         if (_currentSensitivityResult == null) return;
 
         bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sorted = _currentSensitivityResult.Lines
             .Select(l => new
             {
@@ -717,7 +828,9 @@ public partial class ResultsWindow : Window
         if (dynamicList.Count > 0)
         {
             var top = dynamicList[0];
-            TxtSensPlotLeader.Text = Fmt($"Поточний лідер: {top.AlternativeName} ({top.CurrentPriority:P1})");
+            TxtSensPlotLeader.Text = isEn
+                ? Fmt($"Current leader: {top.AlternativeName} ({top.CurrentPriority:P1})")
+                : Fmt($"Поточний лідер: {top.AlternativeName} ({top.CurrentPriority:P1})");
         }
 
         RedrawSensitivityPlot(t);
@@ -735,6 +848,7 @@ public partial class ResultsWindow : Window
         if (width <= 50 || height <= 50) return;
 
         bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var axisBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#64748B" : "#94A3B8"));
         var gridBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#334155" : "#E2E8F0"));
         var textBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isDark ? "#94A3B8" : "#475569"));
@@ -861,7 +975,9 @@ public partial class ResultsWindow : Window
             Stroke = baseLineBrush,
             StrokeThickness = 1.8,
             StrokeDashArray = new DoubleCollection { 4, 3 },
-            ToolTip = Fmt($"Базова вага критерію w_k^0 = {_currentSensitivityResult.OriginalWeight:P1}")
+            ToolTip = isEn
+                ? Fmt($"Baseline criterion weight w_k^0 = {_currentSensitivityResult.OriginalWeight:P1}")
+                : Fmt($"Базова вага критерію w_k^0 = {_currentSensitivityResult.OriginalWeight:P1}")
         };
         CanvasSensitivityPlot.Children.Add(baseLine);
 
@@ -875,7 +991,9 @@ public partial class ResultsWindow : Window
             Y2 = marginTop + ph,
             Stroke = currLineBrush,
             StrokeThickness = 2.2,
-            ToolTip = Fmt($"Поточна вага t = {currentT:P1}")
+            ToolTip = isEn
+                ? Fmt($"Current weight t = {currentT:P1}")
+                : Fmt($"Поточна вага t = {currentT:P1}")
         };
         CanvasSensitivityPlot.Children.Add(currLine);
 
@@ -899,7 +1017,9 @@ public partial class ResultsWindow : Window
                 Y2 = y1,
                 Stroke = lineBrush,
                 StrokeThickness = 2.5,
-                ToolTip = Fmt($"{l.AlternativeId} ({l.AlternativeName})\nP(t) = {l.Alpha:+0.000;-0.000}·t + {l.Beta:F3}\nПри t={currentT:P1}: P={l.PriorityAt(currentT):P1}")
+                ToolTip = isEn
+                    ? Fmt($"{l.AlternativeId} ({l.AlternativeName})\nP(t) = {l.Alpha:+0.000;-0.000}·t + {l.Beta:F3}\nAt t={currentT:P1}: P={l.PriorityAt(currentT):P1}")
+                    : Fmt($"{l.AlternativeId} ({l.AlternativeName})\nP(t) = {l.Alpha:+0.000;-0.000}·t + {l.Beta:F3}\nПри t={currentT:P1}: P={l.PriorityAt(currentT):P1}")
             };
             CanvasSensitivityPlot.Children.Add(sensLine);
 
@@ -936,7 +1056,9 @@ public partial class ResultsWindow : Window
                     Fill = Brushes.Gold,
                     Stroke = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B45309")),
                     StrokeThickness = 1.5,
-                    ToolTip = Fmt($"⭐ Точка зміни переможця:\n{pt.Alt1Name} = {pt.Alt2Name}\nКритична вага t* = {pt.WeightT:P1}, P* = {pt.PriorityP:P1}")
+                    ToolTip = isEn
+                        ? Fmt($"⭐ Leader change point:\n{pt.Alt1Name} = {pt.Alt2Name}\nCritical weight t* = {pt.WeightT:P1}, P* = {pt.PriorityP:P1}")
+                        : Fmt($"⭐ Точка зміни переможця:\n{pt.Alt1Name} = {pt.Alt2Name}\nКритична вага t* = {pt.WeightT:P1}, P* = {pt.PriorityP:P1}")
                 };
                 Canvas.SetLeft(star, ix - 5);
                 Canvas.SetTop(star, iy - 5);
@@ -950,7 +1072,9 @@ public partial class ResultsWindow : Window
                     Height = 6,
                     Fill = textBrush,
                     Opacity = 0.7,
-                    ToolTip = Fmt($"Точка перетину: {pt.Alt1Name} = {pt.Alt2Name} при t* = {pt.WeightT:P1}")
+                    ToolTip = isEn
+                        ? Fmt($"Intersection point: {pt.Alt1Name} = {pt.Alt2Name} at t* = {pt.WeightT:P1}")
+                        : Fmt($"Точка перетину: {pt.Alt1Name} = {pt.Alt2Name} при t* = {pt.WeightT:P1}")
                 };
                 Canvas.SetLeft(smallDot, ix - 3);
                 Canvas.SetTop(smallDot, iy - 3);
@@ -972,10 +1096,11 @@ public partial class ResultsWindow : Window
 
     private void MenuExportCsv_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти звіт у форматі CSV...",
-            Filter = "Файли CSV (*.csv)|*.csv|Усі файли (*.*)|*.*",
+            Title = isEn ? "Save report in CSV format..." : "Зберегти звіт у форматі CSV...",
+            Filter = isEn ? "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*" : "Файли CSV (*.csv)|*.csv|Усі файли (*.*)|*.*",
             FileName = "ahp_report.csv"
         };
         if (sfd.ShowDialog(this) == true)
@@ -984,21 +1109,22 @@ public partial class ResultsWindow : Window
             {
                 var tables = ReportTableBuilder.Build(_result);
                 ReportExporter.SaveCsv(sfd.FileName, tables);
-                TxtResultsStatus.Text = $"Звіт успішно збережено у файл CSV: {System.IO.Path.GetFileName(sfd.FileName)}";
+                TxtResultsStatus.Text = (isEn ? "Report successfully saved to CSV file: " : "Звіт успішно збережено у файл CSV: ") + System.IO.Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту CSV: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "CSV export error: " : "Помилка експорту CSV: ") + ex.Message, isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 
     private void MenuExportMarkdown_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти звіт у форматі Markdown...",
-            Filter = "Файли Markdown (*.md)|*.md|Усі файли (*.*)|*.*",
+            Title = isEn ? "Save report in Markdown format..." : "Зберегти звіт у форматі Markdown...",
+            Filter = isEn ? "Markdown Files (*.md)|*.md|All Files (*.*)|*.*" : "Файли Markdown (*.md)|*.md|Усі файли (*.*)|*.*",
             FileName = "ahp_report.md"
         };
         if (sfd.ShowDialog(this) == true)
@@ -1007,21 +1133,22 @@ public partial class ResultsWindow : Window
             {
                 var tables = ReportTableBuilder.Build(_result);
                 ReportExporter.SaveMarkdown(sfd.FileName, tables);
-                TxtResultsStatus.Text = $"Звіт успішно збережено у файл Markdown: {System.IO.Path.GetFileName(sfd.FileName)}";
+                TxtResultsStatus.Text = (isEn ? "Report successfully saved to Markdown file: " : "Звіт успішно збережено у файл Markdown: ") + System.IO.Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту Markdown: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "Markdown export error: " : "Помилка експорту Markdown: ") + ex.Message, isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 
     private void MenuExportHtml_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти звіт у форматі HTML (Word)...",
-            Filter = "Файли HTML (*.html)|*.html|Документ Word (*.htm)|*.htm|Усі файли (*.*)|*.*",
+            Title = isEn ? "Save report in HTML (Word) format..." : "Зберегти звіт у форматі HTML (Word)...",
+            Filter = isEn ? "HTML Files (*.html)|*.html|Word Document (*.htm)|*.htm|All Files (*.*)|*.*" : "Файли HTML (*.html)|*.html|Документ Word (*.htm)|*.htm|Усі файли (*.*)|*.*",
             FileName = "ahp_report.html"
         };
         if (sfd.ShowDialog(this) == true)
@@ -1030,51 +1157,75 @@ public partial class ResultsWindow : Window
             {
                 var tables = ReportTableBuilder.Build(_result);
                 ReportExporter.SaveHtml(sfd.FileName, tables);
-                TxtResultsStatus.Text = $"Звіт успішно збережено у файл HTML: {System.IO.Path.GetFileName(sfd.FileName)}";
+                TxtResultsStatus.Text = (isEn ? "Report successfully saved to HTML file: " : "Звіт успішно збережено у файл HTML: ") + System.IO.Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту HTML: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "HTML export error: " : "Помилка експорту HTML: ") + ex.Message, isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 
     private void MenuExportRankingPng_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти діаграму рейтингу в PNG...",
-            Filter = "Зображення PNG (*.png)|*.png",
+            Title = isEn ? "Save ranking chart as PNG..." : "Зберегти діаграму рейтингу в PNG...",
+            Filter = isEn ? "PNG Image (*.png)|*.png" : "Зображення PNG (*.png)|*.png",
             FileName = "ranking.png"
         };
         if (sfd.ShowDialog(this) == true)
         {
+            bool wasDark = ThemeService.CurrentTheme == AppTheme.Dark;
+            if (wasDark)
+            {
+                ThemeService.ApplyTheme(AppTheme.Light);
+                UpdateLayout();
+            }
             try
             {
                 ExportElementToPng(CardRankingContainer, sfd.FileName, 192.0);
-                TxtResultsStatus.Text = $"Діаграму рейтингу збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
+                TxtResultsStatus.Text = (isEn ? "Ranking chart saved: " : "Діаграму рейтингу збережено: ") + System.IO.Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту діаграми в PNG: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "Error exporting chart to PNG: " : "Помилка експорту діаграми в PNG: ") + ex.Message, isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (wasDark)
+                {
+                    ThemeService.ApplyTheme(AppTheme.Dark);
+                    UpdateLayout();
+                }
             }
         }
     }
 
     private void MenuExportSensitivityPng_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         string rawCritName = _currentSensitivityResult?.Criterion?.Name ?? _currentSensitivityResult?.Criterion?.Id ?? "criterion";
         string safeCritName = string.Concat(rawCritName.Split(System.IO.Path.GetInvalidFileNameChars())).Trim();
         if (string.IsNullOrEmpty(safeCritName)) safeCritName = "criterion";
 
         var sfd = new SaveFileDialog
         {
-            Title = "Зберегти графік чутливості в PNG...",
-            Filter = "Зображення PNG (*.png)|*.png",
+            Title = isEn ? "Save sensitivity plot as PNG..." : "Зберегти графік чутливості в PNG...",
+            Filter = isEn ? "PNG Image (*.png)|*.png" : "Зображення PNG (*.png)|*.png",
             FileName = $"sensitivity_{safeCritName}.png"
         };
         if (sfd.ShowDialog(this) == true)
         {
+            bool wasDark = ThemeService.CurrentTheme == AppTheme.Dark;
+            if (wasDark)
+            {
+                ThemeService.ApplyTheme(AppTheme.Light);
+                UpdateLayout();
+                RedrawSensitivityPlot(_currentSensitivityT);
+                UpdateLayout();
+            }
             try
             {
                 if (SensitivityPlotContainer.ActualWidth <= 1 || CanvasSensitivityPlot.ActualWidth <= 50)
@@ -1088,11 +1239,21 @@ public partial class ResultsWindow : Window
                 }
 
                 ExportElementToPng(SensitivityPlotContainer, sfd.FileName, 192.0);
-                TxtResultsStatus.Text = $"Графік чутливості збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
+                TxtResultsStatus.Text = (isEn ? "Sensitivity plot saved: " : "Графік чутливості збережено: ") + System.IO.Path.GetFileName(sfd.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка експорту графіка чутливості в PNG: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show((isEn ? "Error exporting sensitivity plot to PNG: " : "Помилка експорту графіка чутливості в PNG: ") + ex.Message, isEn ? "Error" : "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (wasDark)
+                {
+                    ThemeService.ApplyTheme(AppTheme.Dark);
+                    UpdateLayout();
+                    RedrawSensitivityPlot(_currentSensitivityT);
+                    UpdateLayout();
+                }
             }
         }
     }
@@ -1134,9 +1295,14 @@ public partial class ResultsWindow : Window
 
     private void BtnCompareProfiles_Click(object sender, RoutedEventArgs e)
     {
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
         if (_rawCriteria == null || _rawAlternatives == null || _rawCriteriaMatrix == null || _rawAltMatrices == null)
         {
-            MessageBox.Show("Дані для порівняння профілів недоступні.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(
+                isEn ? "Data for profile comparison is not available." : "Дані для порівняння профілів недоступні.",
+                isEn ? "Information" : "Інформація",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
             return;
         }
 
@@ -1150,7 +1316,11 @@ public partial class ResultsWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка відкриття порівняння профілів: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                (isEn ? "Error opening profile comparison: " : "Помилка відкриття порівняння профілів: ") + ex.Message,
+                isEn ? "Error" : "Помилка",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 
