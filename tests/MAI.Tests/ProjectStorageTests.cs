@@ -169,6 +169,7 @@ public class ProjectStorageTests
             Assert.Equal("1.1", loaded.Version);
             Assert.Equal("Проєкт версії 1.1", loaded.Title);
             Assert.Equal(RiCalculationMode.SaatyTable, loaded.RiMode);
+            Assert.True(loaded.Options.IsClassicSaatyProfile);
             Assert.Equal(2, loaded.Criteria.Count);
             Assert.Equal(2, loaded.Alternatives.Count);
         }
@@ -179,6 +180,17 @@ public class ProjectStorageTests
                 File.Delete(tempFile);
             }
         }
+    }
+
+    [Fact]
+    public void DefaultConstructor_AhpCalculationOptions_MatchesMethodicalProfile()
+    {
+        var options = new AhpCalculationOptions();
+        Assert.True(options.IsMethodicalProfile);
+        Assert.Equal(WeightCalculationMethod.ColumnNormalization, options.WeightMethod);
+        Assert.Equal(LambdaCalculationMethod.ColumnSumProduct, options.LambdaMethod);
+        Assert.Equal(RiCalculationMode.Empirical, options.RiMode);
+        Assert.Equal(ConsistencyThresholdMode.Uniform10Percent, options.ThresholdMode);
     }
 
     [Fact]

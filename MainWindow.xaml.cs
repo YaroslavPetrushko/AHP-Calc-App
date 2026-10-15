@@ -1520,14 +1520,7 @@ public partial class MainWindow : Window
                 _alternativeMatrices = newAlternativeMatrices;
                 _selectedCriterionId = _criteria.FirstOrDefault()?.Id ?? string.Empty;
 
-                if (data.Options != null)
-                {
-                    _calculationOptions = data.Options.Clone();
-                }
-                else
-                {
-                    _calculationOptions = new AhpCalculationOptions { RiMode = data.RiMode };
-                }
+                _calculationOptions = data.Options.Clone();
                 SyncCalculationOptionsUI();
 
                 UpdateCountsUI();

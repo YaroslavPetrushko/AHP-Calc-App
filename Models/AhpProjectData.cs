@@ -14,8 +14,13 @@ public class AhpProjectData
         ? $"{v.Major}.{v.Minor}.{(v.Build >= 0 ? v.Build : 0)}"
         : "1.2.0";
     public DateTime SavedAt { get; set; } = DateTime.Now;
+    private AhpCalculationOptions? _options;
 
-    public AhpCalculationOptions Options { get; set; } = AhpCalculationOptions.Default;
+    public AhpCalculationOptions Options
+    {
+        get => _options ??= AhpCalculationOptions.Default.Clone();
+        set => _options = value;
+    }
 
     /// <summary>
     /// Для зворотної сумісності з файлами версії 1.1.
@@ -23,7 +28,19 @@ public class AhpProjectData
     public RiCalculationMode RiMode
     {
         get => Options.RiMode;
-        set => Options.RiMode = value;
+        set
+        {
+            if (_options == null)
+            {
+                _options = value == RiCalculationMode.SaatyTable
+                    ? AhpCalculationOptions.ClassicSaatyProfile.Clone()
+                    : AhpCalculationOptions.MethodicalProfile.Clone();
+            }
+            else
+            {
+                _options.RiMode = value;
+            }
+        }
     }
 
     public List<Criterion> Criteria { get; set; } = new();
