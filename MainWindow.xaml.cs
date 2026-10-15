@@ -16,6 +16,16 @@ namespace MAI;
 
 public partial class MainWindow : Window
 {
+    private enum PresetKind
+    {
+        None,
+        Reference,
+        Gpu2026,
+        Empty
+    }
+
+    private PresetKind _activePreset = PresetKind.Gpu2026;
+
     private ObservableCollection<Criterion> _criteria = new();
     private ObservableCollection<Alternative> _alternatives = new();
 
@@ -31,7 +41,6 @@ public partial class MainWindow : Window
     // Cache textboxes for quick reciprocal access
     private TextBox[,] _critTextBoxes = new TextBox[0, 0];
     private TextBox[,] _altTextBoxes = new TextBox[0, 0];
-    private static readonly System.Globalization.CultureInfo UkCulture = new("uk-UA");
 
     public MainWindow()
     {
@@ -40,10 +49,83 @@ public partial class MainWindow : Window
         GridCriteria.ItemsSource = _criteria;
         GridAlternatives.ItemsSource = _alternatives;
 
+        LocalizationService.LanguageChanged += OnLanguageChanged;
+        Closed += (s, e) => LocalizationService.LanguageChanged -= OnLanguageChanged;
+
         SyncCalculationOptionsUI();
 
         // Завантажуємо Набір №2 (відеокарти 2026) за замовчуванням
         LoadPreset(PresetService.GetGpu2026Preset());
+    }
+
+    private void MenuLangUk_Click(object sender, RoutedEventArgs e)
+    {
+        MenuLangUk.IsChecked = true;
+        MenuLangEn.IsChecked = false;
+        LocalizationService.ApplyLanguage(AppLanguage.Uk);
+    }
+
+    private void MenuLangEn_Click(object sender, RoutedEventArgs e)
+    {
+        MenuLangEn.IsChecked = true;
+        MenuLangUk.IsChecked = false;
+        LocalizationService.ApplyLanguage(AppLanguage.En);
+    }
+
+    private void OnLanguageChanged(AppLanguage lang)
+    {
+        MenuLangUk.IsChecked = (lang == AppLanguage.Uk);
+        MenuLangEn.IsChecked = (lang == AppLanguage.En);
+
+        if (_activePreset == PresetKind.Reference)
+        {
+            var fresh = PresetService.GetReferencePreset(lang);
+            UpdatePresetTexts(fresh);
+        }
+        else if (_activePreset == PresetKind.Gpu2026)
+        {
+            var fresh = PresetService.GetGpu2026Preset(lang);
+            UpdatePresetTexts(fresh);
+        }
+        else if (_activePreset == PresetKind.Empty)
+        {
+            var fresh = PresetService.CreateEmptyPreset(_criteria.Count, _alternatives.Count, lang);
+            UpdatePresetTexts(fresh);
+        }
+
+        SyncCalculationOptionsUI();
+        UpdateCountsUI();
+        BuildCriteriaMatrixGrid();
+        BuildAlternativesCriteriaSelector();
+        BuildAlternativeMatrixGrid();
+        UpdateAllDiagnostics();
+    }
+
+    private void UpdatePresetTexts(AhpProblemPreset fresh)
+    {
+        _projectTitle = !string.IsNullOrWhiteSpace(fresh.Name) ? fresh.Name : "AHP";
+        _projectDescription = fresh.Description ?? string.Empty;
+
+        for (int i = 0; i < _criteria.Count && i < fresh.Criteria.Count; i++)
+        {
+            _criteria[i].Name = fresh.Criteria[i].Name;
+            _criteria[i].Description = fresh.Criteria[i].Description;
+        }
+
+        for (int j = 0; j < _alternatives.Count && j < fresh.Alternatives.Count; j++)
+        {
+            _alternatives[j].Name = fresh.Alternatives[j].Name;
+            _alternatives[j].Description = fresh.Alternatives[j].Description;
+        }
+
+        _criteriaMatrix.Labels = _criteria.Select(c => c.Name).ToList();
+        foreach (var c in _criteria)
+        {
+            if (_alternativeMatrices.TryGetValue(c.Id, out var mat))
+            {
+                mat.Labels = _alternatives.Select(a => a.Name).ToList();
+            }
+        }
     }
 
     private void LoadPreset(AhpProblemPreset preset)
@@ -79,7 +161,7 @@ public partial class MainWindow : Window
     {
         TxtCritCount.Text = $"({_criteria.Count})";
         TxtAltCount.Text = $"({_alternatives.Count})";
-        TxtBottomStatus.Text = $"Готово до розрахунку: {_criteria.Count} критерії, {_alternatives.Count} альтернатив.";
+        TxtBottomStatus.Text = LocalizationService.Format("Str_Main_ReadyStatusFmt", _criteria.Count, _alternatives.Count);
         TxtBottomStatus.Foreground = (Brush)FindResource("TextDark");
     }
 
@@ -127,7 +209,7 @@ public partial class MainWindow : Window
 
         var cornerText = new TextBlock
         {
-            Text = "Критерій",
+            Text = LocalizationService.Get("Str_Main_CornerCrit"),
             FontWeight = FontWeights.Bold,
             FontSize = 11,
             VerticalAlignment = VerticalAlignment.Center,
@@ -245,6 +327,7 @@ public partial class MainWindow : Window
 
         if (ComparisonMatrix.TryParseSaatyValue(text, out double val))
         {
+            _activePreset = PresetKind.None;
             _isUpdatingMatrixCell = true;
             try
             {
@@ -275,28 +358,34 @@ public partial class MainWindow : Window
             // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
             tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
             tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
-            TxtBottomStatus.Text = "Значення має бути в межах від 1/9 до 9";
+            TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Value must be between 1/9 and 9"
+                : "Значення має бути в межах від 1/9 до 9";
         }
     }
 
     private void UpdateCriteriaDiagnostics()
     {
-        var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, "Матриця критеріїв", _calculationOptions);
+        var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, LocalizationService.Get("Str_Results_CriteriaMatrixName"), _calculationOptions);
 
         TxtCritWeightsPreview.Text = "w = [" + string.Join(", ", _criteria.Select((c, idx) =>
-            $"{c.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})")) + "]";
+            $"{c.Id}: {result.Weights[idx].ToString("F3", LocalizationService.ActiveCulture)} ({result.Weights[idx].ToString("P1", LocalizationService.ActiveCulture)})")) + "]";
 
-        TxtCritLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
+        TxtCritLambdaCI.Text = $"λmax = {result.LambdaMax.ToString("F4", LocalizationService.ActiveCulture)} | CI = {result.CI.ToString("F4", LocalizationService.ActiveCulture)}";
+        string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical
+            ? (_calculationOptions.IsClassicSaatyProfile
+                ? (LocalizationService.CurrentLanguage == AppLanguage.En ? "RI(Saaty)" : "RI(Сааті)")
+                : (LocalizationService.CurrentLanguage == AppLanguage.En ? "RI(emp)" : "RI(емп)"))
+            : (LocalizationService.CurrentLanguage == AppLanguage.En ? "RI(table)" : "RI(табл)");
         double threshold = result.Threshold;
-        TxtCritRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
-        TxtCritJudgedProgress.Text = $"Заповнено {_criteriaMatrix.JudgedCount} з {_criteriaMatrix.TotalPairs} порівнянь";
+        TxtCritRIRatio.Text = $"{riLabel} = {result.ActiveRI.ToString("F3", LocalizationService.ActiveCulture)} | CR = {result.ActiveCR.ToString("P1", LocalizationService.ActiveCulture)} ({result.ActiveCR.ToString("F3", LocalizationService.ActiveCulture)})";
+        TxtCritJudgedProgress.Text = LocalizationService.Format("Str_Main_FilledProgressFmt", _criteriaMatrix.JudgedCount, _criteriaMatrix.TotalPairs);
 
         if (result.IsConsistent)
         {
             PillCritStatus.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
             PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
-            TxtCritStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= {threshold:P0})";
+            TxtCritStatus.Text = LocalizationService.Format("Str_Main_ConsistentStatus", result.ActiveCR.ToString("P1", LocalizationService.ActiveCulture), threshold.ToString("P0", LocalizationService.ActiveCulture));
             TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
 
             ClearCriteriaCellHighlights();
@@ -306,7 +395,7 @@ public partial class MainWindow : Window
         {
             PillCritStatus.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
             PillCritStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
-            TxtCritStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > {threshold:P0})";
+            TxtCritStatus.Text = LocalizationService.Format("Str_Main_InconsistentStatus", result.ActiveCR.ToString("P1", LocalizationService.ActiveCulture), threshold.ToString("P0", LocalizationService.ActiveCulture));
             TxtCritStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
 
             var hint = AhpCalculator.FindMostInconsistentCell(_criteriaMatrix, result.Weights);
@@ -317,10 +406,17 @@ public partial class MainWindow : Window
                 string nameA = r < _criteria.Count ? _criteria[r].Name : $"C{r + 1}";
                 string nameB = c < _criteria.Count ? _criteria[c].Name : $"C{c + 1}";
                 string x = ComparisonMatrix.FormatSaatyValue(hint.Value.Current);
-                string y = hint.Value.Implied.ToString("0.00", UkCulture);
+                string y = hint.Value.Implied.ToString("0.00", LocalizationService.ActiveCulture);
                 string z = ComparisonMatrix.FormatSaatyValue(hint.Value.Recommended);
 
-                TxtCritInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                if (LocalizationService.CurrentLanguage == AppLanguage.En)
+                {
+                    TxtCritInconsistentHint.Text = $"Largest inconsistency: {nameA} vs {nameB}: current {x}, consistent value ≈ {y} (recommendation: {z})";
+                }
+                else
+                {
+                    TxtCritInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                }
                 BorderCritInconsistentHint.Visibility = Visibility.Visible;
                 HighlightCriteriaCells(r, c);
             }
@@ -419,7 +515,7 @@ public partial class MainWindow : Window
 
         var cornerText = new TextBlock
         {
-            Text = "Альтернатива",
+            Text = LocalizationService.Get("Str_Main_CornerAlt"),
             FontWeight = FontWeights.Bold,
             FontSize = 11,
             VerticalAlignment = VerticalAlignment.Center,
@@ -539,6 +635,7 @@ public partial class MainWindow : Window
 
         if (ComparisonMatrix.TryParseSaatyValue(text, out double val))
         {
+            _activePreset = PresetKind.None;
             _isUpdatingMatrixCell = true;
             try
             {
@@ -569,7 +666,9 @@ public partial class MainWindow : Window
             // Відновлюємо попереднє валідне значення для запобігання розсинхронізації UI та моделі даних
             tb.Text = ComparisonMatrix.FormatSaatyValue(currentVal);
             tb.SetResourceReference(TextBox.BorderBrushProperty, "InputBorder");
-            TxtBottomStatus.Text = "Значення має бути в межах від 1/9 до 9";
+            TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Value must be between 1/9 and 9"
+                : "Значення має бути в межах від 1/9 до 9";
         }
     }
 
@@ -581,24 +680,36 @@ public partial class MainWindow : Window
         var critObj = _criteria.FirstOrDefault(c => c.Id == _selectedCriterionId);
         string critTitle = critObj != null ? critObj.Name : _selectedCriterionId;
 
-        TxtAltLocalPriTitle.Text = $"Локальні пріоритети за критерієм: «{critTitle}»";
+        if (LocalizationService.CurrentLanguage == AppLanguage.En)
+        {
+            TxtAltLocalPriTitle.Text = $"Local priorities for criterion: \"{critTitle}\"";
+        }
+        else
+        {
+            TxtAltLocalPriTitle.Text = $"Локальні пріоритети за критерієм: «{critTitle}»";
+        }
 
-        var result = AhpCalculator.CalculateMatrix(altMatrix, $"Альтернативи за {_selectedCriterionId}", _calculationOptions);
+        string matrixName = LocalizationService.Format("Str_Results_AltMatrixNameFmt", _selectedCriterionId);
+        var result = AhpCalculator.CalculateMatrix(altMatrix, matrixName, _calculationOptions);
 
         TxtAltLocalPriPreview.Text = string.Join(", ", _alternatives.Select((a, idx) =>
-            $"{a.Id}: {result.Weights[idx]:F3} ({result.Weights[idx]:P1})"));
+            $"{a.Id}: {result.Weights[idx].ToString("F3", LocalizationService.ActiveCulture)} ({result.Weights[idx].ToString("P1", LocalizationService.ActiveCulture)})"));
 
-        TxtAltLambdaCI.Text = $"λmax = {result.LambdaMax:F4} | CI = {result.CI:F4}";
-        string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "RI(емп)" : "RI(табл)";
+        TxtAltLambdaCI.Text = $"λmax = {result.LambdaMax.ToString("F4", LocalizationService.ActiveCulture)} | CI = {result.CI.ToString("F4", LocalizationService.ActiveCulture)}";
+        string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical
+            ? (_calculationOptions.IsClassicSaatyProfile
+                ? (LocalizationService.CurrentLanguage == AppLanguage.En ? "RI(Saaty)" : "RI(Сааті)")
+                : (LocalizationService.CurrentLanguage == AppLanguage.En ? "RI(emp)" : "RI(емп)"))
+            : (LocalizationService.CurrentLanguage == AppLanguage.En ? "RI(table)" : "RI(табл)");
         double threshold = result.Threshold;
-        TxtAltRIRatio.Text = $"{riLabel} = {result.ActiveRI:F3} | CR = {result.ActiveCR:P1} ({result.ActiveCR:F3})";
-        TxtAltJudgedProgress.Text = $"Заповнено {altMatrix.JudgedCount} з {altMatrix.TotalPairs} порівнянь";
+        TxtAltRIRatio.Text = $"{riLabel} = {result.ActiveRI.ToString("F3", LocalizationService.ActiveCulture)} | CR = {result.ActiveCR.ToString("P1", LocalizationService.ActiveCulture)} ({result.ActiveCR.ToString("F3", LocalizationService.ActiveCulture)})";
+        TxtAltJudgedProgress.Text = LocalizationService.Format("Str_Main_FilledProgressFmt", altMatrix.JudgedCount, altMatrix.TotalPairs);
 
         if (result.IsConsistent)
         {
             PillAltStatus.SetResourceReference(Border.BackgroundProperty, "PillConsistentBg");
             PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillConsistentBorder");
-            TxtAltStatus.Text = $"Узгоджено (CR = {result.ActiveCR:P1} <= {threshold:P0})";
+            TxtAltStatus.Text = LocalizationService.Format("Str_Main_ConsistentStatus", result.ActiveCR.ToString("P1", LocalizationService.ActiveCulture), threshold.ToString("P0", LocalizationService.ActiveCulture));
             TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillConsistentFg");
 
             ClearAlternativeCellHighlights();
@@ -608,7 +719,7 @@ public partial class MainWindow : Window
         {
             PillAltStatus.SetResourceReference(Border.BackgroundProperty, "PillInconsistentBg");
             PillAltStatus.SetResourceReference(Border.BorderBrushProperty, "PillInconsistentBorder");
-            TxtAltStatus.Text = $"Неузгоджено (CR = {result.ActiveCR:P1} > {threshold:P0})";
+            TxtAltStatus.Text = LocalizationService.Format("Str_Main_InconsistentStatus", result.ActiveCR.ToString("P1", LocalizationService.ActiveCulture), threshold.ToString("P0", LocalizationService.ActiveCulture));
             TxtAltStatus.SetResourceReference(TextBlock.ForegroundProperty, "PillInconsistentFg");
 
             var hint = AhpCalculator.FindMostInconsistentCell(altMatrix, result.Weights);
@@ -619,10 +730,17 @@ public partial class MainWindow : Window
                 string nameA = r < _alternatives.Count ? _alternatives[r].Name : $"A{r + 1}";
                 string nameB = c < _alternatives.Count ? _alternatives[c].Name : $"A{c + 1}";
                 string x = ComparisonMatrix.FormatSaatyValue(hint.Value.Current);
-                string y = hint.Value.Implied.ToString("0.00", UkCulture);
+                string y = hint.Value.Implied.ToString("0.00", LocalizationService.ActiveCulture);
                 string z = ComparisonMatrix.FormatSaatyValue(hint.Value.Recommended);
 
-                TxtAltInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                if (LocalizationService.CurrentLanguage == AppLanguage.En)
+                {
+                    TxtAltInconsistentHint.Text = $"Largest inconsistency: {nameA} vs {nameB}: current {x}, consistent value ≈ {y} (recommendation: {z})";
+                }
+                else
+                {
+                    TxtAltInconsistentHint.Text = $"Найбільше відхилення: {nameA} vs {nameB}: задано {x}, узгоджене значення ≈ {y} (рекомендація: {z})";
+                }
                 BorderAltInconsistentHint.Visibility = Visibility.Visible;
                 HighlightAlternativeCells(r, c);
             }
@@ -748,16 +866,17 @@ public partial class MainWindow : Window
         if (e.Row.Item is not Criterion crit) return;
         if (e.EditingElement is not TextBox tb) return;
 
-        string colHeader = e.Column.Header?.ToString() ?? string.Empty;
         string newVal = tb.Text.Trim();
 
-        if (colHeader.Contains("ID") || colHeader.Contains("Код") || e.Column.DisplayIndex == 0)
+        if (e.Column.DisplayIndex == 0)
         {
             if (string.IsNullOrWhiteSpace(newVal))
             {
                 tb.Text = _prevCellCritId;
                 crit.Id = _prevCellCritId;
-                TxtBottomStatus.Text = "Помилка валідації: Код критерію не може бути порожнім.";
+                TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? "Validation error: Criterion ID cannot be empty."
+                    : "Помилка валідації: Код критерію не може бути порожнім.";
                 return;
             }
 
@@ -766,10 +885,15 @@ public partial class MainWindow : Window
             {
                 tb.Text = _prevCellCritId;
                 crit.Id = _prevCellCritId;
-                MessageBox.Show($"Критерій з кодом «{newVal}» вже існує. Коди мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                string errTitle = LocalizationService.Get("Str_Main_ValidationError");
+                string errMsg = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Criterion with code \"{newVal}\" already exists. Codes must be unique."
+                    : $"Критерій з кодом «{newVal}» вже існує. Коди мають бути унікальними.";
+                MessageBox.Show(errMsg, errTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            _activePreset = PresetKind.None;
             string oldId = _prevCellCritId;
             crit.Id = newVal;
 
@@ -795,13 +919,15 @@ public partial class MainWindow : Window
                 });
             }
         }
-        else if (colHeader.Contains("Назва") || e.Column.DisplayIndex == 1)
+        else if (e.Column.DisplayIndex == 1)
         {
             if (string.IsNullOrWhiteSpace(newVal))
             {
                 tb.Text = _prevCellCritName;
                 crit.Name = _prevCellCritName;
-                TxtBottomStatus.Text = "Помилка валідації: Назва критерію не може бути порожньою.";
+                TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? "Validation error: Criterion name cannot be empty."
+                    : "Помилка валідації: Назва критерію не може бути порожньою.";
                 return;
             }
 
@@ -810,10 +936,15 @@ public partial class MainWindow : Window
             {
                 tb.Text = _prevCellCritName;
                 crit.Name = _prevCellCritName;
-                MessageBox.Show($"Критерій з назвою «{newVal}» вже існує. Назви критеріїв мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                string errTitle = LocalizationService.Get("Str_Main_ValidationError");
+                string errMsg = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Criterion with name \"{newVal}\" already exists. Names must be unique."
+                    : $"Критерій з назвою «{newVal}» вже існує. Назви критеріїв мають бути унікальними.";
+                MessageBox.Show(errMsg, errTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            _activePreset = PresetKind.None;
             crit.Name = newVal;
             Dispatcher.BeginInvoke(() =>
             {
@@ -822,6 +953,10 @@ public partial class MainWindow : Window
                 BuildAlternativesCriteriaSelector();
                 UpdateAllDiagnostics();
             });
+        }
+        else
+        {
+            _activePreset = PresetKind.None;
         }
     }
 
@@ -840,16 +975,17 @@ public partial class MainWindow : Window
         if (e.Row.Item is not Alternative alt) return;
         if (e.EditingElement is not TextBox tb) return;
 
-        string colHeader = e.Column.Header?.ToString() ?? string.Empty;
         string newVal = tb.Text.Trim();
 
-        if (colHeader.Contains("ID") || colHeader.Contains("Код") || e.Column.DisplayIndex == 0)
+        if (e.Column.DisplayIndex == 0)
         {
             if (string.IsNullOrWhiteSpace(newVal))
             {
                 tb.Text = _prevCellAltId;
                 alt.Id = _prevCellAltId;
-                TxtBottomStatus.Text = "Помилка валідації: Код альтернативи не може бути порожнім.";
+                TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? "Validation error: Alternative ID cannot be empty."
+                    : "Помилка валідації: Код альтернативи не може бути порожнім.";
                 return;
             }
 
@@ -858,10 +994,15 @@ public partial class MainWindow : Window
             {
                 tb.Text = _prevCellAltId;
                 alt.Id = _prevCellAltId;
-                MessageBox.Show($"Альтернатива з кодом «{newVal}» вже існує. Коди мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                string errTitle = LocalizationService.Get("Str_Main_ValidationError");
+                string errMsg = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Alternative with code \"{newVal}\" already exists. Codes must be unique."
+                    : $"Альтернатива з кодом «{newVal}» вже існує. Коди мають бути унікальними.";
+                MessageBox.Show(errMsg, errTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            _activePreset = PresetKind.None;
             alt.Id = newVal;
             Dispatcher.BeginInvoke(() =>
             {
@@ -869,13 +1010,15 @@ public partial class MainWindow : Window
                 UpdateAllDiagnostics();
             });
         }
-        else if (colHeader.Contains("Назва") || e.Column.DisplayIndex == 1)
+        else if (e.Column.DisplayIndex == 1)
         {
             if (string.IsNullOrWhiteSpace(newVal))
             {
                 tb.Text = _prevCellAltName;
                 alt.Name = _prevCellAltName;
-                TxtBottomStatus.Text = "Помилка валідації: Назва альтернативи не може бути порожньою.";
+                TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? "Validation error: Alternative name cannot be empty."
+                    : "Помилка валідації: Назва альтернативи не може бути порожньою.";
                 return;
             }
 
@@ -884,10 +1027,15 @@ public partial class MainWindow : Window
             {
                 tb.Text = _prevCellAltName;
                 alt.Name = _prevCellAltName;
-                MessageBox.Show($"Альтернатива з назвою «{newVal}» вже існує. Назви мають бути унікальними.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                string errTitle = LocalizationService.Get("Str_Main_ValidationError");
+                string errMsg = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Alternative with name \"{newVal}\" already exists. Names must be unique."
+                    : $"Альтернатива з назвою «{newVal}» вже існує. Назви мають бути унікальними.";
+                MessageBox.Show(errMsg, errTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            _activePreset = PresetKind.None;
             alt.Name = newVal;
             Dispatcher.BeginInvoke(() =>
             {
@@ -898,6 +1046,10 @@ public partial class MainWindow : Window
                 BuildAlternativeMatrixGrid();
                 UpdateAllDiagnostics();
             });
+        }
+        else
+        {
+            _activePreset = PresetKind.None;
         }
     }
 
@@ -925,20 +1077,21 @@ public partial class MainWindow : Window
     {
         if (_criteria.Count >= 10)
         {
-            MessageBox.Show("Рекомендована максимальна кількість критеріїв за методом Сааті — не більше 10 (для запобігання втрати узгодженості суджень).", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(LocalizationService.Get("Str_Main_MaxElementsMsg"), LocalizationService.Get("Str_Main_MaxElementsReached"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         string nextId = GenerateNextCriterionId();
         int displayNum = _criteria.Count + 1;
-        string defaultName = $"Критерій {displayNum}";
+        string defaultName = LocalizationService.CurrentLanguage == AppLanguage.En ? $"Criterion {displayNum}" : $"Критерій {displayNum}";
         int nameCounter = 2;
         while (_criteria.Any(c => c.Name.Equals(defaultName, StringComparison.OrdinalIgnoreCase)))
         {
-            defaultName = $"Критерій {displayNum}_{nameCounter++}";
+            defaultName = LocalizationService.CurrentLanguage == AppLanguage.En ? $"Criterion {displayNum}_{nameCounter++}" : $"Критерій {displayNum}_{nameCounter++}";
         }
 
-        var newCrit = new Criterion(nextId, defaultName, "Новий критерій оцінювання");
+        _activePreset = PresetKind.None;
+        var newCrit = new Criterion(nextId, defaultName, LocalizationService.CurrentLanguage == AppLanguage.En ? "New evaluation criterion" : "Новий критерій оцінювання");
         _criteria.Add(newCrit);
 
         _criteriaMatrix.Resize(_criteria.Count, _criteria.Select(c => c.Name).ToList());
@@ -948,28 +1101,32 @@ public partial class MainWindow : Window
         BuildCriteriaMatrixGrid();
         BuildAlternativesCriteriaSelector();
         UpdateAllDiagnostics();
-        TxtBottomStatus.Text = $"Додано новий критерій «{newCrit.Name}» ({newCrit.Id}).";
+        TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? $"Added new criterion \"{newCrit.Name}\" ({newCrit.Id})."
+            : $"Додано новий критерій «{newCrit.Name}» ({newCrit.Id}).";
     }
 
     private void BtnRemoveCriterion_Click(object sender, RoutedEventArgs e)
     {
         if (_criteria.Count <= 2)
         {
-            MessageBox.Show("Для застосування методу багатокритеріального аналізу необхідно мінімум 2 критерії.", "Обмеження", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(LocalizationService.Get("Str_Main_MinElementsMsg"), LocalizationService.Get("Str_Main_MinElementsReached"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         var selected = GridCriteria.SelectedItem as Criterion;
         if (selected == null)
         {
-            MessageBox.Show("Будь ласка, оберіть критерій для видалення зі списку в таблиці.", "Вибір елемента", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(LocalizationService.CurrentLanguage == AppLanguage.En ? "Please select a criterion to remove from the list." : "Будь ласка, оберіть критерій для видалення зі списку в таблиці.",
+                LocalizationService.CurrentLanguage == AppLanguage.En ? "Selection" : "Вибір елемента", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        var confirm = MessageBox.Show($"Ви дійсно бажаєте видалити критерій «{selected.Name}» ({selected.Id})?\nУсі його попарні порівняння та матрицю альтернатив буде видалено.",
-            "Підтвердження видалення", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var confirm = MessageBox.Show(LocalizationService.Format("Str_Main_ConfirmRemoveCrit", selected.Name),
+            LocalizationService.Get("Str_Main_ConfirmRemoveTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
+        _activePreset = PresetKind.None;
         int idx = _criteria.IndexOf(selected);
         if (idx >= 0)
         {
@@ -987,7 +1144,9 @@ public partial class MainWindow : Window
             BuildAlternativesCriteriaSelector();
             BuildAlternativeMatrixGrid();
             UpdateAllDiagnostics();
-            TxtBottomStatus.Text = $"Критерій «{selected.Name}» успішно видалено.";
+            TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Criterion \"{selected.Name}\" removed."
+                : $"Критерій «{selected.Name}» успішно видалено.";
         }
     }
 
@@ -995,20 +1154,21 @@ public partial class MainWindow : Window
     {
         if (_alternatives.Count >= 10)
         {
-            MessageBox.Show("Рекомендована максимальна кількість альтернатив — до 10 варіантів.", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(LocalizationService.Get("Str_Main_MaxElementsMsg"), LocalizationService.Get("Str_Main_MaxElementsReached"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         string nextId = GenerateNextAlternativeId();
         int displayNum = _alternatives.Count + 1;
-        string defaultName = $"Альтернатива {displayNum}";
+        string defaultName = LocalizationService.CurrentLanguage == AppLanguage.En ? $"Alternative {displayNum}" : $"Альтернатива {displayNum}";
         int nameCounter = 2;
         while (_alternatives.Any(a => a.Name.Equals(defaultName, StringComparison.OrdinalIgnoreCase)))
         {
-            defaultName = $"Альтернатива {displayNum}_{nameCounter++}";
+            defaultName = LocalizationService.CurrentLanguage == AppLanguage.En ? $"Alternative {displayNum}_{nameCounter++}" : $"Альтернатива {displayNum}_{nameCounter++}";
         }
 
-        var newAlt = new Alternative(nextId, defaultName, "Новий варіант вибору");
+        _activePreset = PresetKind.None;
+        var newAlt = new Alternative(nextId, defaultName, LocalizationService.CurrentLanguage == AppLanguage.En ? "New alternative option" : "Новий варіант вибору");
         _alternatives.Add(newAlt);
 
         foreach (var c in _criteria)
@@ -1022,28 +1182,32 @@ public partial class MainWindow : Window
         UpdateCountsUI();
         BuildAlternativeMatrixGrid();
         UpdateAllDiagnostics();
-        TxtBottomStatus.Text = $"Додано нову альтернативу «{newAlt.Name}» ({newAlt.Id}).";
+        TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? $"Added new alternative \"{newAlt.Name}\" ({newAlt.Id})."
+            : $"Додано нову альтернативу «{newAlt.Name}» ({newAlt.Id}).";
     }
 
     private void BtnRemoveAlternative_Click(object sender, RoutedEventArgs e)
     {
         if (_alternatives.Count <= 2)
         {
-            MessageBox.Show("Для порівняння необхідно мінімум 2 альтернативи.", "Обмеження", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(LocalizationService.Get("Str_Main_MinElementsMsg"), LocalizationService.Get("Str_Main_MinElementsReached"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         var selected = GridAlternatives.SelectedItem as Alternative;
         if (selected == null)
         {
-            MessageBox.Show("Будь ласка, оберіть альтернативу для видалення зі списку в таблиці.", "Вибір елемента", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(LocalizationService.CurrentLanguage == AppLanguage.En ? "Please select an alternative to remove from the list." : "Будь ласка, оберіть альтернативу для видалення зі списку в таблиці.",
+                LocalizationService.CurrentLanguage == AppLanguage.En ? "Selection" : "Вибір елемента", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        var confirm = MessageBox.Show($"Ви дійсно бажаєте видалити альтернативу «{selected.Name}» ({selected.Id})?\nЇї оцінки за всіма критеріями буде видалено.",
-            "Підтвердження видалення", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var confirm = MessageBox.Show(LocalizationService.Format("Str_Main_ConfirmRemoveAlt", selected.Name),
+            LocalizationService.Get("Str_Main_ConfirmRemoveTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
+        _activePreset = PresetKind.None;
         int idx = _alternatives.IndexOf(selected);
         if (idx >= 0)
         {
@@ -1060,7 +1224,9 @@ public partial class MainWindow : Window
             UpdateCountsUI();
             BuildAlternativeMatrixGrid();
             UpdateAllDiagnostics();
-            TxtBottomStatus.Text = $"Альтернативу «{selected.Name}» успішно видалено.";
+            TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Alternative \"{selected.Name}\" removed."
+                : $"Альтернативу «{selected.Name}» успішно видалено.";
         }
     }
 
@@ -1070,17 +1236,23 @@ public partial class MainWindow : Window
 
     private void BtnPresetReference_Click(object sender, RoutedEventArgs e)
     {
-        LoadPreset(PresetService.GetReferencePreset());
-        TxtBottomStatus.Text = "Завантажено: Контрольний набір №1: відеокарти (попереднє покоління).";
+        _activePreset = PresetKind.Reference;
+        LoadPreset(PresetService.GetReferencePreset(LocalizationService.CurrentLanguage));
+        TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+            ? "Loaded: Reference Set #1: Graphics cards (previous gen)."
+            : "Завантажено: Контрольний набір №1: відеокарти (попереднє покоління).";
     }
 
     private void BtnPresetGpu2026_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            var preset = PresetService.GetGpu2026Preset();
+            _activePreset = PresetKind.Gpu2026;
+            var preset = PresetService.GetGpu2026Preset(LocalizationService.CurrentLanguage);
             LoadPreset(preset);
-            TxtBottomStatus.Text = "Завантажено: Набір №2: відеокарти 2026 (RTX 50 / RX 9000).";
+            TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Loaded: Dataset #2: Graphics cards 2026 (RTX 50 / RX 9000)."
+                : "Завантажено: Набір №2: відеокарти 2026 (RTX 50 / RX 9000).";
         }
         catch (Exception ex)
         {
@@ -1090,10 +1262,16 @@ public partial class MainWindow : Window
 
     private void BtnResetEmpty_Click(object sender, RoutedEventArgs e)
     {
-        var res = MessageBox.Show("Створити новий чистий шаблон задачі? Усі поточні матриці будуть скинуті до одиниць.", "Скидання", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var res = MessageBox.Show(
+            LocalizationService.CurrentLanguage == AppLanguage.En
+                ? "Create a new empty problem template? All current matrices will be reset to identity."
+                : "Створити новий чистий шаблон задачі? Усі поточні матриці будуть скинуті до одиниць.",
+            LocalizationService.CurrentLanguage == AppLanguage.En ? "Reset" : "Скидання",
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (res == MessageBoxResult.Yes)
         {
-            LoadPreset(PresetService.CreateEmptyPreset(3, 3));
+            _activePreset = PresetKind.Empty;
+            LoadPreset(PresetService.CreateEmptyPreset(3, 3, LocalizationService.CurrentLanguage));
         }
     }
 
@@ -1125,7 +1303,8 @@ public partial class MainWindow : Window
         // 1. Валідація наявності назв
         if (_criteria.Any(c => string.IsNullOrWhiteSpace(c.Name)) || _alternatives.Any(a => string.IsNullOrWhiteSpace(a.Name)))
         {
-            MessageBox.Show("Назви критеріїв та альтернатив не можуть бути порожніми.", "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(LocalizationService.CurrentLanguage == AppLanguage.En ? "Criterion and alternative names cannot be empty." : "Назви критеріїв та альтернатив не можуть бути порожніми.",
+                LocalizationService.Get("Str_Main_ValidationError"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -1136,8 +1315,10 @@ public partial class MainWindow : Window
 
         if (critDuplicate != null)
         {
-            MessageBox.Show($"Виявлено дублювання назви критерію: «{critDuplicate.Key}».\nУсі критерії повинні мати унікальні назви для коректного формування матриці синтезу.",
-                "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+            string msg = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Duplicate criterion name detected: \"{critDuplicate.Key}\".\nAll criteria must have unique names for hierarchical synthesis."
+                : $"Виявлено дублювання назви критерію: «{critDuplicate.Key}».\nУсі критерії повинні мати унікальні назви для коректного формування матриці синтезу.";
+            MessageBox.Show(msg, LocalizationService.Get("Str_Main_ValidationError"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -1148,8 +1329,10 @@ public partial class MainWindow : Window
 
         if (altDuplicate != null)
         {
-            MessageBox.Show($"Виявлено дублювання назви альтернативи: «{altDuplicate.Key}».\nУсі альтернативи повинні мати унікальні назви для однозначного ранжування.",
-                "Помилка валідації", MessageBoxButton.OK, MessageBoxImage.Warning);
+            string msg = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Duplicate alternative name detected: \"{altDuplicate.Key}\".\nAll alternatives must have unique names for ranking."
+                : $"Виявлено дублювання назви альтернативи: «{altDuplicate.Key}».\nУсі альтернативи повинні мати унікальні назви для однозначного ранжування.";
+            MessageBox.Show(msg, LocalizationService.Get("Str_Main_ValidationError"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -1157,21 +1340,28 @@ public partial class MainWindow : Window
         var incompleteMatrices = new List<string>();
         if (!_criteriaMatrix.IsFullyJudged)
         {
-            incompleteMatrices.Add($"Матриця критеріїв (заповнено {_criteriaMatrix.JudgedCount} з {_criteriaMatrix.TotalPairs})");
+            string critMatName = LocalizationService.Get("Str_Results_CriteriaMatrixName");
+            string filled = LocalizationService.Format("Str_Main_FilledProgressFmt", _criteriaMatrix.JudgedCount, _criteriaMatrix.TotalPairs);
+            incompleteMatrices.Add($"{critMatName} ({filled})");
         }
         foreach (var c in _criteria)
         {
             if (_alternativeMatrices.TryGetValue(c.Id, out var mat) && !mat.IsFullyJudged)
             {
-                incompleteMatrices.Add($"Матриця альтернатив за «{c.Name}» (заповнено {mat.JudgedCount} з {mat.TotalPairs})");
+                string altMatName = LocalizationService.Format("Str_Results_AltMatrixNameFmt", c.Name);
+                string filled = LocalizationService.Format("Str_Main_FilledProgressFmt", mat.JudgedCount, mat.TotalPairs);
+                incompleteMatrices.Add($"{altMatName} ({filled})");
             }
         }
 
         if (incompleteMatrices.Count > 0)
         {
             string listText = string.Join("\n• ", incompleteMatrices);
-            string confirmMsg = $"Виявлено не повністю заповнені матриці порівнянь:\n• {listText}\n\nНе оцінені пари вважаються рівними (1). Продовжити?";
-            var dr = MessageBox.Show(confirmMsg, "Неповні оцінки матриць", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            string confirmMsg = LocalizationService.CurrentLanguage == AppLanguage.En
+                ? $"Incomplete comparison matrices detected:\n• {listText}\n\nUnjudged pairs are assumed equal (1). Continue?"
+                : $"Виявлено не повністю заповнені матриці порівнянь:\n• {listText}\n\nНе оцінені пари вважаються рівними (1). Продовжити?";
+            string confirmTitle = LocalizationService.CurrentLanguage == AppLanguage.En ? "Incomplete Matrix Judgments" : "Неповні оцінки матриць";
+            var dr = MessageBox.Show(confirmMsg, confirmTitle, MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (dr != MessageBoxResult.Yes)
             {
                 return;
@@ -1211,7 +1401,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка під час ієрархічного синтезу:\n{ex.Message}", "Помилка обчислень", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, LocalizationService.Get("Str_Main_CalculationError"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1312,22 +1502,29 @@ public partial class MainWindow : Window
         MenuThresholdUniform.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
         MenuThresholdAdaptive.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
-        TxtActiveProfile.Text = $"Профіль: {_calculationOptions.ProfileName}";
+        TxtActiveProfile.Text = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileName}";
 
         string weightDesc = _calculationOptions.WeightMethod switch
         {
-            WeightCalculationMethod.ColumnNormalization => "Нормалізація стовпців",
-            WeightCalculationMethod.GeometricMean => "Геометричне середнє",
-            WeightCalculationMethod.PrincipalEigenvector => "Степеневий метод",
+            WeightCalculationMethod.ColumnNormalization => LocalizationService.Get("Str_Menu_Weight_ColNorm"),
+            WeightCalculationMethod.GeometricMean => LocalizationService.Get("Str_Menu_Weight_Geometric"),
+            WeightCalculationMethod.PrincipalEigenvector => LocalizationService.Get("Str_Menu_Weight_PowerIteration"),
             _ => _calculationOptions.WeightMethod.ToString()
         };
 
         string lambdaDesc = AhpCalculationOptions.GetLambdaMethodDescription(_calculationOptions.LambdaMethod);
 
-        string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical ? "Емпіричний RI" : "Табличний RI";
-        string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent ? "CR ≤ 10%" : "Адаптивний CR";
+        string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical
+            ? (_calculationOptions.IsClassicSaatyProfile
+                ? (LocalizationService.CurrentLanguage == AppLanguage.En ? "Saaty RI" : "RI Сааті")
+                : (LocalizationService.CurrentLanguage == AppLanguage.En ? "Empirical RI" : "Емпіричний RI"))
+            : (LocalizationService.CurrentLanguage == AppLanguage.En ? "Table RI" : "Табличний RI");
 
-        TxtActiveProfileDesc.Text = $"Профіль: {_calculationOptions.ProfileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
+        string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent
+            ? "CR ≤ 10%"
+            : (LocalizationService.CurrentLanguage == AppLanguage.En ? "Adaptive CR" : "Адаптивний CR");
+
+        TxtActiveProfileDesc.Text = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
     }
 
     private void MenuProfileMethodical_Click(object sender, RoutedEventArgs e)
@@ -1447,7 +1644,7 @@ public partial class MainWindow : Window
         {
             var sfd = new SaveFileDialog
             {
-                Title = "Зберегти задачу МАІ як...",
+                Title = LocalizationService.CurrentLanguage == AppLanguage.En ? "Save AHP Problem as..." : "Зберегти задачу МАІ як...",
                 Filter = "Файли задач AHP (*.ahp.json;*.json)|*.ahp.json;*.json|Усі файли (*.*)|*.*",
                 DefaultExt = ".ahp.json",
                 FileName = $"AHP_Task_{DateTime.Now:yyyyMMdd_HHmm}.ahp.json"
@@ -1472,12 +1669,14 @@ public partial class MainWindow : Window
                 };
 
                 ProjectStorageService.SaveProject(sfd.FileName, data);
-                TxtBottomStatus.Text = $"Задачу успішно збережено у файл: {Path.GetFileName(sfd.FileName)}";
+                TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Task successfully saved to file: {Path.GetFileName(sfd.FileName)}"
+                    : $"Задачу успішно збережено у файл: {Path.GetFileName(sfd.FileName)}";
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка збереження задачі:\n{ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, LocalizationService.Get("Str_Main_SaveError"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1487,13 +1686,14 @@ public partial class MainWindow : Window
         {
             var ofd = new OpenFileDialog
             {
-                Title = "Завантажити задачу МАІ...",
+                Title = LocalizationService.CurrentLanguage == AppLanguage.En ? "Open AHP Problem..." : "Завантажити задачу МАІ...",
                 Filter = "Файли задач AHP (*.ahp.json;*.json)|*.ahp.json;*.json|Усі файли (*.*)|*.*"
             };
 
             if (ofd.ShowDialog(this) == true)
             {
                 var data = ProjectStorageService.LoadProject(ofd.FileName);
+                _activePreset = PresetKind.None;
                 _projectTitle = !string.IsNullOrWhiteSpace(data.Title) ? data.Title : "Задача багатокритеріального вибору";
                 _projectDescription = data.Description ?? string.Empty;
 
@@ -1548,14 +1748,16 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    TxtBottomStatus.Text = $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
+                    TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                        ? $"Loaded problem: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} criteria, {_alternatives.Count} alternatives)."
+                        : $"Завантажено задачу: {Path.GetFileName(ofd.FileName)} ({_criteria.Count} критеріїв, {_alternatives.Count} альтернатив).";
                     TxtBottomStatus.Foreground = (Brush)FindResource("TextDark");
                 }
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка завантаження задачі:\n{ex.Message}", "Помилка завантаження", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, LocalizationService.Get("Str_Main_OpenError"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1572,7 +1774,7 @@ public partial class MainWindow : Window
 
             var sfd = new SaveFileDialog
             {
-                Title = "Експорт повного звіту результатів МАІ",
+                Title = LocalizationService.CurrentLanguage == AppLanguage.En ? "Export full AHP report..." : "Експорт повного звіту результатів МАІ",
                 Filter = "Текстовий файл (*.txt)|*.txt|Усі файли (*.*)|*.*",
                 DefaultExt = ".txt",
                 FileName = $"AHP_Report_{DateTime.Now:yyyyMMdd_HHmm}.txt"
@@ -1582,12 +1784,14 @@ public partial class MainWindow : Window
             {
                 string report = ProjectStorageService.GenerateFullReportText(result);
                 File.WriteAllText(sfd.FileName, report, Encoding.UTF8);
-                TxtBottomStatus.Text = $"Звіт успішно експортовано у файл: {Path.GetFileName(sfd.FileName)}";
+                TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
+                    ? $"Report successfully exported to file: {Path.GetFileName(sfd.FileName)}"
+                    : $"Звіт успішно експортовано у файл: {Path.GetFileName(sfd.FileName)}";
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Не вдалося сформувати звіт:\n{ex.Message}", "Помилка експорту", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, LocalizationService.Get("Str_Main_ExportError"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

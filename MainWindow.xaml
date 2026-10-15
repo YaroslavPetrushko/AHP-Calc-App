@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MAI"
         mc:Ignorable="d"
-        Title="Метод аналізу ієрархій Томаса Сааті (МАІ / AHP)" 
+        Title="{DynamicResource Str_Main_Title}" 
         Height="810" Width="1080"
         MinHeight="650" MinWidth="960"
         WindowStartupLocation="CenterScreen"
@@ -28,33 +28,33 @@
         <!-- Top Menu Bar -->
         <Menu DockPanel.Dock="Top" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4" FontSize="13">
             <!-- Menu "Файл" -->
-            <MenuItem Header="_Файл">
-                <MenuItem Header="_Зберегти задачу як..." InputGestureText="Ctrl+S" Click="MenuFileSaveAs_Click">
+            <MenuItem Header="{DynamicResource Str_Menu_File}">
+                <MenuItem Header="{DynamicResource Str_Menu_SaveAs}" InputGestureText="Ctrl+S" Click="MenuFileSaveAs_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="💾" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="За_вантажити задачу..." InputGestureText="Ctrl+O" Click="MenuFileOpen_Click">
+                <MenuItem Header="{DynamicResource Str_Menu_Open}" InputGestureText="Ctrl+O" Click="MenuFileOpen_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="📂" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="_Тестові набори (Пресети)">
+                <MenuItem Header="{DynamicResource Str_Menu_Presets}">
                     <MenuItem.Icon>
                         <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem Header="📁 Набір №1: відеокарти (попереднє покоління)" Click="BtnPresetReference_Click"/>
-                    <MenuItem Header="📗 Набір №2: відеокарти 2026 (RTX 50 / RX 9000)" Click="BtnPresetGpu2026_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_Preset1}" Click="BtnPresetReference_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_Preset2}" Click="BtnPresetGpu2026_Click"/>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="_Експорт звіту в TXT..." InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click">
+                <MenuItem Header="{DynamicResource Str_Menu_ExportReport}" InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="📋" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="Ви_хід" InputGestureText="Alt+F4" Click="MenuFileExit_Click">
+                <MenuItem Header="{DynamicResource Str_Menu_Exit}" InputGestureText="Alt+F4" Click="MenuFileExit_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="❌" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
@@ -62,52 +62,59 @@
             </MenuItem>
 
             <!-- Menu "Налаштування" -->
-            <MenuItem Header="_Налаштування">
-                <MenuItem Header="_Порівняти профілі..." InputGestureText="Ctrl+P" Click="MenuCompareProfiles_Click">
+            <MenuItem Header="{DynamicResource Str_Menu_Settings}">
+                <MenuItem Header="{DynamicResource Str_Menu_CompareProfiles}" InputGestureText="Ctrl+P" Click="MenuCompareProfiles_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="⚖️" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
                     </MenuItem.Icon>
                 </MenuItem>
-                    <Separator/>
-                <MenuItem Header="_Профіль розрахунку">
+                <Separator/>
+                <MenuItem Header="{DynamicResource Str_Menu_Profile}">
                     <MenuItem.Icon>
                         <TextBlock Text="🎯" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem x:Name="MenuProfileMethodical" Header="🔬 За методичними рекомендаціями" IsCheckable="True" IsChecked="True" Click="MenuProfileMethodical_Click"/>
-                    <MenuItem x:Name="MenuProfileClassic" Header="🏛️ Класичний метод Т. Сааті" IsCheckable="True" IsChecked="False" Click="MenuProfileClassic_Click"/>
-                    <MenuItem x:Name="MenuProfileCustom" Header="⚙️ Власний профіль (Custom)" IsCheckable="True" IsChecked="False" IsEnabled="False"/>
+                    <MenuItem x:Name="MenuProfileMethodical" Header="{DynamicResource Str_Menu_Profile_Methodical}" IsCheckable="True" IsChecked="True" Click="MenuProfileMethodical_Click"/>
+                    <MenuItem x:Name="MenuProfileClassic" Header="{DynamicResource Str_Menu_Profile_Classic}" IsCheckable="True" IsChecked="False" Click="MenuProfileClassic_Click"/>
+                    <MenuItem x:Name="MenuProfileCustom" Header="{DynamicResource Str_Menu_Profile_Custom}" IsCheckable="True" IsChecked="False" IsEnabled="False"/>
                     <Separator/>
-                    <MenuItem Header="Метод розрахунку ваг">
-                        <MenuItem x:Name="MenuWeightColumnNorm" Header="Нормалізація стовпців (Column Normalization)" IsCheckable="True" Click="MenuWeightColumnNorm_Click"/>
-                        <MenuItem x:Name="MenuWeightGeometric" Header="Геометричне середнє (Geometric Mean / LLSM)" IsCheckable="True" Click="MenuWeightGeometric_Click"/>
-                        <MenuItem x:Name="MenuWeightPowerIteration" Header="Степеневий метод (Power Iteration / Сааті)" IsCheckable="True" Click="MenuWeightPowerIteration_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_WeightMethod}">
+                        <MenuItem x:Name="MenuWeightColumnNorm" Header="{DynamicResource Str_Menu_Weight_ColNorm}" IsCheckable="True" Click="MenuWeightColumnNorm_Click"/>
+                        <MenuItem x:Name="MenuWeightGeometric" Header="{DynamicResource Str_Menu_Weight_Geometric}" IsCheckable="True" Click="MenuWeightGeometric_Click"/>
+                        <MenuItem x:Name="MenuWeightPowerIteration" Header="{DynamicResource Str_Menu_Weight_PowerIteration}" IsCheckable="True" Click="MenuWeightPowerIteration_Click"/>
                     </MenuItem>
-                    <MenuItem Header="Метод власного значення (λmax)">
-                        <MenuItem x:Name="MenuLambdaColSum" Header="λmax = Σ(сума j-го стовпця · wⱼ) (за методичними рекомендаціями)" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
-                        <MenuItem x:Name="MenuLambdaRowRatio" Header="λmax = середнє (A·w)ᵢ / wᵢ" IsCheckable="True" Click="MenuLambdaRowRatio_Click"/>
-                        <MenuItem x:Name="MenuLambdaExact" Header="λmax — головне власне число (степеневий метод)" IsCheckable="True" Click="MenuLambdaExact_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_LambdaMethod}">
+                        <MenuItem x:Name="MenuLambdaColSum" Header="{DynamicResource Str_Menu_Lambda_ColSum}" IsCheckable="True" Click="MenuLambdaColSum_Click"/>
+                        <MenuItem x:Name="MenuLambdaRowRatio" Header="{DynamicResource Str_Menu_Lambda_RowRatio}" IsCheckable="True" Click="MenuLambdaRowRatio_Click"/>
+                        <MenuItem x:Name="MenuLambdaExact" Header="{DynamicResource Str_Menu_Lambda_Exact}" IsCheckable="True" Click="MenuLambdaExact_Click"/>
                     </MenuItem>
-                    <MenuItem Header="Індекс випадкової узгодженості (RI)">
-                        <MenuItem x:Name="MenuRiEmpirical" Header="Емпірична формула: 1.98 · (n-2) / n" IsCheckable="True" Click="MenuRiEmpirical_Click"/>
-                        <MenuItem x:Name="MenuRiTable" Header="Табличне значення Сааті (RI table)" IsCheckable="True" Click="MenuRiTable_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_RiMode}">
+                        <MenuItem x:Name="MenuRiEmpirical" Header="{DynamicResource Str_Menu_Ri_Empirical}" IsCheckable="True" Click="MenuRiEmpirical_Click"/>
+                        <MenuItem x:Name="MenuRiTable" Header="{DynamicResource Str_Menu_Ri_Table}" IsCheckable="True" Click="MenuRiTable_Click"/>
                     </MenuItem>
-                    <MenuItem Header="Поріг узгодженості (CR max)">
-                        <MenuItem x:Name="MenuThresholdUniform" Header="Фіксований 10% для всіх n (за методичними рекомендаціями)" IsCheckable="True" Click="MenuThresholdUniform_Click"/>
-                        <MenuItem x:Name="MenuThresholdAdaptive" Header="Адаптивний Сааті (5% при n=3, 8% при n=4, 10% при n≥5)" IsCheckable="True" Click="MenuThresholdAdaptive_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_ThresholdMode}">
+                        <MenuItem x:Name="MenuThresholdUniform" Header="{DynamicResource Str_Menu_Threshold_Uniform}" IsCheckable="True" Click="MenuThresholdUniform_Click"/>
+                        <MenuItem x:Name="MenuThresholdAdaptive" Header="{DynamicResource Str_Menu_Threshold_Adaptive}" IsCheckable="True" Click="MenuThresholdAdaptive_Click"/>
                     </MenuItem>
                 </MenuItem>
-                <MenuItem Header="_Тема оформлення">
+                <MenuItem Header="{DynamicResource Str_Menu_Theme}">
                     <MenuItem.Icon>
                         <TextBlock Text="🎨" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem x:Name="MenuThemeLight" Header="☀️ Світла" IsCheckable="True" IsChecked="True" Click="MenuThemeLight_Click"/>
-                    <MenuItem x:Name="MenuThemeDark" Header="🌙 Темна" IsCheckable="True" IsChecked="False" Click="MenuThemeDark_Click"/>
+                    <MenuItem x:Name="MenuThemeLight" Header="{DynamicResource Str_Menu_Theme_Light}" IsCheckable="True" IsChecked="True" Click="MenuThemeLight_Click"/>
+                    <MenuItem x:Name="MenuThemeDark" Header="{DynamicResource Str_Menu_Theme_Dark}" IsCheckable="True" IsChecked="False" Click="MenuThemeDark_Click"/>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource Str_Menu_Language}">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🌐" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </MenuItem.Icon>
+                    <MenuItem x:Name="MenuLangUk" Header="🇺🇦 Українська" IsCheckable="True" IsChecked="True" Click="MenuLangUk_Click"/>
+                    <MenuItem x:Name="MenuLangEn" Header="🇬🇧 English" IsCheckable="True" IsChecked="False" Click="MenuLangEn_Click"/>
                 </MenuItem>
             </MenuItem>
 
             <!-- Menu "Довідка" -->
-            <MenuItem Header="_Довідка">
-                <MenuItem Header="_Про програму" InputGestureText="F1" Click="MenuHelpAbout_Click">
+            <MenuItem Header="{DynamicResource Str_Menu_Help}">
+                <MenuItem Header="{DynamicResource Str_Menu_About}" InputGestureText="F1" Click="MenuHelpAbout_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="ℹ️" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
@@ -135,19 +142,19 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Метод аналізу ієрархій Томаса Сааті" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                        <TextBlock Text="{DynamicResource Str_Main_HeaderTitle}" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                         <Border x:Name="BadgeActiveProfile" Background="{DynamicResource PillConsistentBg}" BorderBrush="{DynamicResource PillConsistentBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="12,4,0,0" VerticalAlignment="Center">
                             <TextBlock x:Name="TxtActiveProfile" Text="Профіль: Метод. рекомендації" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PillConsistentFg}"/>
                         </Border>
                     </StackPanel>
-                    <TextBlock Text="Системний аналіз та теорія прийняття рішень • .NET 10 WPF Application" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
+                    <TextBlock Text="{DynamicResource Str_Main_HeaderSubtitle}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,3,0,0"/>
                 </StackPanel>
 
                 <!-- Preset Toolbar -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnPresetReference" Content="📁 Набір №1" ToolTip="Набір №1: відеокарти (попереднє покоління)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetReference_Click"/>
-                    <Button x:Name="BtnPresetGpu2026" Content="📗 Набір №2: GPU 2026" ToolTip="Набір №2: відеокарти 2026 (RTX 50 / RX 9000)" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetGpu2026_Click"/>
-                    <Button x:Name="BtnResetEmpty" Content="🔄 Нова задача" ToolTip="Створити чистий шаблон задачі" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
+                    <Button x:Name="BtnPresetReference" Content="{DynamicResource Str_Main_BtnPresetRef}" ToolTip="{DynamicResource Str_Main_BtnPresetRef_Tip}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetReference_Click"/>
+                    <Button x:Name="BtnPresetGpu2026" Content="{DynamicResource Str_Main_BtnPresetGpu}" ToolTip="{DynamicResource Str_Main_BtnPresetGpu_Tip}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetGpu2026_Click"/>
+                    <Button x:Name="BtnResetEmpty" Content="{DynamicResource Str_Main_BtnReset}" ToolTip="{DynamicResource Str_Main_BtnReset_Tip}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -155,7 +162,7 @@
         <!-- Main Navigation Tabs -->
         <TabControl Grid.Row="1" x:Name="MainTabControl" Background="Transparent" BorderThickness="0" Margin="0,0,0,10" SelectionChanged="MainTabControl_SelectionChanged">
             <!-- TAB 1: Критерії та Альтернативи -->
-            <TabItem Header="1. Критерії та Альтернативи">
+            <TabItem Header="{DynamicResource Str_Main_Tab1}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
                     <StackPanel>
                         <Grid Margin="0,0,0,10">
@@ -168,10 +175,10 @@
                             <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="Критерії оцінювання" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="{DynamicResource Str_Main_CritCardTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Визначте параметри, за якими здійснюється вибір (2..10). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="{DynamicResource Str_Main_CritCardDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridCriteria" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
                                               IsReadOnly="False"
@@ -179,10 +186,17 @@
                                               HeadersVisibility="Column" RowHeaderWidth="0"
                                               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Код (ID)" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}"/>
-                                            <DataGridTextColumn Header="Назва критерію" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="140"
+                                            <DataGridTextColumn Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
                                                                 EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="{DynamicResource Str_Main_ColCode}"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="140"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="{DynamicResource Str_Main_ColCritName}"/>
+                                                </DataGridTextColumn.Header>
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -191,8 +205,11 @@
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn Header="Опис / Зміст" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
+                                            <DataGridTextColumn Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
                                                                 EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="{DynamicResource Str_Main_ColCritDesc}"/>
+                                                </DataGridTextColumn.Header>
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -205,8 +222,8 @@
                                     </DataGrid>
 
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                                        <Button Content="➕ Додати критерій" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddCriterion_Click"/>
-                                        <Button Content="❌ Видалити" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveCriterion_Click"/>
+                                        <Button Content="{DynamicResource Str_Main_BtnAddCrit}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddCriterion_Click"/>
+                                        <Button Content="{DynamicResource Str_Main_BtnRemoveCrit}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveCriterion_Click"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -215,10 +232,10 @@
                             <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="Альтернативи вибору" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="{DynamicResource Str_Main_AltCardTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
                                         <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Варіанти розв'язку або об'єкти вибору (2..10). Комірки доступні для редагування." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                                    <TextBlock Text="{DynamicResource Str_Main_AltCardDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
 
                                     <DataGrid x:Name="GridAlternatives" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
                                               IsReadOnly="False"
@@ -226,10 +243,17 @@
                                               HeadersVisibility="Column" RowHeaderWidth="0"
                                               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Код (ID)" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}"/>
-                                            <DataGridTextColumn Header="Назва альтернативи" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="160"
+                                            <DataGridTextColumn Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
                                                                 EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="{DynamicResource Str_Main_ColCode}"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="160"
+                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="{DynamicResource Str_Main_ColAltName}"/>
+                                                </DataGridTextColumn.Header>
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -238,8 +262,11 @@
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn Header="Опис / Специфікація" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
+                                            <DataGridTextColumn Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
                                                                 EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="{DynamicResource Str_Main_ColAltDesc}"/>
+                                                </DataGridTextColumn.Header>
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -252,8 +279,8 @@
                                     </DataGrid>
 
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                                        <Button Content="➕ Додати альтернативу" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddAlternative_Click"/>
-                                        <Button Content="❌ Видалити" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveAlternative_Click"/>
+                                        <Button Content="{DynamicResource Str_Main_BtnAddAlt}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddAlternative_Click"/>
+                                        <Button Content="{DynamicResource Str_Main_BtnRemoveAlt}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveAlternative_Click"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -262,23 +289,23 @@
                         <!-- Saaty Scale Reference Card -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Довідка: Фундаментальна 9-бальна шкала важливості Сааті" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_Scale_Title}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                        <TextBlock Text="• 1 — Однакова важливість (рівні умови)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="• 3 — Помірна перевага одного над іншим" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="• 5 — Суттєва (сильна) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="• 7 — Значна (очевидна) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_Point1}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_Point3}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_Point5}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_Point7}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="• 9 — Абсолютна (найвища можлива) перевага" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="• 2, 4, 6, 8 — Проміжні компромісні градації" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="• 1/2, 1/3, ..., 1/9 — Обернені оцінки (перевага стовпця над рядком)" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="💡 Порада: вводьте числа або дроби (напр. 1/3). Симетричні клітинки заповнюються автоматично." FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_Point9}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_PointEven}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_PointReciprocal}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                        <TextBlock Text="{DynamicResource Str_Scale_Tip}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -288,7 +315,7 @@
             </TabItem>
 
             <!-- TAB 2: Порівняння критеріїв -->
-            <TabItem Header="2. Порівняння критеріїв">
+            <TabItem Header="{DynamicResource Str_Main_Tab2}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
                     <StackPanel>
                         <!-- Criteria Matrix Card -->
@@ -301,8 +328,8 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Матриця попарних порівнянь критеріїв" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                                        <TextBlock Text="Вкажіть перевагу критерію в лівому рядку над критерієм у верхньому стовпці." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                        <TextBlock Text="{DynamicResource Str_Main_CritMatrixTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="{DynamicResource Str_Main_CritMatrixDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
                                     <!-- Quick Status Pill & Progress -->
@@ -338,7 +365,7 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Розраховані ваги критеріїв (Вектор w):" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{DynamicResource Str_Main_CritWeightsTitle}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
                                             <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
                                         </StackPanel>
 
@@ -355,7 +382,7 @@
             </TabItem>
 
             <!-- TAB 3: Оцінка альтернатив -->
-            <TabItem Header="3. Оцінка альтернатив">
+            <TabItem Header="{DynamicResource Str_Main_Tab3}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
                     <StackPanel>
                         <Border Style="{StaticResource CardStyle}">
@@ -367,8 +394,8 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Матриці попарних порівнянь альтернатив" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                                        <TextBlock Text="Оберіть критерій та заповніть попарні оцінки альтернатив за ним." FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                        <TextBlock Text="{DynamicResource Str_Main_AltMatricesTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                        <TextBlock Text="{DynamicResource Str_Main_AltMatricesDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
 
                                     <!-- Quick Status Pill & Progress for Alternative Matrix -->
@@ -440,7 +467,7 @@
                     <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: За метод. реком. • Нормалізація стовпців • Σ(ColSum_j · w_j) • Емпіричний RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
                 </StackPanel>
 
-                <Button Grid.Column="1" Content="🚀 Розрахувати та показати результати" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>
+                <Button Grid.Column="1" Content="{DynamicResource Str_Main_BtnCalculate}" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>
             </Grid>
         </Border>
     </Grid>
