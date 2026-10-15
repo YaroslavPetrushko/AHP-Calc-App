@@ -119,7 +119,9 @@ public partial class ResultsWindow : Window
         Color.FromRgb(139, 92, 246), // Purple (#8B5CF6)
         Color.FromRgb(236, 72, 153), // Pink (#EC4899)
         Color.FromRgb(20, 184, 166), // Teal (#14B8A6)
-        Color.FromRgb(249, 115, 22)  // Orange (#F97316)
+        Color.FromRgb(249, 115, 22), // Orange (#F97316)
+        Color.FromRgb(99, 102, 241), // Indigo (#6366F1)
+        Color.FromRgb(6, 182, 212)   // Cyan (#06B6D4)
     };
 
     private readonly List<Criterion>? _rawCriteria;

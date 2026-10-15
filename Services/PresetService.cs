@@ -217,8 +217,8 @@ public static class PresetService
     /// </summary>
     public static AhpProblemPreset CreateEmptyPreset(int criteriaCount = 3, int alternativesCount = 3)
     {
-        int cCount = Math.Clamp(criteriaCount, 2, 8);
-        int aCount = Math.Clamp(alternativesCount, 2, 8);
+        int cCount = Math.Clamp(criteriaCount, 2, 10);
+        int aCount = Math.Clamp(alternativesCount, 2, 10);
 
         var criteria = new List<Criterion>();
         for (int i = 0; i < cCount; i++)

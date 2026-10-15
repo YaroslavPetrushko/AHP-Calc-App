@@ -788,8 +788,10 @@ public partial class MainWindow : Window
 
                 Dispatcher.BeginInvoke(() =>
                 {
+                    BuildCriteriaMatrixGrid();
                     BuildAlternativesCriteriaSelector();
                     UpdateCountsUI();
+                    UpdateAllDiagnostics();
                 });
             }
         }
@@ -863,6 +865,7 @@ public partial class MainWindow : Window
             alt.Id = newVal;
             Dispatcher.BeginInvoke(() =>
             {
+                BuildAlternativeMatrixGrid();
                 UpdateAllDiagnostics();
             });
         }
@@ -920,9 +923,9 @@ public partial class MainWindow : Window
 
     private void BtnAddCriterion_Click(object sender, RoutedEventArgs e)
     {
-        if (_criteria.Count >= 8)
+        if (_criteria.Count >= 10)
         {
-            MessageBox.Show("Рекомендована максимальна кількість критеріїв за методом Сааті — не більше 8 (для запобігання втрати узгодженості суджень).", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Рекомендована максимальна кількість критеріїв за методом Сааті — не більше 10 (для запобігання втрати узгодженості суджень).", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -990,9 +993,9 @@ public partial class MainWindow : Window
 
     private void BtnAddAlternative_Click(object sender, RoutedEventArgs e)
     {
-        if (_alternatives.Count >= 8)
+        if (_alternatives.Count >= 10)
         {
-            MessageBox.Show("Рекомендована максимальна кількість альтернатив — до 8 варіантів.", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Рекомендована максимальна кількість альтернатив — до 10 варіантів.", "Обмеження розмірності", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
