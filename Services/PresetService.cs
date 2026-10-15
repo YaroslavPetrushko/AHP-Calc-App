@@ -185,11 +185,11 @@ public static class PresetService
 
             var enAltNames = new Dictionary<string, (string Name, string Desc)>
             {
-                ["A1"] = ("GeForce RTX 5060 Ti 16GB", "Mid-range Blackwell architecture with 16GB GDDR7, optimal for 1440p and local neural network inference"),
-                ["A2"] = ("GeForce RTX 5070 12GB", "High graphics performance, GDDR7, DLSS 4, optimal for demanding gaming workloads"),
-                ["A3"] = ("GeForce RTX 5070 Ti 16GB", "Sub-flagship model, 16GB high-speed memory, exceptional ray tracing capability"),
-                ["A4"] = ("Radeon RX 9060 XT 16GB", "Competitive price, 16GB VRAM, solid raster FPS and RDNA 4 ray tracing acceleration"),
-                ["A5"] = ("Radeon RX 9070 16GB", "Direct RTX 5070 competitor with 16GB memory and high compute throughput")
+                ["A1"] = ("RTX 5060 8GB", "Mid-range Blackwell architecture with 8GB GDDR7, entry-level gaming and everyday tasks"),
+                ["A2"] = ("RTX 5060 Ti 16GB", "Mid-range Blackwell architecture with 16GB GDDR7, optimal for 1440p and local neural network inference"),
+                ["A3"] = ("RTX 5070 12GB", "High graphics performance, GDDR7, DLSS 4, optimal for demanding gaming workloads"),
+                ["A4"] = ("RX 9060 XT 16GB", "Competitive price, 16GB VRAM, solid raster FPS and RDNA 4 ray tracing acceleration"),
+                ["A5"] = ("RX 9070 16GB", "Direct RTX 5070 competitor with 16GB memory and high compute throughput")
             };
 
             foreach (var a in preset.Alternatives)
