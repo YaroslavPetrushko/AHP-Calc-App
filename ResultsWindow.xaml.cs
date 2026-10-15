@@ -1046,17 +1046,30 @@ public partial class ResultsWindow : Window
 
     private void MenuExportSensitivityPng_Click(object sender, RoutedEventArgs e)
     {
-        string critName = _currentSensitivityResult?.Criterion?.Name ?? _currentSensitivityResult?.Criterion?.Id ?? "criterion";
+        string rawCritName = _currentSensitivityResult?.Criterion?.Name ?? _currentSensitivityResult?.Criterion?.Id ?? "criterion";
+        string safeCritName = string.Concat(rawCritName.Split(System.IO.Path.GetInvalidFileNameChars())).Trim();
+        if (string.IsNullOrEmpty(safeCritName)) safeCritName = "criterion";
+
         var sfd = new SaveFileDialog
         {
             Title = "Зберегти графік чутливості в PNG...",
             Filter = "Зображення PNG (*.png)|*.png",
-            FileName = $"sensitivity_{critName}.png"
+            FileName = $"sensitivity_{safeCritName}.png"
         };
         if (sfd.ShowDialog(this) == true)
         {
             try
             {
+                if (SensitivityPlotContainer.ActualWidth <= 1 || CanvasSensitivityPlot.ActualWidth <= 50)
+                {
+                    var measureSize = new Size(760, 460);
+                    SensitivityPlotContainer.Measure(measureSize);
+                    SensitivityPlotContainer.Arrange(new Rect(measureSize));
+                    SensitivityPlotContainer.UpdateLayout();
+                    RedrawSensitivityPlot(_currentSensitivityT);
+                    SensitivityPlotContainer.UpdateLayout();
+                }
+
                 ExportElementToPng(SensitivityPlotContainer, sfd.FileName, 192.0);
                 TxtResultsStatus.Text = $"Графік чутливості збережено: {System.IO.Path.GetFileName(sfd.FileName)}";
             }
@@ -1069,18 +1082,29 @@ public partial class ResultsWindow : Window
 
     private static void ExportElementToPng(FrameworkElement element, string filePath, double dpi = 192.0)
     {
+        if (element.ActualWidth <= 1 || element.ActualHeight <= 1)
+        {
+            var defaultSize = new Size(800, 500);
+            element.Measure(defaultSize);
+            element.Arrange(new Rect(defaultSize));
+            element.UpdateLayout();
+        }
+
+        double elemWidth = element.ActualWidth > 1 ? element.ActualWidth : element.DesiredSize.Width;
+        double elemHeight = element.ActualHeight > 1 ? element.ActualHeight : element.DesiredSize.Height;
+
         double scale = dpi / 96.0;
-        int width = (int)Math.Max(1, Math.Ceiling(element.ActualWidth * scale));
-        int height = (int)Math.Max(1, Math.Ceiling(element.ActualHeight * scale));
+        int width = (int)Math.Max(1, Math.Ceiling(elemWidth * scale));
+        int height = (int)Math.Max(1, Math.Ceiling(elemHeight * scale));
 
         var rtb = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
 
         var dv = new DrawingVisual();
         using (var dc = dv.RenderOpen())
         {
-            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, elemWidth, elemHeight));
             var brush = new VisualBrush(element);
-            dc.DrawRectangle(brush, null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+            dc.DrawRectangle(brush, null, new Rect(0, 0, elemWidth, elemHeight));
         }
 
         rtb.Render(dv);

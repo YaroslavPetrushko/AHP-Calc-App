@@ -205,6 +205,9 @@
                 <Trigger Property="IsHighlighted" Value="True">
                     <Setter TargetName="templateRoot" Property="Background" Value="{DynamicResource MenuHoverBg}"/>
                 </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="templateRoot" Property="Background" Value="{DynamicResource MenuHoverBg}"/>
+                </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
@@ -237,6 +240,9 @@
                 <Trigger Property="IsHighlighted" Value="True">
                     <Setter TargetName="templateRoot" Property="Background" Value="{DynamicResource MenuHoverBg}"/>
                 </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="templateRoot" Property="Background" Value="{DynamicResource MenuHoverBg}"/>
+                </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
                 </Trigger>
@@ -267,11 +273,42 @@
                 <Trigger Property="IsHighlighted" Value="True">
                     <Setter TargetName="templateRoot" Property="Background" Value="{DynamicResource MenuHoverBg}"/>
                 </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="templateRoot" Property="Background" Value="{DynamicResource MenuHoverBg}"/>
+                </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
+
+        <!-- Modern ContextMenu Style -->
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource MenuBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource MenuFg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Color="#0F172A" Opacity="0.18"/>
+                            </Border.Effect>
+                            <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            </ScrollViewer>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Menu Bar Style -->
         <Style TargetType="Menu">
@@ -285,6 +322,7 @@
         <Style TargetType="MenuItem">
             <Setter Property="Foreground" Value="{DynamicResource MenuFg}"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="Role" Value="TopLevelHeader">
                     <Setter Property="Template" Value="{StaticResource TopLevelHeaderTemplate}"/>
