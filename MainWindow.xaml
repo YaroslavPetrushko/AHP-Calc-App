@@ -479,9 +479,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
-                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: За метод. реком. • Нормалізація стовпців • Σ(ColSum_j · w_j) • Емпіричний RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: Метод. рекомендації • Норм. стовпців • λ: Σ(Col·w) • Емп. RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="{DynamicResource Str_Main_BtnCalculate}" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>
