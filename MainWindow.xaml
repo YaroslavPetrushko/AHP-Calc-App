@@ -333,7 +333,7 @@
 
             <!-- TAB 2: Порівняння критеріїв -->
             <TabItem Header="{DynamicResource Str_Main_Tab2}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,0">
                     <StackPanel>
                         <!-- Criteria Matrix Card -->
                         <Border Style="{StaticResource CardStyle}">
@@ -383,7 +383,7 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="{DynamicResource Str_Main_CritWeightsTitle}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
@@ -400,7 +400,7 @@
 
             <!-- TAB 3: Оцінка альтернатив -->
             <TabItem Header="{DynamicResource Str_Main_Tab3}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,0">
                     <StackPanel>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
@@ -452,7 +452,7 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock x:Name="TxtAltLocalPriTitle" Text="Локальні пріоритети альтернатив за обраним критерієм:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
