@@ -63,7 +63,7 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtAppVersion" Text="Версія 1.3.0" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryBlue}"/>
+                        <TextBlock x:Name="TxtAppVersion" Text="Версія 1.3.1" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryBlue}"/>
                         <TextBlock Text="{DynamicResource Str_About_Platform}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
 
