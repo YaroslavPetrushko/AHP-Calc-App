@@ -68,17 +68,17 @@
                                 <TextBlock Text="{DynamicResource Str_Results_CardRankingsTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
                                 <TextBlock Text="{DynamicResource Str_Results_CardRankingsDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,14"/>
 
-                                <ItemsControl x:Name="ListRankings">
+                                <ItemsControl x:Name="ListRankings" Grid.IsSharedSizeScope="True">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border BorderThickness="1" BorderBrush="{DynamicResource BorderColor}" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="42"/>  <!-- Rank Badge -->
-                                                        <ColumnDefinition Width="*"/>   <!-- Name & Description -->
-                                                        <ColumnDefinition Width="110"/> <!-- Percent -->
-                                                        <ColumnDefinition Width="170"/> <!-- Progress Bar -->
-                                                        <ColumnDefinition Width="115"/> <!-- Status Pill -->
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="RankNameCol" MinWidth="180" MaxWidth="320"/>   <!-- Name & Description -->
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="RankPercentCol"/> <!-- Percent -->
+                                                        <ColumnDefinition Width="*"/>   <!-- Dynamic Progress Bar: uniform and stretchable -->
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="RankBadgeCol"/> <!-- Status Pill -->
                                                     </Grid.ColumnDefinitions>
 
                                                     <!-- Rank Badge -->
@@ -88,14 +88,14 @@
 
                                                     <!-- Name & Description -->
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,12,0">
-                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextDark}"/>
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextDark}" TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
 
                                                     <!-- Percent -->
-                                                    <TextBlock Grid.Column="2" Text="{Binding PriorityPercentText}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding PriorityPercentText}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0,14,0"/>
 
-                                                    <!-- Visual Bar -->
+                                                    <!-- Dynamic Visual Bar -->
                                                     <Grid Grid.Column="3" VerticalAlignment="Center" Margin="0,0,14,0">
                                                         <Border Background="{DynamicResource MatrixContainerBg}" CornerRadius="5" Height="12"/>
                                                         <ProgressBar Value="{Binding PriorityPercent, Mode=OneWay}" Maximum="100" Height="12" Foreground="{Binding BarBrush}" Background="Transparent" BorderThickness="0"/>
