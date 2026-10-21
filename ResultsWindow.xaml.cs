@@ -316,35 +316,78 @@ public partial class ResultsWindow : Window
     private void InitRecommendationText()
     {
         bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
-        if (_result.RankedAlternatives.Count == 0)
+        TxtRecommendation.Text = BuildRecommendationText(_result, isEn);
+    }
+
+    public static string BuildRecommendationText(AhpResult result, bool isEn)
+    {
+        if (result.RankedAlternatives.Count == 0)
         {
-            TxtRecommendation.Text = isEn ? "No data for recommendation." : "Немає даних для формування висновку.";
-            return;
+            return isEn ? "No data for recommendation." : "Немає даних для формування висновку.";
         }
 
-        var winner = _result.RankedAlternatives[0];
-        var runnerUp = _result.RankedAlternatives.Count > 1 ? _result.RankedAlternatives[1] : null;
+        var rankGroups = result.RankedAlternatives
+            .GroupBy(a => a.Rank)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        var firstGroup = rankGroups[0].ToList();
+        var secondGroup = rankGroups.Count > 1 ? rankGroups[1].ToList() : null;
 
         var sb = new StringBuilder();
-        sb.AppendLine(isEn
-            ? Fmt($"1. The optimal alternative identified by the Analytic Hierarchy Process is \"{winner.Name}\" with a final global priority of {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4}).")
-            : Fmt($"1. Оптимальною альтернативою за методом аналізу ієрархій визначено «{winner.Name}» із підсумковим глобальним пріоритетом {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4})."));
 
-        if (runnerUp != null)
+        if (firstGroup.Count > 1)
         {
-            double margin = winner.GlobalPriority - runnerUp.GlobalPriority;
+            string tiedNames = string.Join(", ", firstGroup.Select(a => isEn ? $"\"{a.Name}\"" : $"«{a.Name}»"));
             sb.AppendLine(isEn
-                ? Fmt($"2. Runner-up is alternative \"{runnerUp.Name}\" with priority {runnerUp.GlobalPriority:P2} (gap is {margin:P2}).")
-                : Fmt($"2. Друге місце посіла альтернатива «{runnerUp.Name}» з пріоритетом {runnerUp.GlobalPriority:P2} (відрив становить {margin:P2})."));
-            if (margin < 0.02)
+                ? Fmt($"1. Tied leaders detected (joint 1st place): alternatives {tiedNames} received identical final global priority of {firstGroup[0].GlobalPriority:P2} ({firstGroup[0].GlobalPriority:F4}). Note: the decision model does not differentiate between these options under the current criteria. Consider introducing an additional criterion or refining pairwise comparisons.")
+                : Fmt($"1. Виявлено рівність лідерів (спільне 1-ше місце): альтернативи {tiedNames} отримали однаковий підсумковий глобальний пріоритет {firstGroup[0].GlobalPriority:P2} ({firstGroup[0].GlobalPriority:F4}). Зауваження: метод аналізу ієрархій не виявив переваги між цими варіантами за заданими критеріями. Для прийняття остаточного рішення рекомендується ввести додатковий критерій або уточнити експертні судження."));
+
+            if (secondGroup != null)
             {
+                var runnerUp = secondGroup[0];
+                double margin = firstGroup[0].GlobalPriority - runnerUp.GlobalPriority;
+                string runnerUpNames = string.Join(", ", secondGroup.Select(a => isEn ? $"\"{a.Name}\"" : $"«{a.Name}»"));
                 sb.AppendLine(isEn
-                    ? "   Note: The margin between leaders is narrow (< 2%), indicating high sensitivity to fluctuations in judgments or market conditions."
-                    : "   Зверніть увагу: відрив між лідерами є незначним (< 2%), що свідчить про високу чутливість розв'язку до коливань оцінок або ринкових цін.");
+                    ? Fmt($"2. Next ranking ({secondGroup[0].RankText}): alternative(s) {runnerUpNames} with priority {runnerUp.GlobalPriority:P2} (gap to leaders is {margin:P2}).")
+                    : Fmt($"2. Наступне місце ({secondGroup[0].RankText}) посіли: {runnerUpNames} із пріоритетом {runnerUp.GlobalPriority:P2} (відставання від лідерів становить {margin:P2})."));
+            }
+        }
+        else
+        {
+            var winner = firstGroup[0];
+            sb.AppendLine(isEn
+                ? Fmt($"1. The optimal alternative identified by the Analytic Hierarchy Process is \"{winner.Name}\" with a final global priority of {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4}).")
+                : Fmt($"1. Оптимальною альтернативою за методом аналізу ієрархій визначено «{winner.Name}» із підсумковим глобальним пріоритетом {winner.GlobalPriority:P2} ({winner.GlobalPriority:F4})."));
+
+            if (secondGroup != null)
+            {
+                double margin = winner.GlobalPriority - secondGroup[0].GlobalPriority;
+                if (secondGroup.Count > 1)
+                {
+                    string runnerUpNames = string.Join(", ", secondGroup.Select(a => isEn ? $"\"{a.Name}\"" : $"«{a.Name}»"));
+                    sb.AppendLine(isEn
+                        ? Fmt($"2. Runner-up rank ({secondGroup[0].RankText}) is shared by alternatives {runnerUpNames} with priority {secondGroup[0].GlobalPriority:P2} (gap is {margin:P2}).")
+                        : Fmt($"2. Друге місце ({secondGroup[0].RankText}) розділили альтернативи {runnerUpNames} із пріоритетом {secondGroup[0].GlobalPriority:P2} (відрив становить {margin:P2})."));
+                }
+                else
+                {
+                    var runnerUp = secondGroup[0];
+                    sb.AppendLine(isEn
+                        ? Fmt($"2. Runner-up is alternative \"{runnerUp.Name}\" with priority {runnerUp.GlobalPriority:P2} (gap is {margin:P2}).")
+                        : Fmt($"2. Друге місце посіла альтернатива «{runnerUp.Name}» з пріоритетом {runnerUp.GlobalPriority:P2} (відрив становить {margin:P2})."));
+                }
+
+                if (margin < 0.02)
+                {
+                    sb.AppendLine(isEn
+                        ? "   Note: The margin between leaders is narrow (< 2%), indicating high sensitivity to fluctuations in judgments or market conditions."
+                        : "   Зверніть увагу: відрив між лідерами є незначним (< 2%), що свідчить про високу чутливість розв'язку до коливань оцінок або ринкових цін.");
+                }
             }
         }
 
-        var topCriterion = _result.Criteria.OrderByDescending(c => c.Weight).FirstOrDefault();
+        var topCriterion = result.Criteria.OrderByDescending(c => c.Weight).FirstOrDefault();
         if (topCriterion != null)
         {
             sb.AppendLine(isEn
@@ -352,11 +395,11 @@ public partial class ResultsWindow : Window
                 : Fmt($"3. Найбільш визначальним критерієм у моделі є «{topCriterion.Name}» із вагою {topCriterion.Weight:P1}."));
         }
 
-        string activeMethodStr = _result.ActiveRiMode == RiCalculationMode.Empirical
+        string activeMethodStr = result.ActiveRiMode == RiCalculationMode.Empirical
             ? (isEn ? "Saaty empirical formula" : "емпіричною формулою Сааті")
             : (isEn ? "Saaty standard table" : "табличними значеннями Сааті");
-        string thresholdStr = Fmt($"{_result.HierarchyThreshold:P0}");
-        string passFailStr = _result.IsHierarchyConsistent
+        string thresholdStr = Fmt($"{result.HierarchyThreshold:P0}");
+        string passFailStr = result.IsHierarchyConsistent
             ? (isEn
                 ? $"satisfying the consistency condition (CRh ≤ {thresholdStr}). Expert judgments are mutually consistent (mathematical consistency confirms logical coherence of judgments, but does not guarantee absolute truth)."
                 : $"що задовольняє умову узгодженості (CRh ≤ {thresholdStr}). Судження експерта є взаємно узгодженими (зауважимо: математична узгодженість підтверджує несуперечливість логіки експерта, але не є гарантією абсолютної істинності суджень).")
@@ -365,17 +408,17 @@ public partial class ResultsWindow : Window
                 : $"що перевищує допустимий поріг {thresholdStr} (CRh > {thresholdStr}). Рекомендується переглянути матриці попарних порівнянь для усунення суперечностей в оцінках.");
 
         sb.AppendLine(isEn
-            ? Fmt($"4. System hierarchy consistency (computed via: {activeMethodStr}): ratio CRh = {_result.ActiveHierarchicalCR:P2} (table: {_result.HierarchicalCRTable:P2}, empirical: {_result.HierarchicalCREmpirical:P2}), {passFailStr}")
-            : Fmt($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {_result.ActiveHierarchicalCR:P2} (табличний: {_result.HierarchicalCRTable:P2}, емпіричний: {_result.HierarchicalCREmpirical:P2}), {passFailStr}"));
+            ? Fmt($"4. System hierarchy consistency (computed via: {activeMethodStr}): ratio CRh = {result.ActiveHierarchicalCR:P2} (table: {result.HierarchicalCRTable:P2}, empirical: {result.HierarchicalCREmpirical:P2}), {passFailStr}")
+            : Fmt($"4. Ієрархічна узгодженість системи (розрахунок за: {activeMethodStr}): коефіцієнт CRh = {result.ActiveHierarchicalCR:P2} (табличний: {result.HierarchicalCRTable:P2}, емпіричний: {result.HierarchicalCREmpirical:P2}), {passFailStr}"));
 
-        if (_result.InconsistentMatrices.Count > 0)
+        if (result.InconsistentMatrices.Count > 0)
         {
             sb.AppendLine(isEn
-                ? $"   Warning: The following matrices violate their consistency threshold: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"\"{m}\""))}. It is recommended to adjust judgments in these matrices."
-                : $"   Увага: виявлено матриці з порушенням власного порогу узгодженості: {string.Join(", ", _result.InconsistentMatrices.Select(m => $"«{m}»"))}. Рекомендується скоригувати судження в цих матрицях.");
+                ? $"   Warning: The following matrices violate their consistency threshold: {string.Join(", ", result.InconsistentMatrices.Select(m => $"\"{m}\""))}. It is recommended to adjust judgments in these matrices."
+                : $"   Увага: виявлено матриці з порушенням власного порогу узгодженості: {string.Join(", ", result.InconsistentMatrices.Select(m => $"«{m}»"))}. Рекомендується скоригувати судження в цих матрицях.");
         }
 
-        TxtRecommendation.Text = sb.ToString();
+        return sb.ToString();
     }
 
     private void InitSynthesisDataGrid()

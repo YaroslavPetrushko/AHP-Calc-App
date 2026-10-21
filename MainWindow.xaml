@@ -163,160 +163,177 @@
         <TabControl Grid.Row="1" x:Name="MainTabControl" Background="Transparent" BorderThickness="0" Margin="0,0,0,10" SelectionChanged="MainTabControl_SelectionChanged">
             <!-- TAB 1: Критерії та Альтернативи -->
             <TabItem Header="{DynamicResource Str_Main_Tab1}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                <Grid Margin="0,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" MinHeight="260"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                            <!-- Criteria Management Card -->
-                            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="{DynamicResource Str_Main_CritCardTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                                        <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
-                                    </Grid>
-                                    <TextBlock Text="{DynamicResource Str_Main_CritCardDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                                    <DataGrid x:Name="GridCriteria" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
-                                              IsReadOnly="False"
-                                              BeginningEdit="GridCriteria_BeginningEdit" CellEditEnding="GridCriteria_CellEditEnding"
-                                              HeadersVisibility="Column" RowHeaderWidth="0"
-                                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
-                                                <DataGridTextColumn.Header>
-                                                    <TextBlock Text="{DynamicResource Str_Main_ColCode}"/>
-                                                </DataGridTextColumn.Header>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="140"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
-                                                <DataGridTextColumn.Header>
-                                                    <TextBlock Text="{DynamicResource Str_Main_ColCritName}"/>
-                                                </DataGridTextColumn.Header>
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                                        <Setter Property="ToolTip" Value="{Binding Name}"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
-                                                <DataGridTextColumn.Header>
-                                                    <TextBlock Text="{DynamicResource Str_Main_ColCritDesc}"/>
-                                                </DataGridTextColumn.Header>
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                                        <Setter Property="ToolTip" Value="{Binding Description}"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
+                        <!-- Criteria Management Card -->
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*" MinHeight="140"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                                        <Button Content="{DynamicResource Str_Main_BtnAddCrit}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddCriterion_Click"/>
-                                        <Button Content="{DynamicResource Str_Main_BtnRemoveCrit}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveCriterion_Click"/>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Alternatives Management Card -->
-                            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="{DynamicResource Str_Main_AltCardTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
-                                        <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
-                                    </Grid>
-                                    <TextBlock Text="{DynamicResource Str_Main_AltCardDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
-
-                                    <DataGrid x:Name="GridAlternatives" Height="190" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
-                                              IsReadOnly="False"
-                                              BeginningEdit="GridAlternatives_BeginningEdit" CellEditEnding="GridAlternatives_CellEditEnding"
-                                              HeadersVisibility="Column" RowHeaderWidth="0"
-                                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
-                                                <DataGridTextColumn.Header>
-                                                    <TextBlock Text="{DynamicResource Str_Main_ColCode}"/>
-                                                </DataGridTextColumn.Header>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="160"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
-                                                <DataGridTextColumn.Header>
-                                                    <TextBlock Text="{DynamicResource Str_Main_ColAltName}"/>
-                                                </DataGridTextColumn.Header>
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                                        <Setter Property="ToolTip" Value="{Binding Name}"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
-                                                                EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
-                                                <DataGridTextColumn.Header>
-                                                    <TextBlock Text="{DynamicResource Str_Main_ColAltDesc}"/>
-                                                </DataGridTextColumn.Header>
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                                        <Setter Property="ToolTip" Value="{Binding Description}"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                                        <Button Content="{DynamicResource Str_Main_BtnAddAlt}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddAlternative_Click"/>
-                                        <Button Content="{DynamicResource Str_Main_BtnRemoveAlt}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveAlternative_Click"/>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-
-                        <!-- Saaty Scale Reference Card -->
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="{DynamicResource Str_Scale_Title}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                        <TextBlock Text="{DynamicResource Str_Scale_Point1}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="{DynamicResource Str_Scale_Point3}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="{DynamicResource Str_Scale_Point5}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="{DynamicResource Str_Scale_Point7}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{DynamicResource Str_Scale_Point9}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="{DynamicResource Str_Scale_PointEven}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="{DynamicResource Str_Scale_PointReciprocal}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
-                                        <TextBlock Text="{DynamicResource Str_Scale_Tip}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
-                                    </StackPanel>
+                                <Grid Grid.Row="0" Margin="0,0,0,8">
+                                    <TextBlock Text="{DynamicResource Str_Main_CritCardTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                    <TextBlock x:Name="TxtCritCount" Text="(4)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
                                 </Grid>
-                            </StackPanel>
+                                <TextBlock Grid.Row="1" Text="{DynamicResource Str_Main_CritCardDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+
+                                <DataGrid Grid.Row="2" x:Name="GridCriteria" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                                          IsReadOnly="False" VerticalAlignment="Stretch"
+                                          BeginningEdit="GridCriteria_BeginningEdit" CellEditEnding="GridCriteria_CellEditEnding"
+                                          HeadersVisibility="Column" RowHeaderWidth="0"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
+                                                            EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Main_ColCode}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="140"
+                                                            EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Main_ColCritName}"/>
+                                            </DataGridTextColumn.Header>
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                    <Setter Property="ToolTip" Value="{Binding Name}"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
+                                                            EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Main_ColCritDesc}"/>
+                                            </DataGridTextColumn.Header>
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                    <Setter Property="ToolTip" Value="{Binding Description}"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                    <Button Content="{DynamicResource Str_Main_BtnAddCrit}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddCriterion_Click"/>
+                                    <Button Content="{DynamicResource Str_Main_BtnRemoveCrit}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveCriterion_Click"/>
+                                </StackPanel>
+                            </Grid>
                         </Border>
-                    </StackPanel>
-                </ScrollViewer>
+
+                        <!-- Alternatives Management Card -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*" MinHeight="140"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="0,0,0,8">
+                                    <TextBlock Text="{DynamicResource Str_Main_AltCardTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextDark}"/>
+                                    <TextBlock x:Name="TxtAltCount" Text="(5)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <TextBlock Grid.Row="1" Text="{DynamicResource Str_Main_AltCardDesc}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+
+                                <DataGrid Grid.Row="2" x:Name="GridAlternatives" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                                          IsReadOnly="False" VerticalAlignment="Stretch"
+                                          BeginningEdit="GridAlternatives_BeginningEdit" CellEditEnding="GridAlternatives_CellEditEnding"
+                                          HeadersVisibility="Column" RowHeaderWidth="0"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="65" MinWidth="50"
+                                                            EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Main_ColCode}"/>
+                                            </DataGridTextColumn.Header>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="160"
+                                                            EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Main_ColAltName}"/>
+                                            </DataGridTextColumn.Header>
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                    <Setter Property="ToolTip" Value="{Binding Name}"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="220"
+                                                            EditingElementStyle="{StaticResource DataGridCellEditorTextBoxStyle}">
+                                            <DataGridTextColumn.Header>
+                                                <TextBlock Text="{DynamicResource Str_Main_ColAltDesc}"/>
+                                            </DataGridTextColumn.Header>
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                    <Setter Property="ToolTip" Value="{Binding Description}"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                    <Button Content="{DynamicResource Str_Main_BtnAddAlt}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnAddAlternative_Click"/>
+                                    <Button Content="{DynamicResource Str_Main_BtnRemoveAlt}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnRemoveAlternative_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Saaty Scale Reference Card -->
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Scale_Title}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="{DynamicResource Str_Scale_Point1}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Scale_Point3}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Scale_Point5}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Scale_Point7}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{DynamicResource Str_Scale_Point9}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Scale_PointEven}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Scale_PointReciprocal}" FontSize="12" Foreground="{DynamicResource TextDark}" Margin="0,2"/>
+                                    <TextBlock Text="{DynamicResource Str_Scale_Tip}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </TabItem>
 
             <!-- TAB 2: Порівняння критеріїв -->
             <TabItem Header="{DynamicResource Str_Main_Tab2}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,0">
                     <StackPanel>
                         <!-- Criteria Matrix Card -->
                         <Border Style="{StaticResource CardStyle}">
@@ -366,7 +383,7 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="{DynamicResource Str_Main_CritWeightsTitle}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TxtCritWeightsPreview" Text="w = [P: 0.365, F: 0.234, A: 0.124, C: 0.278]" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
@@ -383,7 +400,7 @@
 
             <!-- TAB 3: Оцінка альтернатив -->
             <TabItem Header="{DynamicResource Str_Main_Tab3}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,0">
                     <StackPanel>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
@@ -435,7 +452,7 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock x:Name="TxtAltLocalPriTitle" Text="Локальні пріоритети альтернатив за обраним критерієм:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,4"/>
-                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TxtAltLocalPriPreview" Text="A1: 0.045, A2: 0.139, A3: 0.213, A4: 0.278, A5: 0.325" FontSize="13" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" TextBlock.TextAlignment="Right">
@@ -462,9 +479,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}"/>
-                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: За метод. реком. • Нормалізація стовпців • Σ(ColSum_j · w_j) • Емпіричний RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock x:Name="TxtBottomStatus" Text="Готово до розрахунку: 4 критерії, 5 альтернатив." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="TxtActiveProfileDesc" Text="Профіль: Метод. рекомендації • Норм. стовпців • λ: Σ(Col·w) • Емп. RI • CR ≤ 10%" FontSize="11" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="{DynamicResource Str_Main_BtnCalculate}" Style="{StaticResource PrimaryBtnStyle}" Height="38" Padding="20,0" FontSize="14" Click="BtnCalculate_Click"/>

@@ -129,7 +129,7 @@ public static class ReportExporter
         sb.AppendLine("  <style>");
         sb.AppendLine("    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.3; color: #000; margin: 20px; }");
         sb.AppendLine("    table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }");
-        sb.AppendLine("    th, td { border: 1px solid #000; padding: 4px 8px; text-align: left; vertical-align: top; }");
+        sb.AppendLine("    th, td { border: 1px solid #000; padding: 4px 8px; text-align: left; vertical-align: top; mso-number-format: \"\\@\"; }");
         sb.AppendLine("    th { background-color: #f2f2f2; font-weight: bold; }");
         sb.AppendLine("    p.table-title { font-weight: bold; font-size: 12pt; margin: 16px 0 6px 0; }");
         sb.AppendLine("    p.table-note { font-style: italic; font-size: 11pt; margin: 4px 0 16px 0; color: #333; }");
@@ -187,9 +187,16 @@ public static class ReportExporter
         File.WriteAllText(filePath, content, Encoding.UTF8);
     }
 
+    private static readonly System.Text.RegularExpressions.Regex SaatyFractionRegex =
+        new(@"^\d+/\d+$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     private static string EscapeCsvField(string field)
     {
         if (field == null) return string.Empty;
+        if (SaatyFractionRegex.IsMatch(field))
+        {
+            return $"=\"{field}\"";
+        }
         if (field.Contains(';') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
         {
             return $"\"{field.Replace("\"", "\"\"")}\"";

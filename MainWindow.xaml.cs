@@ -368,8 +368,22 @@ public partial class MainWindow : Window
     {
         var result = AhpCalculator.CalculateMatrix(_criteriaMatrix, LocalizationService.Get("Str_Results_CriteriaMatrixName"), _calculationOptions);
 
-        TxtCritWeightsPreview.Text = "w = [" + string.Join(", ", _criteria.Select((c, idx) =>
-            $"{c.Id}: {result.Weights[idx].ToString("F3", LocalizationService.ActiveCulture)} ({result.Weights[idx].ToString("P1", LocalizationService.ActiveCulture)})")) + "]";
+        var weightItems = _criteria.Select((c, idx) =>
+            $"{c.Id}: {result.Weights[idx].ToString("F3", LocalizationService.ActiveCulture)} ({result.Weights[idx].ToString("P1", LocalizationService.ActiveCulture)})").ToList();
+
+        if (weightItems.Count > 5)
+        {
+            int mid = (weightItems.Count + 1) / 2;
+            string row1 = string.Join(", ", weightItems.Take(mid));
+            string row2 = string.Join(", ", weightItems.Skip(mid));
+            TxtCritWeightsPreview.Text = $@"w = [
+  {row1},
+  {row2} ]";
+        }
+        else
+        {
+            TxtCritWeightsPreview.Text = "w = [" + string.Join(", ", weightItems) + "]";
+        }
 
         TxtCritLambdaCI.Text = $"λmax = {result.LambdaMax.ToString("F4", LocalizationService.ActiveCulture)} | CI = {result.CI.ToString("F4", LocalizationService.ActiveCulture)}";
         string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical
@@ -692,8 +706,21 @@ public partial class MainWindow : Window
         string matrixName = LocalizationService.Format("Str_Results_AltMatrixNameFmt", _selectedCriterionId);
         var result = AhpCalculator.CalculateMatrix(altMatrix, matrixName, _calculationOptions);
 
-        TxtAltLocalPriPreview.Text = string.Join(", ", _alternatives.Select((a, idx) =>
-            $"{a.Id}: {result.Weights[idx].ToString("F3", LocalizationService.ActiveCulture)} ({result.Weights[idx].ToString("P1", LocalizationService.ActiveCulture)})"));
+        var altWeightItems = _alternatives.Select((a, idx) =>
+            $"{a.Id}: {result.Weights[idx].ToString("F3", LocalizationService.ActiveCulture)} ({result.Weights[idx].ToString("P1", LocalizationService.ActiveCulture)})").ToList();
+
+        if (altWeightItems.Count > 5)
+        {
+            int mid = (altWeightItems.Count + 1) / 2;
+            string row1 = string.Join(", ", altWeightItems.Take(mid));
+            string row2 = string.Join(", ", altWeightItems.Skip(mid));
+            TxtAltLocalPriPreview.Text = $@"{row1},
+{row2}";
+        }
+        else
+        {
+            TxtAltLocalPriPreview.Text = string.Join(", ", altWeightItems);
+        }
 
         TxtAltLambdaCI.Text = $"λmax = {result.LambdaMax.ToString("F4", LocalizationService.ActiveCulture)} | CI = {result.CI.ToString("F4", LocalizationService.ActiveCulture)}";
         string riLabel = _calculationOptions.RiMode == RiCalculationMode.Empirical
@@ -1502,7 +1529,10 @@ public partial class MainWindow : Window
         MenuThresholdUniform.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent;
         MenuThresholdAdaptive.IsChecked = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.SaatyAdaptive;
 
-        TxtActiveProfile.Text = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileName}";
+        TxtActiveProfile.Text = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileShortName}";
+        BadgeActiveProfile.ToolTip = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileName}";
+
+        bool isEn = LocalizationService.CurrentLanguage == AppLanguage.En;
 
         string weightDesc = _calculationOptions.WeightMethod switch
         {
@@ -1516,15 +1546,42 @@ public partial class MainWindow : Window
 
         string riDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical
             ? (_calculationOptions.IsClassicSaatyProfile
-                ? (LocalizationService.CurrentLanguage == AppLanguage.En ? "Saaty RI" : "RI Сааті")
-                : (LocalizationService.CurrentLanguage == AppLanguage.En ? "Empirical RI" : "Емпіричний RI"))
-            : (LocalizationService.CurrentLanguage == AppLanguage.En ? "Table RI" : "Табличний RI");
+                ? (isEn ? "Saaty RI" : "RI Сааті")
+                : (isEn ? "Empirical RI" : "Емпіричний RI"))
+            : (isEn ? "Table RI" : "Табличний RI");
 
         string threshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent
             ? "CR ≤ 10%"
-            : (LocalizationService.CurrentLanguage == AppLanguage.En ? "Adaptive CR" : "Адаптивний CR");
+            : (isEn ? "Adaptive CR" : "Адаптивний CR");
 
-        TxtActiveProfileDesc.Text = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
+        string fullProfileDesc = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileName} • {weightDesc} • {lambdaDesc} • {riDesc} • {threshDesc}";
+
+        string shortWeightDesc = _calculationOptions.WeightMethod switch
+        {
+            WeightCalculationMethod.ColumnNormalization => isEn ? "Col. Norm" : "Норм. стовпців",
+            WeightCalculationMethod.GeometricMean => isEn ? "Geom. Mean" : "Геом. середнє",
+            WeightCalculationMethod.PrincipalEigenvector => isEn ? "Power Iter." : "Степеневий",
+            _ => _calculationOptions.WeightMethod.ToString()
+        };
+
+        string shortLambdaDesc = _calculationOptions.LambdaMethod switch
+        {
+            LambdaCalculationMethod.ColumnSumProduct => "λ: Σ(Col·w)",
+            LambdaCalculationMethod.RowRatioMean => "λ: Aw/w",
+            LambdaCalculationMethod.ExactEigenvalue => "λ: PowerIter",
+            _ => _calculationOptions.LambdaMethod.ToString()
+        };
+
+        string shortRiDesc = _calculationOptions.RiMode == RiCalculationMode.Empirical
+            ? (isEn ? "Emp. RI" : "Емп. RI")
+            : (isEn ? "Tab. RI" : "Табл. RI");
+
+        string shortThreshDesc = _calculationOptions.ThresholdMode == ConsistencyThresholdMode.Uniform10Percent
+            ? "CR ≤ 10%"
+            : (isEn ? "CR: Adapt" : "CR: Адапт.");
+
+        TxtActiveProfileDesc.Text = $"{LocalizationService.Get("Str_Main_ProfilePrefix")}{_calculationOptions.ProfileShortName} • {shortWeightDesc} • {shortLambdaDesc} • {shortRiDesc} • {shortThreshDesc}";
+        TxtActiveProfileDesc.ToolTip = fullProfileDesc;
     }
 
     private void MenuProfileMethodical_Click(object sender, RoutedEventArgs e)

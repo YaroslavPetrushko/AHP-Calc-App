@@ -164,12 +164,13 @@ public class ReportExportTests
         Assert.True(hasFractionInCrit, "Pairwise table should contain '1/3' formatted Saaty fraction");
 
         string csv = ReportExporter.ToCsv(tables);
-        Assert.Contains(";1/3;", csv);
+        Assert.True(csv.Contains(";=\"1/3\";") || csv.Contains(";1/3;"), "CSV should contain Excel-safe or raw Saaty fraction 1/3");
 
         string md = ReportExporter.ToMarkdown(tables);
         Assert.Contains("| 1/3 |", md);
 
         string html = ReportExporter.ToHtml(tables);
         Assert.Contains(">1/3<", html);
+        Assert.Contains("mso-number-format", html);
     }
 }
