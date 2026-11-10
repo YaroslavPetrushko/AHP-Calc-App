@@ -44,8 +44,8 @@
                     <MenuItem.Icon>
                         <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </MenuItem.Icon>
-                    <MenuItem Header="{DynamicResource Str_Menu_Preset1}" Click="BtnPresetReference_Click"/>
-                    <MenuItem Header="{DynamicResource Str_Menu_Preset2}" Click="BtnPresetGpu2026_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_Preset1}" Click="BtnPresetGpu2026_Click"/>
+                    <MenuItem Header="{DynamicResource Str_Menu_Preset2}" Click="BtnPresetReference_Click"/>
                 </MenuItem>
                 <Separator/>
                 <MenuItem Header="{DynamicResource Str_Menu_ExportReport}" InputGestureText="Ctrl+E" Click="MenuFileExportReport_Click">
@@ -152,7 +152,6 @@
 
                 <!-- Preset Toolbar -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnPresetReference" Content="{DynamicResource Str_Main_BtnPresetRef}" ToolTip="{DynamicResource Str_Main_BtnPresetRef_Tip}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetReference_Click"/>
                     <Button x:Name="BtnPresetGpu2026" Content="{DynamicResource Str_Main_BtnPresetGpu}" ToolTip="{DynamicResource Str_Main_BtnPresetGpu_Tip}" Style="{StaticResource SecondaryBtnStyle}" Margin="0,0,8,0" Click="BtnPresetGpu2026_Click"/>
                     <Button x:Name="BtnResetEmpty" Content="{DynamicResource Str_Main_BtnReset}" ToolTip="{DynamicResource Str_Main_BtnReset_Tip}" Style="{StaticResource SecondaryBtnStyle}" Click="BtnResetEmpty_Click"/>
                 </StackPanel>

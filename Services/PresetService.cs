@@ -142,8 +142,8 @@ public static class PresetService
         return new AhpProblemPreset
         {
             Name = isEn
-                ? "Reference Set #1: Graphics Cards (Previous Gen)"
-                : "Контрольний набір №1: відеокарти (попереднє покоління)",
+                ? "Reference Set #2: Graphics Cards (Previous Gen)"
+                : "Контрольний набір №2: відеокарти (попереднє покоління)",
             Description = isEn
                 ? "Discrete graphics card selection for a software engineering student: 4 criteria, 5 alternatives."
                 : "Вибір дискретної відеокарти для студента-програміста: 4 критерії, 5 альтернатив.",
@@ -155,7 +155,7 @@ public static class PresetService
     }
 
     /// <summary>
-    /// Набір №2: відеокарти 2026 (RTX 50 / RX 9000) — завантажується з вбудованого ресурсу gpu_2026.ahp.json.
+    /// Набір №1: відеокарти 2026 (RTX 50 / RX 9000) — завантажується з вбудованого ресурсу gpu_2026.ahp.json.
     /// </summary>
     public static AhpProblemPreset GetGpu2026Preset(AppLanguage? language = null)
     {
@@ -163,7 +163,7 @@ public static class PresetService
         var lang = language ?? LocalizationService.CurrentLanguage;
         if (lang == AppLanguage.En)
         {
-            preset.Name = "Dataset #2: Graphics Cards 2026 (RTX 50 / RX 9000)";
+            preset.Name = "Dataset #1: Graphics Cards 2026 (RTX 50 / RX 9000)";
             preset.Description = "Comprehensive choice of modern graphics card: RTX 50 Blackwell vs AMD RX 9000 RDNA 4. 4 criteria, 5 alternatives.";
 
             var enCritNames = new Dictionary<string, (string Name, string Desc)>

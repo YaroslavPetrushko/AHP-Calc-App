@@ -27,7 +27,7 @@ public partial class AboutWindow : Window
     private void UpdateVersionText()
     {
         var ver = Assembly.GetExecutingAssembly().GetName().Version;
-        string verStr = ver != null ? $"{ver.Major}.{ver.Minor}.{(ver.Build >= 0 ? ver.Build : 0)}" : "1.3.1";
+        string verStr = ver != null ? $"{ver.Major}.{ver.Minor}.{(ver.Build >= 0 ? ver.Build : 0)}" : "1.3.2";
         TxtAppVersion.Text = LocalizationService.Format("Str_About_VersionFmt", verStr);
     }
 

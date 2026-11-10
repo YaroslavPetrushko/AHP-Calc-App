@@ -54,7 +54,7 @@ public partial class MainWindow : Window
 
         SyncCalculationOptionsUI();
 
-        // Завантажуємо Набір №2 (відеокарти 2026) за замовчуванням
+        // Завантажуємо Набір №1 (відеокарти 2026) за замовчуванням
         LoadPreset(PresetService.GetGpu2026Preset());
     }
 
@@ -1266,8 +1266,8 @@ public partial class MainWindow : Window
         _activePreset = PresetKind.Reference;
         LoadPreset(PresetService.GetReferencePreset(LocalizationService.CurrentLanguage));
         TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
-            ? "Loaded: Reference Set #1: Graphics cards (previous gen)."
-            : "Завантажено: Контрольний набір №1: відеокарти (попереднє покоління).";
+            ? "Loaded: Reference Set #2: Graphics cards (previous gen)."
+            : "Завантажено: Контрольний набір №2: відеокарти (попереднє покоління).";
     }
 
     private void BtnPresetGpu2026_Click(object sender, RoutedEventArgs e)
@@ -1278,12 +1278,12 @@ public partial class MainWindow : Window
             var preset = PresetService.GetGpu2026Preset(LocalizationService.CurrentLanguage);
             LoadPreset(preset);
             TxtBottomStatus.Text = LocalizationService.CurrentLanguage == AppLanguage.En
-                ? "Loaded: Dataset #2: Graphics cards 2026 (RTX 50 / RX 9000)."
-                : "Завантажено: Набір №2: відеокарти 2026 (RTX 50 / RX 9000).";
+                ? "Loaded: Dataset #1: Graphics cards 2026 (RTX 50 / RX 9000)."
+                : "Завантажено: Набір №1: відеокарти 2026 (RTX 50 / RX 9000).";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Помилка завантаження набору №2:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Помилка завантаження набору №1:\n{ex.Message}", "Помилка пресету", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
